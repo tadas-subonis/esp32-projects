@@ -1,9 +1,11 @@
 # Makefile for waveshare-esp32-sandbox-1
-# ESP32-C3 Rust project with Embassy async runtime
+# ESP32 Rust project with Embassy async runtime
 
 # Configuration
-TARGET = riscv32imc-unknown-none-elf
-CHIP = esp32c3
+# Target triple (S3 uses Xtensa). Override if needed: make flash-monitor TARGET=...
+TARGET ?= xtensa-esp32s3-none-elf
+# Chip type (can be overridden: make flash CHIP=esp32s3, or leave empty for autodetect)
+CHIP ?= esp32s3
 BINARY = waveshare-esp32-sandbox-1
 RELEASE_BINARY = target/$(TARGET)/release/$(BINARY)
 DEBUG_BINARY = target/$(TARGET)/debug/$(BINARY)
@@ -18,16 +20,24 @@ else
 	CARGO_FLAGS =
 endif
 
+# Serial port (can be overridden: make flash PORT=/dev/ttyUSB0)
+PORT ?= /dev/ttyACM0
+
+# ESP toolchain environment (installed by `espup`; required for Xtensa builds)
+ESP_EXPORT ?= $(HOME)/export-esp.sh
+
 # Flash tool (prefer cargo-espflash if available, fallback to espflash)
-ESPFLASH = $(shell command -v cargo-espflash 2> /dev/null || echo "espflash")
-ifeq ($(ESPFLASH),cargo-espflash)
-	FLASH_CMD = cargo espflash flash --chip $(CHIP) --target $(TARGET) $(CARGO_FLAGS)
-	MONITOR_CMD = cargo espflash monitor --chip $(CHIP)
-	FLASH_MONITOR_CMD = cargo espflash flash --chip $(CHIP) --target $(TARGET) $(CARGO_FLAGS) --monitor
+HAS_CARGO_ESPFLASH = $(shell command -v cargo-espflash 2> /dev/null)
+# Build chip flag (empty if CHIP is empty for autodetect)
+CHIP_FLAG = $(if $(CHIP),--chip $(CHIP),)
+ifneq ($(HAS_CARGO_ESPFLASH),)
+	FLASH_CMD = cargo espflash flash $(CHIP_FLAG) --target $(TARGET) --port $(PORT) $(CARGO_FLAGS)
+	MONITOR_CMD = cargo espflash monitor $(CHIP_FLAG) --port $(PORT)
+	FLASH_MONITOR_CMD = cargo espflash flash $(CHIP_FLAG) --target $(TARGET) --port $(PORT) $(CARGO_FLAGS) --monitor
 else
-	FLASH_CMD = espflash flash --chip $(CHIP) $(BINARY_PATH)
-	MONITOR_CMD = espflash monitor --chip $(CHIP)
-	FLASH_MONITOR_CMD = espflash flash --chip $(CHIP) --monitor $(BINARY_PATH)
+	FLASH_CMD = espflash flash $(CHIP_FLAG) --port $(PORT) $(BINARY_PATH)
+	MONITOR_CMD = espflash monitor $(CHIP_FLAG) --port $(PORT)
+	FLASH_MONITOR_CMD = espflash flash $(CHIP_FLAG) --port $(PORT) --monitor $(BINARY_PATH)
 endif
 
 # Log level (can be overridden: make flash RUST_LOG=debug)
@@ -52,18 +62,18 @@ build: build-release
 
 build-debug:
 	@echo "$(INFO_COLOR)Building debug...$(NO_COLOR)"
-	RUST_LOG=$(RUST_LOG) cargo build --target $(TARGET)
+	@. $(ESP_EXPORT) && RUST_LOG=$(RUST_LOG) cargo build --target $(TARGET)
 	@echo "$(OK_COLOR)✓ Debug build complete$(NO_COLOR)"
 
 build-release:
 	@echo "$(INFO_COLOR)Building release...$(NO_COLOR)"
-	RUST_LOG=$(RUST_LOG) cargo build --release --target $(TARGET)
+	@. $(ESP_EXPORT) && RUST_LOG=$(RUST_LOG) cargo build --release --target $(TARGET)
 	@echo "$(OK_COLOR)✓ Release build complete$(NO_COLOR)"
 
 # Flash targets
 flash: build-release
 	@echo "$(INFO_COLOR)Flashing release build...$(NO_COLOR)"
-	$(FLASH_CMD)
+	@. $(ESP_EXPORT) && $(FLASH_CMD)
 
 flash-debug: build-debug
 	@echo "$(INFO_COLOR)Flashing debug build...$(NO_COLOR)"
@@ -75,13 +85,13 @@ flash-release: flash
 monitor:
 	@echo "$(INFO_COLOR)Starting serial monitor...$(NO_COLOR)"
 	@echo "$(WARN_COLOR)Press Ctrl+] to exit$(NO_COLOR)"
-	$(MONITOR_CMD)
+	@. $(ESP_EXPORT) && $(MONITOR_CMD)
 
 # Flash and monitor in one command
 flash-monitor: build-release
 	@echo "$(INFO_COLOR)Flashing and starting monitor...$(NO_COLOR)"
 	@echo "$(WARN_COLOR)Press Ctrl+] to exit monitor$(NO_COLOR)"
-	$(FLASH_MONITOR_CMD)
+	@. $(ESP_EXPORT) && $(FLASH_MONITOR_CMD)
 
 # Quick development cycle: flash + monitor (alias)
 dev: flash-monitor

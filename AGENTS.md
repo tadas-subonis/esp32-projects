@@ -6,13 +6,24 @@ This file documents **project-specific conventions and guardrails** for AI codin
 
 ## Project summary (what this repo is)
 
-- **Target**: ESP32-C3 (RISC‑V), `riscv32imc-unknown-none-elf` (see `rust-toolchain.toml`)
+- **Target**: ESP32-S3 (Xtensa), `xtensa-esp32s3-none-elf` (see `rust-toolchain.toml` and `.cargo/config.toml`)
 - **Runtime model**: `no_std` + async via Embassy, integrated via `esp-rtos`
 - **HAL**: `esp-hal` `~1.0` (with `unstable` feature enabled)
 - **Wi‑Fi/BLE controller**: `esp-radio`
 - **Logging**: `log` facade via `esp-println` logger (see `src/bin/main.rs`)
-- **Heap**: `esp-alloc` using reclaimed RAM (see `src/bin/main.rs`)
+- **Heap**: `esp-alloc` using PSRAM (`esp_alloc::psram_allocator!`) for large buffers like the SH8601 framebuffer
 - **Bootloader/OTA support**: ESP-IDF 2nd stage bootloader support crate `esp-bootloader-esp-idf`
+
+## Default development board (hardware spec)
+
+**Default board we develop against:** **Waveshare ESP32‑S3 Touch AMOLED 1.8"** (ESP32‑S3R8, SH8601 QSPI AMOLED, FT3168 touch, QMI8658C IMU, PCF85063A RTC, AXP2101 PMU, TCA9554 expander).
+
+- **Before touching anything hardware-related** (pin mapping, buses, I²C addresses, reset/power sequencing, display/touch controllers), **consult the board spec** in:
+  - `docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md`
+- **Also consult the vendor spec/wiki** (and match board revision):
+  - `https://www.waveshare.com/wiki/ESP32-S3-Touch-AMOLED-1.8`
+
+This is the canonical reference to avoid mixing ESP32-C3 vs ESP32-S3 assumptions and to prevent “guessed wiring” regressions.
 
 Helpful background reading:
 - Rust-on-ESP “Application Development” chapters (bootloader, configuration, logging, alloc, async, testing, OTA): `https://docs.espressif.com/projects/rust/book/application-development/index.html`
@@ -23,16 +34,43 @@ Helpful background reading:
 - **Don’t accidentally add `std`**: This repo is intentionally `#![no_std]`. Only introduce `std` if explicitly requested.
 - **Don’t remove/disable `build.rs`**: It wires up linker args (e.g. `linkall.x`) and prints friendlier link errors.
 - **Be stingy with stack**: Keep buffers off stack; prefer static storage or heap where appropriate. Note we already deny `clippy::large_stack_frames`.
-- **Keep the target stable**: Don’t change `riscv32imc-unknown-none-elf` / `esp32c3` without a clear reason and explicit approval.
+- **Keep the target stable**: Don’t change `xtensa-esp32s3-none-elf` / `esp32s3` without a clear reason and explicit approval.
 - **Dependency upgrades are opt-in**: Don’t bump versions unless asked (embedded regressions are costly).
-- **Don’t guess hardware wiring**: For anything involving pin mapping, buses, I²C addresses, display/touch controllers, etc., consult the board docs in `docs/devices/` and verify against the schematic/board revision.
+- **Don’t guess hardware wiring**: For anything involving pin mapping, buses, I²C addresses, display/touch controllers, etc., consult the board docs in `docs/devices/` (especially `docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md`) and verify against the schematic/board revision.
+
+## Waveshare ESP32‑S3 Touch AMOLED 1.8" bring-up checklist (avoid “black screen” wandering)
+
+When the firmware flashes but the screen is blank/hung, **do these in order**:
+
+- **PSRAM mode (critical)**:
+  - This board uses **octal PSRAM**. Ensure `.cargo/config.toml` includes:
+    - `ESP_HAL_CONFIG_PSRAM_MODE="octal"`
+  - Symptom of wrong PSRAM mode: PSRAM auto-detect logs show “size is 0” or the app panics/hangs early.
+
+- **Display bus wiring (QSPI)**:
+  - SH8601 uses ESP32-S3 `SPI2` in QSPI mode with `SIO0..3 = GPIO4..7`.
+  - **CS/SCK are easy to swap**. If display init panics or writes do nothing, re-check the mapping against the board doc and the board’s schematic.
+
+- **GPIO expander gating reset/power (TCA9554)**:
+  - The display reset/power lines are behind the expander (EXIO0 LCD_RESET, EXIO1 DSI_PWR_EN, etc.).
+  - The expander address is **strap-dependent**: commonly `0x20` or `0x24`.
+  - **Don’t hardcode one address**; probe/scan and log which one ACKs.
+
+- **I²C must never hang the whole boot**:
+  - Always configure **I²C timeouts** (bus + software timeout) so a missing/stuck device returns an error instead of wedging the firmware during bring-up.
+
+- **Panic/backtrace tooling**:
+  - Prefer `esp-backtrace` (`panic-handler` + `println`) during hardware bring-up so failures produce actionable output instead of a silent hang.
+
+- **Known-good reference implementation (sanity check)**:
+  - The public Waveshare example in [`georgik/esp32-conways-game-of-life-rs`](https://github.com/georgik/esp32-conways-game-of-life-rs/tree/main/waveshare-esp32-s3-touch-amoled-1_8) is a good cross-check for pin mapping and init sequencing when troubleshooting.
 
 ## Quickstart: build / flash / monitor
 
 ### Build
 
 ```bash
-cargo build --release --target riscv32imc-unknown-none-elf
+cargo build --release --target xtensa-esp32s3-none-elf
 ```
 
 ### Flash + serial monitor (recommended)
@@ -51,10 +89,10 @@ cargo install cargo-espflash
 
 ```bash
 # cargo-espflash (nice UX)
-cargo espflash flash --release --target riscv32imc-unknown-none-elf --chip esp32c3 --monitor
+cargo espflash flash --release --target xtensa-esp32s3-none-elf --chip esp32s3 --monitor
 
 # espflash (direct)
-espflash flash --chip esp32c3 --monitor target/riscv32imc-unknown-none-elf/release/waveshare-esp32-sandbox-1
+espflash flash --chip esp32s3 --monitor target/xtensa-esp32s3-none-elf/release/waveshare-esp32-sandbox-1
 ```
 
 Bootloader context and customizations (partition tables, custom bootloader builds, etc.) are described in:
@@ -75,7 +113,7 @@ Background: Rust-on-ESP “Logging” discusses `defmt` vs `log` and mentions `e
 
 For settings that don’t fit cleanly into Cargo features, Espressif’s ecosystem uses `esp-config`.
 
-- **Preferred approach for persistent config**: commit a `.cargo/config.toml` `[env]` section (this repo doesn’t currently have one).
+- **Preferred approach for persistent config**: commit a `.cargo/config.toml` `[env]` section (this repo does).
 - **CLI env vars win**: environment variables set on the command line override `.cargo/config.toml`.
 - **After changing config**: do a clean rebuild.
 
@@ -203,11 +241,11 @@ The `docs/` folder complements AGENTS.md by providing:
 
 ### Generated Rust documentation (cargo doc)
 
-**Always explore the generated documentation interactively** in `target/riscv32imc-unknown-none-elf/doc/` for precise API details:
+**Always explore the generated documentation interactively** in `target/xtensa-esp32s3-none-elf/doc/` for precise API details:
 
-- **Generate docs**: `cargo doc --target riscv32imc-unknown-none-elf`
-- **Open in browser**: `cargo doc --target riscv32imc-unknown-none-elf --open`
-- **Or navigate directly**: Open `target/riscv32imc-unknown-none-elf/doc/index.html` in a browser
+ - **Generate docs**: `cargo doc --target xtensa-esp32s3-none-elf`
+ - **Open in browser**: `cargo doc --target xtensa-esp32s3-none-elf --open`
+- **Or navigate directly**: Open `target/xtensa-esp32s3-none-elf/doc/index.html` in a browser
 
 **Use generated docs to:**
 - Find exact type signatures, method parameters, and return types

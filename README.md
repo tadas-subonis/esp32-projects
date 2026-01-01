@@ -10,6 +10,79 @@ ESP32-C3 Rust project using `no_std`, Embassy async runtime, and the `esp-rs` ec
 - ESP Rust toolchain (install via `espup` or follow [setup guide](./docs/setup.md))
 - `cargo-espflash` or `espflash` for flashing (install with `make install-tools`)
 
+### WSL2 USB Passthrough (Windows → Linux)
+
+If you're developing in WSL2 but your ESP32 device is physically connected to Windows, you need to map the USB device from Windows to Linux using `usbipd-win`.
+
+**Installation (Windows):**
+
+```powershell
+winget install usbipd
+```
+
+**Setup Steps:**
+
+1. **Find your device BUSID** (run on Windows PowerShell):
+   ```powershell
+   usbipd list
+   ```
+   Look for your ESP32 device (e.g., "Silicon Labs CP210x USB to UART Bridge") and note the BUSID (e.g., `1-2`).
+
+2. **Bind the device** (run once per Windows restart, requires admin):
+   ```powershell
+   usbipd bind --busid <BUSID>
+   ```
+   Replace `<BUSID>` with your actual bus ID (e.g., `1-2`).
+
+3. **Attach to WSL** (run each time the device is plugged in):
+   ```powershell
+   usbipd attach --wsl --busid <BUSID>
+   ```
+
+**On Linux (WSL) side:**
+
+After attaching from Windows, the device should appear in WSL. If it doesn't show up automatically:
+
+1. **Load usbip kernel modules** (if not already loaded):
+   ```bash
+   sudo modprobe usbip-core
+   sudo modprobe usbip-host
+   ```
+
+2. **Verify the device appears**:
+   ```bash
+   lsusb
+   ```
+   You should see your ESP32 device listed (e.g., "Silicon Labs CP210x USB to UART Bridge").
+
+3. **Check for serial device**:
+   ```bash
+   ls -l /dev/tty* | grep -i usb
+   # or
+   ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+   ```
+   The device typically appears as `/dev/ttyUSB0` or `/dev/ttyACM0`.
+
+4. **Set permissions** (if needed):
+   ```bash
+   # Add your user to the dialout group (one-time setup)
+   sudo usermod -aG dialout $USER
+   # Then log out and back in, or run:
+   newgrp dialout
+   ```
+
+5. **Use the device**:
+   Once the device is visible, you can use it with `cargo-espflash` or `espflash`:
+   ```bash
+   make dev  # Build, flash, and monitor
+   ```
+
+**Notes:**
+- Binding persists across device unplug/replug but not across Windows restarts
+- You'll need to re-attach after each device unplug/replug
+- If you use a third-party firewall, you may need to allow inbound TCP port `3240`
+- See [docs/wsl2-usb.md](./docs/wsl2-usb.md) for more details
+
 ### Build and Flash
 
 The easiest way to get started:

@@ -9,17 +9,17 @@ name = "waveshare-esp32-sandbox-1"
 path = "./src/bin/main.rs"
 
 [dependencies]
-esp-hal = { version = "~1.0", features = ["esp32c3", "log-04", "unstable"] }
+esp-hal = { version = "~1.0", features = ["esp32s3", "log-04", "psram", "unstable"] }
 
 esp-rtos = { version = "0.2.0", features = [
   "embassy",
   "esp-alloc",
   "esp-radio",
-  "esp32c3",
+  "esp32s3",
   "log-04",
 ] }
 
-esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32c3", "log-04"] }
+esp-bootloader-esp-idf = { version = "0.4.0", features = ["esp32s3", "log-04"] }
 log                    = "0.4.27"
 
 embassy-net = { version = "0.7.1", features = [
@@ -31,14 +31,16 @@ embassy-net = { version = "0.7.1", features = [
 ] }
 embedded-io = "0.7.1"
 embedded-io-async = "0.7.0"
+embedded-hal = "1.0.0"
 esp-alloc = "0.9.0"
-esp-println = { version = "0.16.1", features = ["esp32c3", "log-04"] }
+esp-println = { version = "0.16.1", features = ["esp32s3", "log-04"] }
+esp-backtrace = { version = "0.18.1", features = ["esp32s3", "println", "panic-handler"] }
 # for more networking protocol support see https://crates.io/crates/edge-net
 embassy-executor = { version = "0.9.1", features = ["log"] }
 embassy-time = { version = "0.5.0", features = ["log"] }
 esp-radio = { version = "0.17.0", features = [
   "esp-alloc",
-  "esp32c3",
+  "esp32s3",
   "log-04",
   "smoltcp",
   "unstable",
@@ -60,6 +62,15 @@ smoltcp = { version = "0.12.0", default-features = false, features = [
 
 critical-section = "1.2.0"
 static_cell      = "2.1.1"
+
+# Display and graphics
+mipidsi = "0.9"
+embedded-graphics = "0.8"
+embedded-graphics-core = "0.3"
+profont = "0.3"
+embedded-hal-bus = "0.3"
+# SH8601 driver for Waveshare 1.8" AMOLED (QSPI)
+sh8601-rs = { git = "https://github.com/theembeddedrustacean/sh8601-rs", features = ["waveshare_18_amoled"] }
 
 
 [profile.dev]

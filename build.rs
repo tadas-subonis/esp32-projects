@@ -63,8 +63,17 @@ fn linker_be_nice() {
         std::process::exit(0);
     }
 
-    println!(
-        "cargo:rustc-link-arg=--error-handling-script={}",
-        std::env::current_exe().unwrap().display()
-    );
+    // Only pass the "error-handling-script" arg on targets whose linkers accept it.
+    //
+    // On Xtensa (e.g. ESP32-S3), the GCC driver rejects this flag:
+    //   xtensa-esp32s3-elf-gcc: error: unrecognized command-line option '--error-handling-script=...'
+    //
+    // We still keep the friendly error hook for RISC-V (ESP32-C3/C6/etc).
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target.starts_with("riscv") {
+        println!(
+            "cargo:rustc-link-arg=--error-handling-script={}",
+            std::env::current_exe().unwrap().display()
+        );
+    }
 }

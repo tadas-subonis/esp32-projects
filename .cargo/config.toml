@@ -1,8 +1,14 @@
-[target.riscv32imc-unknown-none-elf]
-runner = "espflash flash --monitor --chip esp32c3"
+[target.xtensa-esp32s3-none-elf]
+# Note: we typically flash via `make flash-monitor` (cargo-espflash).
+# This runner is a convenient default for `cargo run`.
+runner = "cargo espflash flash --monitor --chip esp32s3"
 
 [env]
 ESP_LOG="info"
+# ESP32-S3R8 has embedded **octal** PSRAM. The esp-hal `psram` feature defaults to `quad`
+# unless configured, which results in PSRAM auto-detect returning size 0 and early panics
+# when we try to allocate the framebuffer.
+ESP_HAL_CONFIG_PSRAM_MODE="octal"
 
 [build]
 rustflags = [
@@ -11,7 +17,7 @@ rustflags = [
   "-C", "force-frame-pointers",
 ]
 
-target = "riscv32imc-unknown-none-elf"
+target = "xtensa-esp32s3-none-elf"
 
 [unstable]
 build-std = ["alloc", "core"]
