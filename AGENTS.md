@@ -25,6 +25,7 @@ Helpful background reading:
 - **Be stingy with stack**: Keep buffers off stack; prefer static storage or heap where appropriate. Note we already deny `clippy::large_stack_frames`.
 - **Keep the target stable**: Don’t change `riscv32imc-unknown-none-elf` / `esp32c3` without a clear reason and explicit approval.
 - **Dependency upgrades are opt-in**: Don’t bump versions unless asked (embedded regressions are costly).
+- **Don’t guess hardware wiring**: For anything involving pin mapping, buses, I²C addresses, display/touch controllers, etc., consult the board docs in `docs/devices/` and verify against the schematic/board revision.
 
 ## Quickstart: build / flash / monitor
 
@@ -182,6 +183,8 @@ This repository maintains detailed documentation in the `docs/` folder. **Agents
   - `docs/logging.md` - Logging patterns beyond AGENTS.md basics
   - `docs/wifi-ble.md` - Network connectivity patterns
   - `docs/display-graphics.md` - TFT display and graphics programming
+
+- **Working with real hardware**: Start from `docs/devices/` for board-specific wiring (pinouts, buses, controller ICs, I²C addresses) and only then map those onto the crate APIs used by this repo. Be especially careful not to mix **ESP32-C3 (RISC-V)** vs **ESP32-S3 (Xtensa)** assumptions.
 
 - **Learning and reference**: 
   - `docs/learning-resources.md` - Curated learning materials, example projects, and learning paths

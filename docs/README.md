@@ -8,6 +8,7 @@ https://docs.espressif.com/projects/rust/book/application-development/index.html
 ## Contents
 
 - [Stack & architecture](./stack.md)
+- [Device / board references](./devices/README.md)
 - [Environment setup](./setup.md)
 - [Build / flash / monitor](./build-flash-monitor.md)
 - [Logging](./logging.md)
