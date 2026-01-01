@@ -18,9 +18,20 @@ The esp-rs ecosystem commonly uses:
 
 - `espflash` / `cargo-espflash` for flashing and serial monitoring (bootloader + partition defaults included)
   - https://docs.espressif.com/projects/rust/book/application-development/bootloader.html
-- `espup` to install/maintain the ESP Rust toolchains (handy when working across multiple machines)
-  - curated via https://github.com/esp-rs/awesome-esp-rust
-- `esp-generate` to bootstrap new no_std projects (if you want a fresh template)
+- **`espup`** - Install and maintain ESP Rust toolchains (recommended for multi-machine setups)
+  - Automatically installs and configures the required toolchains
+  - Useful when working across multiple machines or setting up CI/CD
+  - https://github.com/esp-rs/espup
+
+  ```bash
+  cargo install espup
+  espup install
+  ```
+- **Wokwi Simulator** - Web-based simulator for testing without hardware
+  - Useful for rapid prototyping and testing logic without physical hardware
+  - Supports Rust on ESP32 chips
+  - https://wokwi.com/
+- **`esp-generate`** - Bootstrap new no_std projects
   - mentioned in Rust-on-ESP “Logging” and “Testing”
   - https://docs.espressif.com/projects/rust/book/application-development/logging.html
   - https://docs.espressif.com/projects/rust/book/application-development/testing.html

@@ -136,11 +136,24 @@ Notes:
 - If you use a third-party firewall, `usbipd-win` notes you may need to allow inbound TCP port `3240`.
 - Device attach is non-persistent; you may need to re-attach after reboots/unplug events.
 
+## Community and support
+
+- **Matrix room**: `#esp-rs:matrix.org` - Active community including Espressif employees
+  - https://matrix.to/#/#esp-rs:matrix.org
+- **Learning resources**: See `docs/references.md` for comprehensive list of books, blogs, video courses, and example projects
+
 ## Ecosystem pointers (useful tools/templates/examples)
 
 From the ESP Rust “awesome list”:
-- **Tooling**: `espup`, `espflash`
-- **Templates**: `esp-generate` (no_std), `esp-idf-template` (std via ESP-IDF)
+- **Tooling**: 
+  - `espup` - Install and maintain ESP Rust toolchains (useful for multi-machine setups)
+  - `espflash` / `cargo-espflash` - Serial flasher and monitor
+  - `Wokwi Simulator` - Web-based simulator for testing without hardware (https://wokwi.com/)
+  - `esp-web-flash-server` / `wokwi-server` - Remote development support for VS Code containers
+- **Templates**: 
+  - `esp-generate` (no_std) - Bootstrap new no_std projects
+  - `esp-idf-template` (std via ESP-IDF) - For std-based projects
+- **Example projects**: See `docs/references.md` for curated list of no_std examples demonstrating patterns (MQTT, OTA, BLE, sensors, etc.)
 
 Reference:
 `https://github.com/esp-rs/awesome-esp-rust`
@@ -168,7 +181,13 @@ This repository maintains detailed documentation in the `docs/` folder. **Agents
   - `docs/memory-alloc.md` - Heap allocation guidelines
   - `docs/logging.md` - Logging patterns beyond AGENTS.md basics
   - `docs/wifi-ble.md` - Network connectivity patterns
+  - `docs/display-graphics.md` - TFT display and graphics programming
 
+- **Learning and reference**: 
+  - `docs/learning-resources.md` - Curated learning materials, example projects, and learning paths
+  - `docs/references.md` - Comprehensive reference list of resources
+
+- **Practical development**: See `docs/practical-tips.md` for patterns, gotchas, and best practices
 - **Troubleshooting**: Start with `docs/troubleshooting.md`, then check crate-specific docs
 
 - **Understanding architecture**: Read `docs/stack.md` for overall system design
