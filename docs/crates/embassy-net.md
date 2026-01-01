@@ -107,26 +107,51 @@ Depending on how you structure your Wi‑Fi bring-up, common entrypoints include
 
 Note: this repo currently doesn’t set up the network stack yet—only the Wi‑Fi controller is initialized.
 
-## API inventory (practical)
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/embassy-net/0.7.1/embassy_net/all.html
+Full API index: https://docs.rs/embassy-net/0.7.1/embassy_net/all.html
 
-- **Top-level structs**
-  - **`Config`**: network stack configuration (DHCP/static, etc.).
-  - **`DhcpConfig`**: DHCP configuration options.
-  - **`StackResources<const N: usize>`**: static memory backing for the stack (socket storage, etc.).
-  - **`Stack`**: handle used to create sockets and interact with the stack.
-  - **`Runner`**: background driver that must be `.run().await`ed in a task.
+### Top-level Structs
+- **`Config`**: Network stack configuration (DHCP/static, etc.).
+- **`DhcpConfig`**: DHCP configuration options.
+- **`EthernetAddress`**: MAC address type.
+- **`IpEndpoint`**: IP address + port endpoint.
+- **`IpListenEndpoint`**: Listening endpoint (IP + port or port only).
+- **`Ipv4Address`**: IPv4 address.
+- **`Ipv4Cidr`**: IPv4 CIDR block.
+- **`Runner`**: Background driver that must be `.run().await`ed in a task.
+- **`Stack`**: Handle used to create sockets and interact with the stack.
+- **`StackResources<const N: usize>`**: Static memory backing for the stack (socket storage, etc.).
+- **`StaticConfigV4`**: Static IPv4 configuration.
 
-- **Top-level functions**
-  - **`embassy_net::new(...)`**: constructs the stack and runner from a driver + config + resources + random seed.
+### Top-level Enums
+- **`ConfigV4`**: IPv4 configuration (DHCP or static).
+- **`HardwareAddress`**: Hardware address type (Ethernet or IEEE 802.15.4).
+- **`IpAddress`**: IP address (IPv4 or IPv6).
+- **`IpCidr`**: IP CIDR block (IPv4 or IPv6).
 
-- **Modules you’ll use**
-  - **`embassy_net::tcp`**: TCP socket APIs (`TcpSocket`) implementing `embedded-io-async`.
-  - **`embassy_net::udp`**: UDP sockets.
-  - **`embassy_net::dns`**: DNS client.
-  - **`embassy_net::icmp`**: ICMP sockets.
-  - **`embassy_net::raw`**: raw sockets.
-  - **`embassy_net::driver`** (re-export): driver traits your hardware Wi‑Fi/Ethernet layer implements.
+### Top-level Functions
+- **`new(driver, config, resources, seed)`**: Constructs the stack and runner from a driver + config + resources + random seed.
+
+### Modules
+
+#### `embassy_net::tcp`
+- **`TcpSocket`**: TCP socket implementing `embedded-io-async::Read` and `Write`.
+- **`TcpReader`**: Read-only view of a TCP socket.
+- **`TcpWriter`**: Write-only view of a TCP socket.
+- **`tcp::client::TcpClient`**: High-level TCP client.
+- **`tcp::client::TcpClientState`**: State for TCP client connections.
+- **`tcp::client::TcpConnection`**: Active TCP connection.
+- **`tcp::AcceptError`**: Error accepting connections.
+- **`tcp::ConnectError`**: Error connecting.
+- **`tcp::Error`**: General TCP error.
+- **`tcp::State`**: TCP socket state.
+
+#### `embassy_net::udp`
+- **`UdpSocket`**: UDP socket.
+- **`UdpMetadata`**: Metadata for UDP packets.
+- **`udp::BindError`**: Error binding socket.
+- **`udp::RecvError`**: Error receiving.
+- **`udp::SendError`**: Error sending.
+- **`udp::PacketMetadata`**: Type alias for UDP packet metadata.
 

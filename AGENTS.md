@@ -2,6 +2,8 @@
 
 This file documents **project-specific conventions and guardrails** for AI coding agents (and humans) working in this repository.
 
+**IMPORTANT**: Always consult this file (AGENTS.md), the `docs/` folder, AND the generated Rust documentation in `target/riscv32imc-unknown-none-elf/doc/` when developing. The `docs/` folder contains detailed crate-specific documentation, architectural patterns, and implementation guides. The generated docs (via `cargo doc`) provide interactive HTML documentation with exact API signatures—explore them interactively for precise type information.
+
 ## Project summary (what this repo is)
 
 - **Target**: ESP32-C3 (RISC‑V), `riscv32imc-unknown-none-elf` (see `rust-toolchain.toml`)
@@ -149,4 +151,65 @@ Community feedback often recommends starting with the `esp-rs` ecosystem; people
 
 Reference discussion:
 `https://www.reddit.com/r/esp32/comments/1l6hgdb/how_mature_is_esp32_rust/`
+
+## Documentation structure and usage
+
+This repository maintains detailed documentation in the `docs/` folder. **Agents should proactively reference these docs** when:
+
+- **Working with specific crates**: Check `docs/crates/` for API patterns, examples, and gotchas
+  - `docs/crates/esp-hal.md` - HAL usage patterns
+  - `docs/crates/esp-radio.md` - Wi-Fi/BLE controller usage
+  - `docs/crates/embassy-*.md` - Async executor and time patterns
+  - `docs/crates/smoltcp.md` - Network stack usage
+  - See `docs/crates/README.md` for full list
+
+- **Implementing features**: Review relevant topic docs:
+  - `docs/async-embassy.md` - Async patterns and Embassy integration
+  - `docs/memory-alloc.md` - Heap allocation guidelines
+  - `docs/logging.md` - Logging patterns beyond AGENTS.md basics
+  - `docs/wifi-ble.md` - Network connectivity patterns
+
+- **Troubleshooting**: Start with `docs/troubleshooting.md`, then check crate-specific docs
+
+- **Understanding architecture**: Read `docs/stack.md` for overall system design
+
+The `docs/` folder complements AGENTS.md by providing:
+- Detailed API usage examples
+- Crate-specific patterns and best practices
+- Troubleshooting guides
+- Implementation details that don't fit in AGENTS.md's convention-focused format
+
+### Generated Rust documentation (cargo doc)
+
+**Always explore the generated documentation interactively** in `target/riscv32imc-unknown-none-elf/doc/` for precise API details:
+
+- **Generate docs**: `cargo doc --target riscv32imc-unknown-none-elf`
+- **Open in browser**: `cargo doc --target riscv32imc-unknown-none-elf --open`
+- **Or navigate directly**: Open `target/riscv32imc-unknown-none-elf/doc/index.html` in a browser
+
+**Use generated docs to:**
+- Find exact type signatures, method parameters, and return types
+- Verify trait bounds, associated types, and required implementations
+- Search for specific APIs, types, or functions across all crates
+- Explore trait implementations and see what types implement which traits
+- Understand feature flags and conditional compilation (`#[cfg(...)]`)
+- Read example code from doc comments
+- Cross-reference between related types and modules
+- Debug type mismatches by understanding exact API contracts
+
+**When to use generated docs:**
+- Need precise type information (exact signatures, generic parameters)
+- Verifying correct API usage when compiler errors occur
+- Exploring the full API surface of a crate
+- Finding all available methods on a type
+- Understanding trait requirements and bounds
+- Checking feature-gated APIs
+
+**Workflow**: 
+1. Read AGENTS.md for constraints and conventions
+2. Check `docs/crates/*.md` for patterns and examples
+3. **Explore `target/riscv32imc-unknown-none-elf/doc/` interactively** for exact API details
+4. Use generated docs to verify types, find methods, and understand trait requirements
+
+The generated docs are the **source of truth** for exact API contracts, while `docs/crates/*.md` provide higher-level patterns and gotchas.
 

@@ -49,11 +49,29 @@ let mut v: Vec<u8> = Vec::new();
 v.extend_from_slice(b"hello");
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/esp-alloc/0.9.0/esp_alloc/all.html
+Full API index: See local docs at `target/riscv32imc-unknown-none-elf/doc/esp_alloc/all.html`
 
-- **Macros**
-  - **`esp_alloc::heap_allocator!(...)`**: installs the global allocator (optionally in reclaimed RAM / PSRAM regions).
+### Structs
+- **`AnyMemory`**: Generic memory type that can represent any memory region.
+- **`EspHeap`**: The ESP heap allocator implementation.
+- **`ExternalMemory`**: External memory region (e.g., PSRAM).
+- **`HeapRegion`**: A single heap region configuration.
+- **`HeapStats`**: Heap statistics (used/free memory, etc.).
+- **`InternalMemory`**: Internal memory region.
+- **`RegionStats`**: Statistics for a specific memory region.
+
+### Enums
+- **`MemoryCapability`**: Memory capability flags (executable, writable, etc.).
+
+### Macros
+- **`heap_allocator!(#[esp_hal::ram(...)] size: N)`**: Installs the global allocator. Supports:
+  - `#[esp_hal::ram(reclaimed)]`: Use reclaimed RAM (from 2nd stage bootloader).
+  - `#[esp_hal::ram(psram)]`: Use PSRAM (if available).
+  - `size`: Size of the heap in bytes.
+- **`psram_allocator!(size: N)`**: Installs a PSRAM-specific allocator.
+
+### Statics
+- **`HEAP`**: Global heap instance (used internally).
 

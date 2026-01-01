@@ -39,14 +39,22 @@ info!("boot");
 warn!("something looks off");
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/esp-println/0.16.1/esp_println/all.html
+Full API index: https://docs.rs/esp-println/0.16.1/esp_println/all.html
 
-- **Modules**
-  - **`esp_println::logger`**: logger backend wiring for the `log` facade (what this repo uses).
+### Structs
+- **`Printer`**: Low-level UART printer (used internally by macros).
 
-- **Key functions**
-  - **`esp_println::logger::init_logger_from_env()`**: initialize logger based on environment configuration.
+### Macros
+- **`dbg!(...)`**: Debug print macro (like `std::dbg!` but for UART).
+- **`print!(...)`**: Print to UART without newline.
+- **`println!(...)`**: Print to UART with newline.
+
+### Functions
+- **`logger::init_logger(...)`**: Initialize logger with explicit configuration.
+- **`logger::init_logger_from_env()`**: Initialize logger based on environment configuration (`RUST_LOG`).
+
+### Modules
+- **`esp_println::logger`**: Logger backend wiring for the `log` facade (what this repo uses).
 

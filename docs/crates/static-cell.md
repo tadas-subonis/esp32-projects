@@ -30,11 +30,14 @@ fn init_buf() -> &'static mut [u8; 1024] {
 }
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/static_cell/2.1.1/static_cell/all.html
+Full API index: https://docs.rs/static_cell/2.1.1/static_cell/all.html
 
-- **Types**
-  - **`StaticCell<T>`**: single-assignment storage that returns `&'static mut T` on initialization.
+### Structs
+- **`ConstStaticCell<T>`**: Const-constructible `StaticCell` (can be initialized in `const` context).
+- **`StaticCell<T>`**: Single-assignment storage that returns `&'static mut T` on initialization.
+
+### Macros
+- **`make_static!(value)`**: Macro to create a `'static` reference from a value (uses `StaticCell` internally).
 

@@ -61,23 +61,24 @@ impl Write for MyUart {
 }
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/embedded-io/0.7.1/embedded_io/all.html
+Full API index: https://docs.rs/embedded-io/0.7.1/embedded_io/all.html
 
-- **Traits**
-  - **`ErrorType`**: base trait defining the associated `Error` type.
-  - **`Error`**: error trait implemented by error types.
-  - **`Read` / `Write`**: blocking read/write traits (always blocking).
-  - **`ReadReady` / `WriteReady`**: readiness traits for non-blocking usage patterns.
-  - **`BufRead`**: buffered reader trait.
-  - **`Seek`**: seek within streams.
+### Traits
+- **`BufRead`**: Buffered reader trait (read lines, etc.).
+- **`Error`**: Error trait implemented by error types.
+- **`ErrorType`**: Base trait defining the associated `Error` type.
+- **`Read`**: Blocking read trait (always blocking).
+- **`ReadReady`**: Readiness trait for non-blocking read patterns.
+- **`Seek`**: Seek within streams.
+- **`Write`**: Blocking write trait (always blocking).
+- **`WriteReady`**: Readiness trait for non-blocking write patterns.
 
-- **Enums**
-  - **`ErrorKind`**: common error classification.
-  - **`ReadExactError`**: error from `Read::read_exact`.
-  - **`WriteFmtError`**: error from `Write::write_fmt`.
-  - **`SeekFrom`**: seek origin for `Seek`.
-  - **`SliceWriteError`**: error for writing into `&mut [u8]`.
+### Enums
+- **`ErrorKind`**: Common error classification (NotFound, PermissionDenied, etc.).
+- **`ReadExactError`**: Error from `Read::read_exact` (contains partial read count).
+- **`SeekFrom`**: Seek origin for `Seek` (Start, End, Current).
+- **`SliceWriteError`**: Error for writing into `&mut [u8]`.
+- **`WriteFmtError`**: Error from `Write::write_fmt`.
 

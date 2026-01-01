@@ -32,14 +32,26 @@ fn bump() {
 }
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/critical-section/1.2.0/critical_section/all.html
+Full API index: https://docs.rs/critical-section/1.2.0/critical_section/all.html
 
-- **Functions**
-  - **`critical_section::with(|cs| ...)`**: enter a critical section and pass a token used to borrow protected data.
+### Structs
+- **`CriticalSection`**: Token proving you're in a critical section.
+- **`Mutex<T>`**: Minimal mutex primitive for `no_std` critical-section-based locking.
+- **`RestoreState`**: State to restore interrupts after a critical section.
 
-- **Types**
-  - **`Mutex<T>`**: minimal mutex primitive for `no_std` critical-section-based locking.
+### Traits
+- **`Impl`**: Platform-specific implementation trait (usually provided by HAL).
+
+### Macros
+- **`set_impl!(impl)`**: Set the platform-specific implementation (usually called by HAL).
+
+### Functions
+- **`acquire()`**: Acquire a critical section (low-level, returns restore state).
+- **`release(restore_state)`**: Release a critical section (low-level).
+- **`with(|cs| ...)`**: Enter a critical section and pass a token used to borrow protected data (most common API).
+
+### Type Aliases
+- **`RawRestoreState`**: Raw platform-specific restore state type.
 

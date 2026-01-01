@@ -97,33 +97,156 @@ loop {
 }
 ```
 
-## API inventory (navigation-first)
+## Complete API inventory
 
-`esp-hal` is a large crate. Instead of duplicating the full rustdoc listing here, use:
+**Note**: `esp-hal` is a very large crate (1000+ items). 
 
-- Full API index (All Items): https://docs.rs/esp-hal/latest/esp_hal/all.html
-- Module index: https://docs.rs/esp-hal/latest/esp_hal/#modules
+Full API index: See local docs at `target/riscv32imc-unknown-none-elf/doc/esp_hal/all.html`
 
-Below is a “what you should click first” map:
+**This is a curated list organized by module. For exhaustive coverage, see the local docs.**
 
-- **Core entrypoints**
-  - **`esp_hal::init(config)`**: takes ownership of peripherals and applies global configuration.
-  - **`esp_hal::Config`**: global configuration (clocks, etc).
-  - **`esp_hal::peripherals::Peripherals`**: the singleton peripheral container returned by `init`.
+### Core Entrypoints
+- **`init(config)`**: Takes ownership of peripherals and applies global configuration.
+- **`Config`**: Global configuration (clocks, etc.).
+- **`peripherals::Peripherals`**: The singleton peripheral container returned by `init`.
 
-- **Concurrency/driver modes**
-  - **`esp_hal::Blocking`**: marker for blocking driver mode.
-  - **`esp_hal::Async`**: marker for async driver mode.
+### Concurrency/Driver Modes
+- **`Blocking`**: Marker type for blocking driver mode.
+- **`Async`**: Marker type for async driver mode.
 
-- **Modules you’ll use early**
-  - **`esp_hal::gpio`**: digital I/O pins (`Io`, `Input`, `Output`, `Level`, pull/drive settings).
-  - **`esp_hal::timer`**: timers (`PeriodicTimer`, `OneShotTimer`, `TimerGroup`, `systimer`, etc.).
-  - **`esp_hal::clock`**: clock configuration (`CpuClock`, PLL/clock tree pieces).
-  - **`esp_hal::interrupt`**: interrupt enabling/handlers + software interrupts.
-  - **`esp_hal::uart`**: UART peripheral drivers.
-  - **`esp_hal::spi`**: SPI peripheral drivers.
-  - **`esp_hal::i2c`**: I2C peripheral drivers.
+### Key Modules and Types
 
-If you want, tell me the exact board/pinout you have and which peripheral you’re using next (UART/I2C/SPI/GPIO), and I’ll add a “golden example” section for that module using the exact types from `esp-hal` v1.0.
+#### `esp_hal::gpio` (Digital I/O)
+- **`Io`**: GPIO I/O controller.
+- **`Input`**: Input pin.
+- **`Output`**: Output pin.
+- **`InputOutput`**: Bidirectional pin.
+- **`Level`**: Pin level (High, Low).
+- **`Pull`**: Pull-up/pull-down configuration.
+- **`Drive`**: Drive strength configuration.
+- **`Function`**: Pin function/mux configuration.
+
+#### `esp_hal::timer` (Timers)
+- **`PeriodicTimer`**: Periodic timer.
+- **`OneShotTimer`**: One-shot timer.
+- **`timg::TimerGroup`**: Timer group (TIMG).
+- **`systimer::SystemTimer`**: System timer (SYSTIMER).
+- **`systimer::Alarm`**: System timer alarm.
+- **`systimer::Target`**: System timer target.
+
+#### `esp_hal::clock` (Clock Configuration)
+- **`CpuClock`**: CPU clock speed enum.
+- **`ClockControl`**: Clock control handle.
+- **`Clock`**: Clock type.
+- **`XtalClock`**: Crystal clock configuration.
+- **`PllClock`**: PLL clock configuration.
+
+#### `esp_hal::interrupt` (Interrupts)
+- **`Interrupt`**: Interrupt number enum.
+- **`enable`**: Enable an interrupt.
+- **`disable`**: Disable an interrupt.
+- **`software::SoftwareInterruptControl`**: Software interrupt controller.
+- **`software::SoftwareInterrupt`**: Software interrupt handle.
+
+#### `esp_hal::uart` (UART)
+- **`Uart`**: UART peripheral driver.
+- **`UartRx`**: UART receiver.
+- **`UartTx`**: UART transmitter.
+- **`UartRxTx`**: UART receiver+transmitter.
+- **`Config`**: UART configuration.
+- **`DataBits`**: Data bits configuration.
+- **`Parity`**: Parity configuration.
+- **`StopBits`**: Stop bits configuration.
+
+#### `esp_hal::spi` (SPI)
+- **`Spi`**: SPI peripheral driver.
+- **`SpiDevice`**: SPI device handle.
+- **`SpiBus`**: SPI bus handle.
+- **`Config`**: SPI configuration.
+- **`Mode`**: SPI mode (CPOL/CPHA).
+- **`DutyCycle`**: SPI duty cycle.
+- **`BitOrder`**: Bit order (MSB/LSB).
+
+#### `esp_hal::i2c` (I2C)
+- **`I2c`**: I2C peripheral driver.
+- **`I2cBus`**: I2C bus handle.
+- **`Config`**: I2C configuration.
+- **`ClockSpeed`**: I2C clock speed.
+
+#### `esp_hal::adc` (ADC - Analog-to-Digital)
+- **`Adc`**: ADC peripheral driver.
+- **`AdcPin`**: ADC pin.
+- **`Resolution`**: ADC resolution.
+- **`Attenuation`**: ADC attenuation.
+
+#### `esp_hal::dac` (DAC - Digital-to-Analog)
+- **`Dac`**: DAC peripheral driver.
+- **`DacChannel`**: DAC channel.
+
+#### `esp_hal::ledc` (LED PWM Controller)
+- **`LedcTimer`**: LEDC timer.
+- **`LedcChannel`**: LEDC channel.
+- **`Resolution`**: LEDC resolution.
+- **`ClockSource`**: LEDC clock source.
+
+#### `esp_hal::rmt` (Remote Control)
+- **`Rmt`**: RMT peripheral driver.
+- **`RmtChannel`**: RMT channel.
+- **`Pulse`**: RMT pulse.
+
+#### `esp_hal::usb_serial_jtag` (USB Serial JTAG)
+- **`UsbSerialJtag`**: USB Serial JTAG driver.
+
+#### `esp_hal::systimer` (System Timer)
+- **`SystemTimer`**: System timer.
+- **`Alarm`**: System timer alarm.
+- **`Target`**: System timer target.
+
+#### `esp_hal::peripherals` (Peripheral Access)
+- **`Peripherals`**: Peripheral container.
+- Individual peripheral types (e.g., `GPIO`, `UART0`, `SPI2`, `I2C0`, `TIMG0`, etc.).
+
+#### `esp_hal::ram` (RAM Attributes)
+- **`#[ram(reclaimed)]`**: Attribute for reclaimed RAM.
+- **`#[ram(psram)]`**: Attribute for PSRAM.
+
+#### `esp_hal::reset` (Reset)
+- **`Reset`**: Reset controller.
+- **`ResetReason`**: Reset reason enum.
+
+#### `esp_hal::rtc` (RTC - Real-Time Clock)
+- **`Rtc`**: RTC peripheral.
+- **`DateTime`**: RTC date/time.
+
+#### `esp_hal::efuse` (eFuse)
+- **`Efuse`**: eFuse peripheral.
+- Various eFuse field accessors.
+
+#### `esp_hal::flash` (Flash)
+- **`Flash`**: Flash peripheral.
+- **`FlashSize`**: Flash size.
+
+#### `esp_hal::dma` (DMA)
+- **`Dma`**: DMA controller.
+- **`DmaChannel`**: DMA channel.
+- **`DmaTransfer`**: DMA transfer.
+
+#### `esp_hal::soc` (SoC-specific)
+- SoC-specific types and constants.
+
+### Additional Modules
+- **`esp_hal::rng`**: Random number generator.
+- **`esp_hal::sha`**: SHA hashing.
+- **`esp_hal::aes`**: AES encryption.
+- **`esp_hal::rsa`**: RSA encryption.
+- **`esp_hal::hmac`**: HMAC.
+- **`esp_hal::ds`**: Digital signature.
+- **`esp_hal::temperature_sensor`**: Temperature sensor.
+- **`esp_hal::touch`**: Touch sensor (ESP32-S2/S3).
+- **`esp_hal::twai`**: Two-Wire Automotive Interface (CAN).
+- **`esp_hal::parl_io`**: Parallel I/O (ESP32-S3).
+- **`esp_hal::gdma`**: General DMA (ESP32-S3).
+
+**For exhaustive coverage, see**: https://docs.rs/esp-hal/latest/esp_hal/all.html
 
 

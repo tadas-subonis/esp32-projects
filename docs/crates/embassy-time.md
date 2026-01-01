@@ -39,3 +39,26 @@ async fn periodic() -> ! {
 }
 ```
 
+## Complete API inventory
+
+Full API index: https://docs.rs/embassy-time/0.5.0/embassy_time/all.html
+
+### Structs
+- **`Delay`**: Type implementing async delays and blocking `embedded-hal` delays.
+- **`Duration`**: Represents the difference between two `Instant`s.
+- **`Instant`**: An instant in time, based on the MCU's clock ticks since startup.
+- **`Ticker`**: Asynchronous stream that yields every `Duration`, indefinitely.
+- **`TimeoutError`**: Error returned by `with_timeout` and `with_deadline` on timeout.
+- **`Timer`**: A future that completes at a specified `Instant`.
+
+### Constants
+- **`TICK_HZ`**: Ticks per second of the global timebase.
+
+### Traits
+- **`WithTimeout`**: Provides functions to run a given future with a timeout or a deadline.
+
+### Functions
+- **`block_for(duration)`**: Blocks for at least `duration`.
+- **`with_deadline(deadline, future)`**: Runs a given future with a deadline time.
+- **`with_timeout(timeout, future)`**: Runs a given future with a timeout.
+

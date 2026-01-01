@@ -31,19 +31,40 @@ warn!("battery low");
 error!("wifi connect failed");
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/log/0.4.27/log/all.html
+Full API index: https://docs.rs/log/0.4.27/log/all.html
 
-- **Macros** (main user-facing API)
-  - **`trace!` / `debug!` / `info!` / `warn!` / `error!`**: emit a log record at the given level.
+### Macros (main user-facing API)
+- **`debug!(...)`**: Emit a log record at the `Debug` level.
+- **`error!(...)`**: Emit a log record at the `Error` level.
+- **`info!(...)`**: Emit a log record at the `Info` level.
+- **`log!(level, ...)`**: Emit a log record at a specified level.
+- **`log_enabled!(level)`**: Check if logging is enabled for a level.
+- **`trace!(...)`**: Emit a log record at the `Trace` level.
+- **`warn!(...)`**: Emit a log record at the `Warn` level.
 
-- **Core types**
-  - **`Level` / `LevelFilter`**: severity levels + filter levels.
-  - **`Metadata` / `Record`**: structured log record data passed to the logger.
+### Structs
+- **`Metadata`**: Metadata about a log record (level, target, etc.).
+- **`MetadataBuilder`**: Builder for `Metadata`.
+- **`ParseLevelError`**: Error parsing a log level string.
+- **`Record`**: A log record containing metadata and message.
+- **`RecordBuilder`**: Builder for `Record`.
+- **`SetLoggerError`**: Error setting the global logger.
 
-- **Core traits/functions** (logger implementors)
-  - **`Log`**: trait implemented by log backends.
-  - **`set_logger(...)` / `set_max_level(...)`**: install global logger and configure max level.
+### Enums
+- **`Level`**: Log level (Trace, Debug, Info, Warn, Error).
+- **`LevelFilter`**: Log level filter (same variants as `Level` plus `Off`).
+
+### Traits
+- **`Log`**: Trait implemented by log backends (what `esp-println` implements).
+
+### Functions
+- **`logger()`**: Get the global logger.
+- **`max_level()`**: Get the maximum enabled log level.
+- **`set_logger_racy(logger)`**: Set the global logger (racy, for single-threaded).
+- **`set_max_level_racy(level)`**: Set the maximum log level (racy, for single-threaded).
+
+### Constants
+- **`STATIC_MAX_LEVEL`**: Compile-time maximum log level (feature-gated).
 

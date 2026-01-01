@@ -52,14 +52,32 @@ async fn main(spawner: Spawner) -> ! {
 }
 ```
 
-## API inventory (practical)
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/embassy-executor/0.9.1/embassy_executor/all.html
+Full API index: https://docs.rs/embassy-executor/0.9.1/embassy_executor/all.html
 
-- **Types**
-  - **`Spawner`**: handle used to spawn tasks.
+### Structs
+- **`SendSpawner`**: `Send`-safe spawner for cross-thread task spawning.
+- **`SpawnToken`**: Token representing a task that can be spawned.
+- **`Spawner`**: Handle used to spawn tasks (most common entrypoint).
+- **`raw::AvailableTask`**: Raw task availability tracking.
+- **`raw::Executor`**: Raw executor implementation details.
+- **`raw::TaskPool`**: Pool of task storage.
+- **`raw::TaskRef`**: Reference to a task.
+- **`raw::TaskStorage`**: Storage for a task's state.
 
-- **Task macro**
-  - **`#[embassy_executor::task]`**: marks an `async fn` as a spawnable Embassy task.
+### Enums
+- **`SpawnError`**: Error returned when spawning a task fails.
+
+### Traits
+- **`SpawnerTraceExt`**: Extension trait for spawner tracing (feature-gated).
+
+### Attribute Macros
+- **`#[embassy_executor::main]`**: Marks the async entrypoint (when not using `esp-rtos::main`).
+- **`#[embassy_executor::task]`**: Marks an `async fn` as a spawnable Embassy task.
+
+### Functions (raw module)
+- **`raw::task_from_waker(waker)`**: Convert a waker to a task reference.
+- **`raw::wake_task(task)`**: Wake a task.
+- **`raw::wake_task_no_pend(task)`**: Wake a task without pending.
 

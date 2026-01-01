@@ -37,21 +37,22 @@ async fn echo_once<RW: Read + Write>(io: &mut RW) {
 }
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/embedded-io-async/0.7.0/embedded_io_async/all.html
+Full API index: https://docs.rs/embedded-io-async/0.7.0/embedded_io_async/all.html
 
-- **Traits** (async equivalents of `embedded-io`)
-  - **`ErrorType`**: base trait defining the associated `Error` type.
-  - **`Error`**: error trait implemented by error types.
-  - **`Read` / `Write`**: async read/write traits.
-  - **`ReadReady` / `WriteReady`**: readiness traits.
-  - **`BufRead`**: async buffered reader.
-  - **`Seek`**: async seek.
+### Traits (async equivalents of `embedded-io`)
+- **`BufRead`**: Async buffered reader trait.
+- **`Error`**: Error trait implemented by error types.
+- **`ErrorType`**: Base trait defining the associated `Error` type.
+- **`Read`**: Async read trait.
+- **`ReadReady`**: Async readiness trait for non-blocking read patterns.
+- **`Seek`**: Async seek trait.
+- **`Write`**: Async write trait.
+- **`WriteReady`**: Async readiness trait for non-blocking write patterns.
 
-- **Enums**
-  - **`ErrorKind`**: common error classification.
-  - **`ReadExactError`**: error from `Read::read_exact`.
-  - **`SeekFrom`**: seek origin for `Seek`.
+### Enums
+- **`ErrorKind`**: Common error classification (NotFound, PermissionDenied, etc.).
+- **`ReadExactError`**: Error from `Read::read_exact` (contains partial read count).
+- **`SeekFrom`**: Seek origin for `Seek` (Start, End, Current).
 

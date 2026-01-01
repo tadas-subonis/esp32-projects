@@ -56,14 +56,29 @@ let sw_interrupt =
 esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
 ```
 
-## API inventory
+## Complete API inventory
 
-Full API index:
-- https://docs.rs/esp-rtos/0.2.0/esp_rtos/all.html
+Full API index: See local docs at `target/riscv32imc-unknown-none-elf/doc/esp_rtos/all.html`
 
-- **Attribute macros**
-  - **`#[esp_rtos::main]`**: defines the async entrypoint and provides a `Spawner`.
+### Structs
+- **`CurrentThreadHandle`**: Handle to the current thread.
+- **`embassy::Executor`**: Embassy executor integration.
+- **`embassy::InterruptExecutor`**: Embassy interrupt executor integration.
+- **`semaphore::Semaphore`**: Semaphore for synchronization.
 
-- **Functions**
-  - **`esp_rtos::start(timer, software_interrupt)`**: boots the Embassy integration using a hardware timer + SW interrupt.
+### Traits
+- **`TimerSource`**: Trait for timer sources used by the runtime.
+- **`embassy::Callbacks`**: Callback trait for Embassy integration.
+
+### Attribute Macros
+- **`#[esp_rtos::main]`**: Defines the async entrypoint and provides a `Spawner`. This macro:
+  - Sets up the async runtime.
+  - Provides a `Spawner` parameter to your `main` function.
+  - Handles the `!` return type (infinite loop).
+
+### Functions
+- **`start(timer, software_interrupt)`**: Boots the Embassy integration using:
+  - `timer`: A hardware timer (e.g., `timg0.timer0` from `esp-hal`).
+  - `software_interrupt`: A software interrupt (e.g., `sw_interrupt.software_interrupt0`).
+- **`start_with_idle_hook(timer, software_interrupt, idle_hook)`**: Same as `start` but with an idle hook callback.
 
