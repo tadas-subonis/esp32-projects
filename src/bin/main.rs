@@ -8,7 +8,8 @@
 #![deny(clippy::large_stack_frames)]
 
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Instant, Timer};
+use embedded_hal_bus::i2c::RefCellDevice;
 use embedded_graphics::{
     mono_font::{MonoTextStyle, ascii::FONT_10X20},
     pixelcolor::Rgb888,
@@ -21,6 +22,7 @@ use esp_hal::{
     delay::Delay,
     dma::{DmaRxBuf, DmaTxBuf},
     dma_buffers,
+    gpio::{Input, InputConfig, Pull},
     i2c::master::{BusTimeout, Config as I2cConfig, I2c, SoftwareTimeout},
     spi::{
         Mode,
@@ -120,6 +122,23 @@ where
     }
 }
 
+fn axp2101_power_off<I2C>(i2c: &mut I2C) -> Result<(), I2C::Error>
+where
+    I2C: embedded_hal::i2c::I2c,
+{
+    // AXP2101 PMU on this board typically uses 7-bit I2C address 0x34.
+    //
+    // Datasheet: writing bit0 in REG 0x10 triggers a power-off sequence.
+    const AXP2101_ADDR: u8 = 0x34;
+    const REG_POWER_OFF: u8 = 0x10;
+
+    let mut reg10 = [0u8; 1];
+    i2c.write_read(AXP2101_ADDR, &[REG_POWER_OFF], &mut reg10)?;
+    reg10[0] |= 0x01;
+    i2c.write(AXP2101_ADDR, &[REG_POWER_OFF, reg10[0]])?;
+    Ok(())
+}
+
 extern crate alloc;
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
@@ -212,8 +231,10 @@ async fn main(spawner: Spawner) -> ! {
     .with_scl(peripherals.GPIO14);
     esp_println::println!("BOOT: I2C ready");
 
+    let i2c_bus = core::cell::RefCell::new(i2c);
+
     esp_println::println!("BOOT: probing TCA9554");
-    let reset = WsTca9554Reset::new(i2c);
+    let reset = WsTca9554Reset::new(RefCellDevice::new(&i2c_bus));
     esp_println::println!("BOOT: TCA9554 ready");
     let ws_driver = Ws18AmoledDriver::new(lcd_spi);
 
@@ -248,8 +269,51 @@ async fn main(spawner: Spawner) -> ! {
 
     esp_println::println!("BOOT: ok (hello world drawn)");
 
+    // --- Buttons: power off when BOTH are clicked/held together ---
+    //
+    // On this board:
+    // - GPIO0 is the BOOT / PWR button (active-low, strapping pin).
+    // - GPIO21 is labeled PWRON in the board doc (active-low when pressed on some revisions).
+    //
+    // We treat "click both buttons" as "hold both low for a short time" to avoid false triggers.
+    let btn_cfg = InputConfig::default().with_pull(Pull::Up);
+    let btn_boot = Input::new(peripherals.GPIO0, btn_cfg);
+    let btn_pwron = Input::new(peripherals.GPIO21, btn_cfg);
+    let mut pmu_i2c = RefCellDevice::new(&i2c_bus);
+
+    const BOTH_HOLD: Duration = Duration::from_millis(120);
+    const POLL: Duration = Duration::from_millis(10);
+    let mut both_low_since: Option<Instant> = None;
+
     loop {
-        Timer::after(Duration::from_secs(1)).await;
+        let boot_low = btn_boot.is_low();
+        let pwron_low = btn_pwron.is_low();
+
+        if boot_low && pwron_low {
+            let since = both_low_since.get_or_insert_with(Instant::now);
+            if Instant::now().duration_since(*since) >= BOTH_HOLD {
+                esp_println::println!("PWR: both buttons pressed -> power off");
+                match axp2101_power_off(&mut pmu_i2c) {
+                    Ok(()) => {
+                        // If power off succeeds, execution should stop shortly after.
+                        loop {
+                            Timer::after(Duration::from_secs(1)).await;
+                        }
+                    }
+                    Err(e) => {
+                        esp_println::println!("PWR: AXP2101 power off failed: {:?}", e);
+                        // Fall back to a tight loop (better than continuing unexpectedly).
+                        loop {
+                            Timer::after(Duration::from_secs(1)).await;
+                        }
+                    }
+                }
+            }
+        } else {
+            both_low_since = None;
+        }
+
+        Timer::after(POLL).await;
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v~1.0/examples
