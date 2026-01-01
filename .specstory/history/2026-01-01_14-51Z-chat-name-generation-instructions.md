@@ -1168,7 +1168,7 @@ cargo espflash flash --release --monitor
 
 ---
 
-_**Agent (model gpt-5.2, mode Agent)**_
+_**Agent (model default, mode Agent)**_
 
 Got it. I’ll add this as a new board/hardware reference doc under `docs/` (so it’s easy to link to), then update `AGENTS.md` to explicitly require consulting it for pinout/peripheral decisions (and to double-check the target/architecture before writing code).
 
@@ -1366,6 +1366,5966 @@ mkdir -p "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices"
 ```
 </details>
 </tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md</summary>
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Updating documentation**
+
+I need to update the README and AGENTS.md files, and I might create a devices/README.md as well. In the main README, I’ll add a link and a bullet for the device/board references. I want to ensure we include a list of boards in the new devices folder. 
+
+In AGENTS.md, I should add a reference for board/hardware under docs/devices, including a point about not guessing pins. I'll also clarify that when working with ESP32-S3 boards, users should consult the relevant documentation to avoid mixing architectures. I'll patch these files separately.</details></think>
+
+---
+
+Hardware spec doc is now in place under `docs/devices/`. Next I’ll wire it into the docs index and update `AGENTS.md` so agents are explicitly required to consult these board docs (and to avoid mixing ESP32-C3 vs ESP32-S3 assumptions).
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/README.md</summary>
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/README.md</summary>
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/AGENTS.md</summary>
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="list_dir_v2">
+<details>
+<summary>Tool use: **list_dir_v2**</summary>
+
+
+Parameters:
+
+```json
+{
+  "targetDirectory": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices"
+}
+```
+Result:
+
+```json
+{
+  "directoryTreeRoot": {
+    "absPath": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices",
+    "childrenFiles": [
+      {
+        "name": "esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md"
+      },
+      {
+        "name": "README.md"
+      }
+    ],
+    "childrenWereProcessed": true
+  }
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+### Done
+- **Added device docs**: `docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md` (your full technical spec, plus a short “scope/status” note up top).
+- **Added device docs index**: `docs/devices/README.md`
+- **Linked from main docs index**: updated `docs/README.md` to include “Device / board references”.
+- **Updated agent guidance**: `AGENTS.md` now explicitly instructs agents to use `docs/devices/` for pinouts/I²C addresses/controllers and to avoid mixing **ESP32-C3 vs ESP32-S3** assumptions.
+
+---
+
+_**User**_
+
+now go and cross check the data in the doc and update if needed
+
+improve structure if needed
+
+we want to optimize it for our development use
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+Reviewing the device doc and cross-checking against the project's configuration to ensure accuracy and optimize for development use.
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/Cargo.toml</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/rust-toolchain.toml</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/bin/main.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/AGENTS.md</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+Reviewing more of the document to understand its structure and identify improvements:
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="semantic_search_full">
+<details>
+<summary>Tool use: **semantic_search_full**</summary>
+
+
+Parameters:
+
+```json
+{
+  "query": "How are GPIO pins configured and used with esp-hal in this project?",
+  "topK": 10,
+  "explanation": ""
+}
+```
+Result:
+
+```json
+{
+  "codeResults": [
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-hal.md",
+        "range": {
+          "startPosition": {
+            "line": 54
+          },
+          "endPosition": {
+            "line": 124
+          }
+        },
+        "contents": "use esp_hal::clock::CpuClock;\n\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\nlet peripherals = esp_hal::init(config);\n&#96;&#96;&#96;\n\n### 2) GPIO: create an output pin\n\nFrom the GPIO module docs, the main “user-facing” types include &#96;Io&#96;, &#96;Output&#96;, and &#96;Level&#96;:\nhttps://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\n\n&#96;&#96;&#96;rust\nuse esp_hal::gpio::{Io, Level, Output};\n\nlet io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\nlet mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\n\n// led.set_high();\n// led.set_low();\n// led.toggle();\n&#96;&#96;&#96;\n\n### 3) Timers: general-purpose timers (TIMG)\n\nThe timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\nhttps://docs.rs/esp-hal/latest/esp_hal/timer/index.html\n\n&#96;&#96;&#96;rust\nuse esp_hal::timer::{OneShotTimer, PeriodicTimer};\nuse esp_hal::timer::timg::TimerGroup;\nuse embassy_time::Duration;\n\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\n\nlet mut one_shot = OneShotTimer::new(timg0.timer0);\none_shot.delay_millis(500);\n\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\nlet mut periodic = PeriodicTimer::new(timg0.timer0);\nperiodic.start(Duration::from_secs(1));\nloop {\n    periodic.wait();\n}\n&#96;&#96;&#96;\n\n## Complete API inventory\n\n**Note**: &#96;esp-hal&#96; is a very large crate (1000+ items). \n\nFull API index: See local docs at &#96;target/riscv32imc-unknown-none-elf/doc/esp_hal/all.html&#96;\n\n**This is a curated list organized by module. For exhaustive coverage, see the local docs.**\n\n### Core Entrypoints\n- **&#96;init(config)&#96;**: Takes ownership of peripherals and applies global configuration.\n- **&#96;Config&#96;**: Global configuration (clocks, etc.).\n- **&#96;peripherals::Peripherals&#96;**: The singleton peripheral container returned by &#96;init&#96;.\n\n### Concurrency/Driver Modes\n- **&#96;Blocking&#96;**: Marker type for blocking driver mode.\n- **&#96;Async&#96;**: Marker type for async driver mode.\n\n### Key Modules and Types\n\n#### &#96;esp_hal::gpio&#96; (Digital I/O)\n- **&#96;Io&#96;**: GPIO I/O controller.\n- **&#96;Input&#96;**: Input pin.\n- **&#96;Output&#96;**: Output pin.\n- **&#96;InputOutput&#96;**: Bidirectional pin.\n- **&#96;Level&#96;**: Pin level (High, Low).",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "use esp_hal::clock::CpuClock;",
+            "lineNumber": 55
+          },
+          {
+            "lineNumber": 56
+          },
+          {
+            "text": "let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());",
+            "lineNumber": 57
+          },
+          {
+            "text": "let peripherals = esp_hal::init(config);",
+            "lineNumber": 58
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 59
+          },
+          {
+            "lineNumber": 60
+          },
+          {
+            "text": "### 2) GPIO: create an output pin",
+            "lineNumber": 61
+          },
+          {
+            "lineNumber": 62
+          },
+          {
+            "text": "From the GPIO module docs, the main “user-facing” types include &#96;Io&#96;, &#96;Output&#96;, and &#96;Level&#96;:",
+            "lineNumber": 63
+          },
+          {
+            "text": "https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html",
+            "lineNumber": 64
+          },
+          {
+            "lineNumber": 65
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 66
+          },
+          {
+            "text": "use esp_hal::gpio::{Io, Level, Output};",
+            "lineNumber": 67
+          },
+          {
+            "lineNumber": 68
+          },
+          {
+            "text": "let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);",
+            "lineNumber": 69
+          },
+          {
+            "text": "let mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board",
+            "lineNumber": 70
+          },
+          {
+            "lineNumber": 71
+          },
+          {
+            "text": "// led.set_high();",
+            "lineNumber": 72
+          },
+          {
+            "text": "// led.set_low();",
+            "lineNumber": 73
+          },
+          {
+            "text": "// led.toggle();",
+            "lineNumber": 74
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 75
+          },
+          {
+            "lineNumber": 76
+          },
+          {
+            "text": "### 3) Timers: general-purpose timers (TIMG)",
+            "lineNumber": 77
+          },
+          {
+            "lineNumber": 78
+          },
+          {
+            "text": "The timer module shows how to wrap a hardware timer into a one-shot or periodic timer:",
+            "lineNumber": 79
+          },
+          {
+            "text": "https://docs.rs/esp-hal/latest/esp_hal/timer/index.html",
+            "lineNumber": 80
+          },
+          {
+            "lineNumber": 81
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 82
+          },
+          {
+            "text": "use esp_hal::timer::{OneShotTimer, PeriodicTimer};",
+            "lineNumber": 83
+          },
+          {
+            "text": "use esp_hal::timer::timg::TimerGroup;",
+            "lineNumber": 84
+          },
+          {
+            "text": "use embassy_time::Duration;",
+            "lineNumber": 85
+          },
+          {
+            "lineNumber": 86
+          },
+          {
+            "text": "let timg0 = TimerGroup::new(peripherals.TIMG0);",
+            "lineNumber": 87
+          },
+          {
+            "lineNumber": 88
+          },
+          {
+            "text": "let mut one_shot = OneShotTimer::new(timg0.timer0);",
+            "lineNumber": 89
+          },
+          {
+            "text": "one_shot.delay_millis(500);",
+            "lineNumber": 90
+          },
+          {
+            "lineNumber": 91
+          },
+          {
+            "text": "let timg0 = TimerGroup::new(peripherals.TIMG0);",
+            "lineNumber": 92
+          },
+          {
+            "text": "let mut periodic = PeriodicTimer::new(timg0.timer0);",
+            "lineNumber": 93
+          },
+          {
+            "text": "periodic.start(Duration::from_secs(1));",
+            "lineNumber": 94
+          },
+          {
+            "text": "loop {",
+            "lineNumber": 95
+          },
+          {
+            "text": "    periodic.wait();",
+            "lineNumber": 96
+          },
+          {
+            "text": "}",
+            "lineNumber": 97
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 98
+          },
+          {
+            "lineNumber": 99
+          },
+          {
+            "text": "## Complete API inventory",
+            "lineNumber": 100
+          },
+          {
+            "lineNumber": 101
+          },
+          {
+            "text": "**Note**: &#96;esp-hal&#96; is a very large crate (1000+ items). ",
+            "lineNumber": 102
+          },
+          {
+            "lineNumber": 103
+          },
+          {
+            "text": "Full API index: See local docs at &#96;target/riscv32imc-unknown-none-elf/doc/esp_hal/all.html&#96;",
+            "lineNumber": 104
+          },
+          {
+            "lineNumber": 105
+          },
+          {
+            "text": "**This is a curated list organized by module. For exhaustive coverage, see the local docs.**",
+            "lineNumber": 106
+          },
+          {
+            "lineNumber": 107
+          },
+          {
+            "text": "### Core Entrypoints",
+            "lineNumber": 108
+          },
+          {
+            "text": "- **&#96;init(config)&#96;**: Takes ownership of peripherals and applies global configuration.",
+            "lineNumber": 109
+          },
+          {
+            "text": "- **&#96;Config&#96;**: Global configuration (clocks, etc.).",
+            "lineNumber": 110
+          },
+          {
+            "text": "- **&#96;peripherals::Peripherals&#96;**: The singleton peripheral container returned by &#96;init&#96;.",
+            "lineNumber": 111
+          },
+          {
+            "lineNumber": 112
+          },
+          {
+            "text": "### Concurrency/Driver Modes",
+            "lineNumber": 113
+          },
+          {
+            "text": "- **&#96;Blocking&#96;**: Marker type for blocking driver mode.",
+            "lineNumber": 114
+          },
+          {
+            "text": "- **&#96;Async&#96;**: Marker type for async driver mode.",
+            "lineNumber": 115
+          },
+          {
+            "lineNumber": 116
+          },
+          {
+            "text": "### Key Modules and Types",
+            "lineNumber": 117
+          },
+          {
+            "lineNumber": 118
+          },
+          {
+            "text": "#### &#96;esp_hal::gpio&#96; (Digital I/O)",
+            "lineNumber": 119
+          },
+          {
+            "text": "- **&#96;Io&#96;**: GPIO I/O controller.",
+            "lineNumber": 120
+          },
+          {
+            "text": "- **&#96;Input&#96;**: Input pin.",
+            "lineNumber": 121
+          },
+          {
+            "text": "- **&#96;Output&#96;**: Output pin.",
+            "lineNumber": 122
+          },
+          {
+            "text": "- **&#96;InputOutput&#96;**: Bidirectional pin.",
+            "lineNumber": 123
+          },
+          {
+            "text": "- **&#96;Level&#96;**: Pin level (High, Low).",
+            "lineNumber": 124
+          }
+        ]
+      },
+      "score": 0.457852840423584
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-hal.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 60
+          }
+        },
+        "contents": "# &#96;esp-hal&#96; (~1.0)\n\n## What it does in this repo\n\nHardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.\n\nUsed directly in &#96;src/bin/main.rs&#96; for:\n\n- &#96;esp_hal::Config&#96; (CPU clock config)\n- &#96;esp_hal::init(...)&#96; (take peripherals)\n- &#96;esp_hal::timer::timg::TimerGroup&#96; (timer used to start Embassy via &#96;esp-rtos&#96;)\n- software interrupts (&#96;esp_hal::interrupt::software::SoftwareInterruptControl&#96;)\n\n## Key links\n\n- API docs (docs.rs): https://docs.rs/esp-hal/\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\n- Project repo: https://github.com/esp-rs/esp-hal\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\n\nUseful module docs on &#96;docs.rs&#96;:\n\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\n\n## APIs you’ll likely use first\n\n- **Initialization**\n  - &#96;esp_hal::Config::default()&#96;\n  - &#96;Config::with_cpu_clock(...)&#96;\n  - &#96;esp_hal::init(config)&#96; → &#96;peripherals&#96;\n- **Clocks**\n  - &#96;esp_hal::clock::CpuClock::max()&#96;\n- **Timers**\n  - &#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&#96;\n- **Interrupt plumbing**\n  - &#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&#96;\n- **RAM placement attributes** (used by &#96;esp-alloc&#96; macro)\n  - &#96;#[esp_hal::ram(reclaimed)]&#96; (reclaimed RAM heap)\n\n## Async note\n\nRust-on-ESP notes that many &#96;esp-hal&#96; drivers are constructed in blocking mode and can be converted to async via &#96;into_async&#96;; async drivers are often &#96;!Send&#96; due to core/interrupt binding:\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\n\n## How to use it (practical patterns)\n\n### 1) Initialize peripherals\n\nThis is the standard &#96;esp-hal&#96; bring-up pattern used in this repo:\n\n&#96;&#96;&#96;rust\nuse esp_hal::clock::CpuClock;\n\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\nlet peripherals = esp_hal::init(config);\n&#96;&#96;&#96;",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# &#96;esp-hal&#96; (~1.0)",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "## What it does in this repo",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "Hardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "Used directly in &#96;src/bin/main.rs&#96; for:",
+            "lineNumber": 7
+          },
+          {
+            "lineNumber": 8
+          },
+          {
+            "text": "- &#96;esp_hal::Config&#96; (CPU clock config)",
+            "lineNumber": 9
+          },
+          {
+            "text": "- &#96;esp_hal::init(...)&#96; (take peripherals)",
+            "lineNumber": 10
+          },
+          {
+            "text": "- &#96;esp_hal::timer::timg::TimerGroup&#96; (timer used to start Embassy via &#96;esp-rtos&#96;)",
+            "lineNumber": 11
+          },
+          {
+            "text": "- software interrupts (&#96;esp_hal::interrupt::software::SoftwareInterruptControl&#96;)",
+            "lineNumber": 12
+          },
+          {
+            "lineNumber": 13
+          },
+          {
+            "text": "## Key links",
+            "lineNumber": 14
+          },
+          {
+            "lineNumber": 15
+          },
+          {
+            "text": "- API docs (docs.rs): https://docs.rs/esp-hal/",
+            "lineNumber": 16
+          },
+          {
+            "text": "- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/",
+            "lineNumber": 17
+          },
+          {
+            "text": "- Project repo: https://github.com/esp-rs/esp-hal",
+            "lineNumber": 18
+          },
+          {
+            "text": "- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples",
+            "lineNumber": 19
+          },
+          {
+            "lineNumber": 20
+          },
+          {
+            "text": "Useful module docs on &#96;docs.rs&#96;:",
+            "lineNumber": 21
+          },
+          {
+            "lineNumber": 22
+          },
+          {
+            "text": "- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html",
+            "lineNumber": 23
+          },
+          {
+            "text": "- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html",
+            "lineNumber": 24
+          },
+          {
+            "text": "- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html",
+            "lineNumber": 25
+          },
+          {
+            "text": "- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html",
+            "lineNumber": 26
+          },
+          {
+            "lineNumber": 27
+          },
+          {
+            "text": "## APIs you’ll likely use first",
+            "lineNumber": 28
+          },
+          {
+            "lineNumber": 29
+          },
+          {
+            "text": "- **Initialization**",
+            "lineNumber": 30
+          },
+          {
+            "text": "  - &#96;esp_hal::Config::default()&#96;",
+            "lineNumber": 31
+          },
+          {
+            "text": "  - &#96;Config::with_cpu_clock(...)&#96;",
+            "lineNumber": 32
+          },
+          {
+            "text": "  - &#96;esp_hal::init(config)&#96; → &#96;peripherals&#96;",
+            "lineNumber": 33
+          },
+          {
+            "text": "- **Clocks**",
+            "lineNumber": 34
+          },
+          {
+            "text": "  - &#96;esp_hal::clock::CpuClock::max()&#96;",
+            "lineNumber": 35
+          },
+          {
+            "text": "- **Timers**",
+            "lineNumber": 36
+          },
+          {
+            "text": "  - &#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&#96;",
+            "lineNumber": 37
+          },
+          {
+            "text": "- **Interrupt plumbing**",
+            "lineNumber": 38
+          },
+          {
+            "text": "  - &#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&#96;",
+            "lineNumber": 39
+          },
+          {
+            "text": "- **RAM placement attributes** (used by &#96;esp-alloc&#96; macro)",
+            "lineNumber": 40
+          },
+          {
+            "text": "  - &#96;#[esp_hal::ram(reclaimed)]&#96; (reclaimed RAM heap)",
+            "lineNumber": 41
+          },
+          {
+            "lineNumber": 42
+          },
+          {
+            "text": "## Async note",
+            "lineNumber": 43
+          },
+          {
+            "lineNumber": 44
+          },
+          {
+            "text": "Rust-on-ESP notes that many &#96;esp-hal&#96; drivers are constructed in blocking mode and can be converted to async via &#96;into_async&#96;; async drivers are often &#96;!Send&#96; due to core/interrupt binding:",
+            "lineNumber": 45
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/async.html",
+            "lineNumber": 46
+          },
+          {
+            "lineNumber": 47
+          },
+          {
+            "text": "## How to use it (practical patterns)",
+            "lineNumber": 48
+          },
+          {
+            "lineNumber": 49
+          },
+          {
+            "text": "### 1) Initialize peripherals",
+            "lineNumber": 50
+          },
+          {
+            "lineNumber": 51
+          },
+          {
+            "text": "This is the standard &#96;esp-hal&#96; bring-up pattern used in this repo:",
+            "lineNumber": 52
+          },
+          {
+            "lineNumber": 53
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 54
+          },
+          {
+            "text": "use esp_hal::clock::CpuClock;",
+            "lineNumber": 55
+          },
+          {
+            "lineNumber": 56
+          },
+          {
+            "text": "let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());",
+            "lineNumber": 57
+          },
+          {
+            "text": "let peripherals = esp_hal::init(config);",
+            "lineNumber": 58
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 59
+          }
+        ]
+      },
+      "score": 0.42833924293518066
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./src/bin/main.rs",
+        "range": {
+          "startPosition": {
+            "line": 30,
+            "column": 17
+          },
+          "endPosition": {
+            "line": 62,
+            "column": 1
+          }
+        },
+        "contents": "async fn main(spawner: Spawner) -&gt; ! {\n    // generator version: 1.1.0\n\n    esp_println::logger::init_logger_from_env();\n\n    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\n    let peripherals = esp_hal::init(config);\n\n    esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 66320);\n\n    let timg0 = TimerGroup::new(peripherals.TIMG0);\n    let sw_interrupt =\n        esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);\n    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);\n\n    info!(\"Embassy initialized!\");\n\n    let radio_init = esp_radio::init().expect(\"Failed to initialize Wi-Fi/BLE controller\");\n    let (mut _wifi_controller, _interfaces) =\n        esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, Default::default())\n            .expect(\"Failed to initialize Wi-Fi controller\");\n\n    // TODO: Spawn some tasks\n    let _ = spawner;\n\n    loop {\n        info!(\"Hello world!\");\n        Timer::after(Duration::from_secs(1)).await;\n    }\n\n    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v~1.0/examples\n}",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "async fn main(spawner: Spawner) -&gt; ! {",
+            "lineNumber": 32
+          },
+          {
+            "text": "    // generator version: 1.1.0",
+            "lineNumber": 33
+          },
+          {
+            "lineNumber": 34
+          },
+          {
+            "text": "    esp_println::logger::init_logger_from_env();",
+            "lineNumber": 35
+          },
+          {
+            "lineNumber": 36
+          },
+          {
+            "text": "    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());",
+            "lineNumber": 37
+          },
+          {
+            "text": "    let peripherals = esp_hal::init(config);",
+            "lineNumber": 38
+          },
+          {
+            "lineNumber": 39
+          },
+          {
+            "text": "    esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 66320);",
+            "lineNumber": 40
+          },
+          {
+            "lineNumber": 41
+          },
+          {
+            "text": "    let timg0 = TimerGroup::new(peripherals.TIMG0);",
+            "lineNumber": 42
+          },
+          {
+            "text": "    let sw_interrupt =",
+            "lineNumber": 43
+          },
+          {
+            "text": "        esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);",
+            "lineNumber": 44
+          },
+          {
+            "text": "    esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);",
+            "lineNumber": 45
+          },
+          {
+            "lineNumber": 46
+          },
+          {
+            "text": "    info!(\"Embassy initialized!\");",
+            "lineNumber": 47
+          },
+          {
+            "lineNumber": 48
+          },
+          {
+            "text": "    let radio_init = esp_radio::init().expect(\"Failed to initialize Wi-Fi/BLE controller\");",
+            "lineNumber": 49
+          },
+          {
+            "text": "    let (mut _wifi_controller, _interfaces) =",
+            "lineNumber": 50
+          },
+          {
+            "text": "        esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, Default::default())",
+            "lineNumber": 51
+          },
+          {
+            "text": "            .expect(\"Failed to initialize Wi-Fi controller\");",
+            "lineNumber": 52
+          },
+          {
+            "lineNumber": 53
+          },
+          {
+            "text": "    // TODO: Spawn some tasks",
+            "lineNumber": 54
+          },
+          {
+            "text": "    let _ = spawner;",
+            "lineNumber": 55
+          },
+          {
+            "lineNumber": 56
+          },
+          {
+            "text": "    loop {",
+            "lineNumber": 57
+          },
+          {
+            "text": "        info!(\"Hello world!\");",
+            "lineNumber": 58
+          },
+          {
+            "text": "        Timer::after(Duration::from_secs(1)).await;",
+            "lineNumber": 59
+          },
+          {
+            "text": "    }",
+            "lineNumber": 60
+          },
+          {
+            "lineNumber": 61
+          },
+          {
+            "text": "    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v~1.0/examples",
+            "lineNumber": 62
+          },
+          {
+            "text": "}",
+            "lineNumber": 63
+          }
+        ]
+      },
+      "score": 0.39648428559303284
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_13-34Z-agents-md-file-explanation.md",
+        "range": {
+          "startPosition": {
+            "line": 20932
+          },
+          "endPosition": {
+            "line": 20969
+          }
+        },
+        "contents": "- - **Modules you’ll use early**\n-   - **&amp;#96;esp_hal::gpio&amp;#96;**: digital I/O pins (&amp;#96;Io&amp;#96;, &amp;#96;Input&amp;#96;, &amp;#96;Output&amp;#96;, &amp;#96;Level&amp;#96;, pull/drive settings).\n-   - **&amp;#96;esp_hal::timer&amp;#96;**: timers (&amp;#96;PeriodicTimer&amp;#96;, &amp;#96;OneShotTimer&amp;#96;, &amp;#96;TimerGroup&amp;#96;, &amp;#96;systimer&amp;#96;, etc.).\n-   - **&amp;#96;esp_hal::clock&amp;#96;**: clock configuration (&amp;#96;CpuClock&amp;#96;, PLL/clock tree pieces).\n-   - **&amp;#96;esp_hal::interrupt&amp;#96;**: interrupt enabling/handlers + software interrupts.\n-   - **&amp;#96;esp_hal::uart&amp;#96;**: UART peripheral drivers.\n-   - **&amp;#96;esp_hal::spi&amp;#96;**: SPI peripheral drivers.\n-   - **&amp;#96;esp_hal::i2c&amp;#96;**: I2C peripheral drivers.\n- \n- If you want, tell me the exact board/pinout you have and which peripheral you’re using next (UART/I2C/SPI/GPIO), and I’ll add a “golden example” section for that module using the exact types from &amp;#96;esp-hal&amp;#96; v1.0.\n+ ### Key Modules and Types\n+ \n+ #### &amp;#96;esp_hal::gpio&amp;#96; (Digital I/O)\n+ - **&amp;#96;Io&amp;#96;**: GPIO I/O controller.\n+ - **&amp;#96;Input&amp;#96;**: Input pin.\n+ - **&amp;#96;Output&amp;#96;**: Output pin.\n+ - **&amp;#96;InputOutput&amp;#96;**: Bidirectional pin.\n+ - **&amp;#96;Level&amp;#96;**: Pin level (High, Low).\n+ - **&amp;#96;Pull&amp;#96;**: Pull-up/pull-down configuration.\n+ - **&amp;#96;Drive&amp;#96;**: Drive strength configuration.\n+ - **&amp;#96;Function&amp;#96;**: Pin function/mux configuration.\n+ \n+ #### &amp;#96;esp_hal::timer&amp;#96; (Timers)\n+ - **&amp;#96;PeriodicTimer&amp;#96;**: Periodic timer.\n+ - **&amp;#96;OneShotTimer&amp;#96;**: One-shot timer.\n+ - **&amp;#96;timg::TimerGroup&amp;#96;**: Timer group (TIMG).\n+ - **&amp;#96;systimer::SystemTimer&amp;#96;**: System timer (SYSTIMER).\n+ - **&amp;#96;systimer::Alarm&amp;#96;**: System timer alarm.\n+ - **&amp;#96;systimer::Target&amp;#96;**: System timer target.\n+ \n+ #### &amp;#96;esp_hal::clock&amp;#96; (Clock Configuration)\n+ - **&amp;#96;CpuClock&amp;#96;**: CPU clock speed enum.\n+ - **&amp;#96;ClockControl&amp;#96;**: Clock control handle.\n+ - **&amp;#96;Clock&amp;#96;**: Clock type.\n+ - **&amp;#96;XtalClock&amp;#96;**: Crystal clock configuration.\n+ - **&amp;#96;PllClock&amp;#96;**: PLL clock configuration.\n+ ",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "- - **Modules you’ll use early**",
+            "lineNumber": 20933
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::gpio&amp;#96;**: digital I/O pins (&amp;#96;Io&amp;#96;, &amp;#96;Input&amp;#96;, &amp;#96;Output&amp;#96;, &amp;#96;Level&amp;#96;, pull/drive settings).",
+            "lineNumber": 20934
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::timer&amp;#96;**: timers (&amp;#96;PeriodicTimer&amp;#96;, &amp;#96;OneShotTimer&amp;#96;, &amp;#96;TimerGroup&amp;#96;, &amp;#96;systimer&amp;#96;, etc.).",
+            "lineNumber": 20935
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::clock&amp;#96;**: clock configuration (&amp;#96;CpuClock&amp;#96;, PLL/clock tree pieces).",
+            "lineNumber": 20936
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::interrupt&amp;#96;**: interrupt enabling/handlers + software interrupts.",
+            "lineNumber": 20937
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::uart&amp;#96;**: UART peripheral drivers.",
+            "lineNumber": 20938
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::spi&amp;#96;**: SPI peripheral drivers.",
+            "lineNumber": 20939
+          },
+          {
+            "text": "-   - **&amp;#96;esp_hal::i2c&amp;#96;**: I2C peripheral drivers.",
+            "lineNumber": 20940
+          },
+          {
+            "text": "- ",
+            "lineNumber": 20941
+          },
+          {
+            "text": "- If you want, tell me the exact board/pinout you have and which peripheral you’re using next (UART/I2C/SPI/GPIO), and I’ll add a “golden example” section for that module using the exact types from &amp;#96;esp-hal&amp;#96; v1.0.",
+            "lineNumber": 20942
+          },
+          {
+            "text": "+ ### Key Modules and Types",
+            "lineNumber": 20943
+          },
+          {
+            "text": "+ ",
+            "lineNumber": 20944
+          },
+          {
+            "text": "+ #### &amp;#96;esp_hal::gpio&amp;#96; (Digital I/O)",
+            "lineNumber": 20945
+          },
+          {
+            "text": "+ - **&amp;#96;Io&amp;#96;**: GPIO I/O controller.",
+            "lineNumber": 20946
+          },
+          {
+            "text": "+ - **&amp;#96;Input&amp;#96;**: Input pin.",
+            "lineNumber": 20947
+          },
+          {
+            "text": "+ - **&amp;#96;Output&amp;#96;**: Output pin.",
+            "lineNumber": 20948
+          },
+          {
+            "text": "+ - **&amp;#96;InputOutput&amp;#96;**: Bidirectional pin.",
+            "lineNumber": 20949
+          },
+          {
+            "text": "+ - **&amp;#96;Level&amp;#96;**: Pin level (High, Low).",
+            "lineNumber": 20950
+          },
+          {
+            "text": "+ - **&amp;#96;Pull&amp;#96;**: Pull-up/pull-down configuration.",
+            "lineNumber": 20951
+          },
+          {
+            "text": "+ - **&amp;#96;Drive&amp;#96;**: Drive strength configuration.",
+            "lineNumber": 20952
+          },
+          {
+            "text": "+ - **&amp;#96;Function&amp;#96;**: Pin function/mux configuration.",
+            "lineNumber": 20953
+          },
+          {
+            "text": "+ ",
+            "lineNumber": 20954
+          },
+          {
+            "text": "+ #### &amp;#96;esp_hal::timer&amp;#96; (Timers)",
+            "lineNumber": 20955
+          },
+          {
+            "text": "+ - **&amp;#96;PeriodicTimer&amp;#96;**: Periodic timer.",
+            "lineNumber": 20956
+          },
+          {
+            "text": "+ - **&amp;#96;OneShotTimer&amp;#96;**: One-shot timer.",
+            "lineNumber": 20957
+          },
+          {
+            "text": "+ - **&amp;#96;timg::TimerGroup&amp;#96;**: Timer group (TIMG).",
+            "lineNumber": 20958
+          },
+          {
+            "text": "+ - **&amp;#96;systimer::SystemTimer&amp;#96;**: System timer (SYSTIMER).",
+            "lineNumber": 20959
+          },
+          {
+            "text": "+ - **&amp;#96;systimer::Alarm&amp;#96;**: System timer alarm.",
+            "lineNumber": 20960
+          },
+          {
+            "text": "+ - **&amp;#96;systimer::Target&amp;#96;**: System timer target.",
+            "lineNumber": 20961
+          },
+          {
+            "text": "+ ",
+            "lineNumber": 20962
+          },
+          {
+            "text": "+ #### &amp;#96;esp_hal::clock&amp;#96; (Clock Configuration)",
+            "lineNumber": 20963
+          },
+          {
+            "text": "+ - **&amp;#96;CpuClock&amp;#96;**: CPU clock speed enum.",
+            "lineNumber": 20964
+          },
+          {
+            "text": "+ - **&amp;#96;ClockControl&amp;#96;**: Clock control handle.",
+            "lineNumber": 20965
+          },
+          {
+            "text": "+ - **&amp;#96;Clock&amp;#96;**: Clock type.",
+            "lineNumber": 20966
+          },
+          {
+            "text": "+ - **&amp;#96;XtalClock&amp;#96;**: Crystal clock configuration.",
+            "lineNumber": 20967
+          },
+          {
+            "text": "+ - **&amp;#96;PllClock&amp;#96;**: PLL clock configuration.",
+            "lineNumber": 20968
+          },
+          {
+            "text": "+ ",
+            "lineNumber": 20969
+          }
+        ]
+      },
+      "score": 0.3760422468185425
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-hal.md",
+        "range": {
+          "startPosition": {
+            "line": 122
+          },
+          "endPosition": {
+            "line": 181
+          }
+        },
+        "contents": "- **&#96;InputOutput&#96;**: Bidirectional pin.\n- **&#96;Level&#96;**: Pin level (High, Low).\n- **&#96;Pull&#96;**: Pull-up/pull-down configuration.\n- **&#96;Drive&#96;**: Drive strength configuration.\n- **&#96;Function&#96;**: Pin function/mux configuration.\n\n#### &#96;esp_hal::timer&#96; (Timers)\n- **&#96;PeriodicTimer&#96;**: Periodic timer.\n- **&#96;OneShotTimer&#96;**: One-shot timer.\n- **&#96;timg::TimerGroup&#96;**: Timer group (TIMG).\n- **&#96;systimer::SystemTimer&#96;**: System timer (SYSTIMER).\n- **&#96;systimer::Alarm&#96;**: System timer alarm.\n- **&#96;systimer::Target&#96;**: System timer target.\n\n#### &#96;esp_hal::clock&#96; (Clock Configuration)\n- **&#96;CpuClock&#96;**: CPU clock speed enum.\n- **&#96;ClockControl&#96;**: Clock control handle.\n- **&#96;Clock&#96;**: Clock type.\n- **&#96;XtalClock&#96;**: Crystal clock configuration.\n- **&#96;PllClock&#96;**: PLL clock configuration.\n\n#### &#96;esp_hal::interrupt&#96; (Interrupts)\n- **&#96;Interrupt&#96;**: Interrupt number enum.\n- **&#96;enable&#96;**: Enable an interrupt.\n- **&#96;disable&#96;**: Disable an interrupt.\n- **&#96;software::SoftwareInterruptControl&#96;**: Software interrupt controller.\n- **&#96;software::SoftwareInterrupt&#96;**: Software interrupt handle.\n\n#### &#96;esp_hal::uart&#96; (UART)\n- **&#96;Uart&#96;**: UART peripheral driver.\n- **&#96;UartRx&#96;**: UART receiver.\n- **&#96;UartTx&#96;**: UART transmitter.\n- **&#96;UartRxTx&#96;**: UART receiver+transmitter.\n- **&#96;Config&#96;**: UART configuration.\n- **&#96;DataBits&#96;**: Data bits configuration.\n- **&#96;Parity&#96;**: Parity configuration.\n- **&#96;StopBits&#96;**: Stop bits configuration.\n\n#### &#96;esp_hal::spi&#96; (SPI)\n- **&#96;Spi&#96;**: SPI peripheral driver.\n- **&#96;SpiDevice&#96;**: SPI device handle.\n- **&#96;SpiBus&#96;**: SPI bus handle.\n- **&#96;Config&#96;**: SPI configuration.\n- **&#96;Mode&#96;**: SPI mode (CPOL/CPHA).\n- **&#96;DutyCycle&#96;**: SPI duty cycle.\n- **&#96;BitOrder&#96;**: Bit order (MSB/LSB).\n\n#### &#96;esp_hal::i2c&#96; (I2C)\n- **&#96;I2c&#96;**: I2C peripheral driver.\n- **&#96;I2cBus&#96;**: I2C bus handle.\n- **&#96;Config&#96;**: I2C configuration.\n- **&#96;ClockSpeed&#96;**: I2C clock speed.\n\n#### &#96;esp_hal::adc&#96; (ADC - Analog-to-Digital)\n- **&#96;Adc&#96;**: ADC peripheral driver.\n- **&#96;AdcPin&#96;**: ADC pin.\n- **&#96;Resolution&#96;**: ADC resolution.\n- **&#96;Attenuation&#96;**: ADC attenuation.",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "- **&#96;InputOutput&#96;**: Bidirectional pin.",
+            "lineNumber": 123
+          },
+          {
+            "text": "- **&#96;Level&#96;**: Pin level (High, Low).",
+            "lineNumber": 124
+          },
+          {
+            "text": "- **&#96;Pull&#96;**: Pull-up/pull-down configuration.",
+            "lineNumber": 125
+          },
+          {
+            "text": "- **&#96;Drive&#96;**: Drive strength configuration.",
+            "lineNumber": 126
+          },
+          {
+            "text": "- **&#96;Function&#96;**: Pin function/mux configuration.",
+            "lineNumber": 127
+          },
+          {
+            "lineNumber": 128
+          },
+          {
+            "text": "#### &#96;esp_hal::timer&#96; (Timers)",
+            "lineNumber": 129
+          },
+          {
+            "text": "- **&#96;PeriodicTimer&#96;**: Periodic timer.",
+            "lineNumber": 130
+          },
+          {
+            "text": "- **&#96;OneShotTimer&#96;**: One-shot timer.",
+            "lineNumber": 131
+          },
+          {
+            "text": "- **&#96;timg::TimerGroup&#96;**: Timer group (TIMG).",
+            "lineNumber": 132
+          },
+          {
+            "text": "- **&#96;systimer::SystemTimer&#96;**: System timer (SYSTIMER).",
+            "lineNumber": 133
+          },
+          {
+            "text": "- **&#96;systimer::Alarm&#96;**: System timer alarm.",
+            "lineNumber": 134
+          },
+          {
+            "text": "- **&#96;systimer::Target&#96;**: System timer target.",
+            "lineNumber": 135
+          },
+          {
+            "lineNumber": 136
+          },
+          {
+            "text": "#### &#96;esp_hal::clock&#96; (Clock Configuration)",
+            "lineNumber": 137
+          },
+          {
+            "text": "- **&#96;CpuClock&#96;**: CPU clock speed enum.",
+            "lineNumber": 138
+          },
+          {
+            "text": "- **&#96;ClockControl&#96;**: Clock control handle.",
+            "lineNumber": 139
+          },
+          {
+            "text": "- **&#96;Clock&#96;**: Clock type.",
+            "lineNumber": 140
+          },
+          {
+            "text": "- **&#96;XtalClock&#96;**: Crystal clock configuration.",
+            "lineNumber": 141
+          },
+          {
+            "text": "- **&#96;PllClock&#96;**: PLL clock configuration.",
+            "lineNumber": 142
+          },
+          {
+            "lineNumber": 143
+          },
+          {
+            "text": "#### &#96;esp_hal::interrupt&#96; (Interrupts)",
+            "lineNumber": 144
+          },
+          {
+            "text": "- **&#96;Interrupt&#96;**: Interrupt number enum.",
+            "lineNumber": 145
+          },
+          {
+            "text": "- **&#96;enable&#96;**: Enable an interrupt.",
+            "lineNumber": 146
+          },
+          {
+            "text": "- **&#96;disable&#96;**: Disable an interrupt.",
+            "lineNumber": 147
+          },
+          {
+            "text": "- **&#96;software::SoftwareInterruptControl&#96;**: Software interrupt controller.",
+            "lineNumber": 148
+          },
+          {
+            "text": "- **&#96;software::SoftwareInterrupt&#96;**: Software interrupt handle.",
+            "lineNumber": 149
+          },
+          {
+            "lineNumber": 150
+          },
+          {
+            "text": "#### &#96;esp_hal::uart&#96; (UART)",
+            "lineNumber": 151
+          },
+          {
+            "text": "- **&#96;Uart&#96;**: UART peripheral driver.",
+            "lineNumber": 152
+          },
+          {
+            "text": "- **&#96;UartRx&#96;**: UART receiver.",
+            "lineNumber": 153
+          },
+          {
+            "text": "- **&#96;UartTx&#96;**: UART transmitter.",
+            "lineNumber": 154
+          },
+          {
+            "text": "- **&#96;UartRxTx&#96;**: UART receiver+transmitter.",
+            "lineNumber": 155
+          },
+          {
+            "text": "- **&#96;Config&#96;**: UART configuration.",
+            "lineNumber": 156
+          },
+          {
+            "text": "- **&#96;DataBits&#96;**: Data bits configuration.",
+            "lineNumber": 157
+          },
+          {
+            "text": "- **&#96;Parity&#96;**: Parity configuration.",
+            "lineNumber": 158
+          },
+          {
+            "text": "- **&#96;StopBits&#96;**: Stop bits configuration.",
+            "lineNumber": 159
+          },
+          {
+            "lineNumber": 160
+          },
+          {
+            "text": "#### &#96;esp_hal::spi&#96; (SPI)",
+            "lineNumber": 161
+          },
+          {
+            "text": "- **&#96;Spi&#96;**: SPI peripheral driver.",
+            "lineNumber": 162
+          },
+          {
+            "text": "- **&#96;SpiDevice&#96;**: SPI device handle.",
+            "lineNumber": 163
+          },
+          {
+            "text": "- **&#96;SpiBus&#96;**: SPI bus handle.",
+            "lineNumber": 164
+          },
+          {
+            "text": "- **&#96;Config&#96;**: SPI configuration.",
+            "lineNumber": 165
+          },
+          {
+            "text": "- **&#96;Mode&#96;**: SPI mode (CPOL/CPHA).",
+            "lineNumber": 166
+          },
+          {
+            "text": "- **&#96;DutyCycle&#96;**: SPI duty cycle.",
+            "lineNumber": 167
+          },
+          {
+            "text": "- **&#96;BitOrder&#96;**: Bit order (MSB/LSB).",
+            "lineNumber": 168
+          },
+          {
+            "lineNumber": 169
+          },
+          {
+            "text": "#### &#96;esp_hal::i2c&#96; (I2C)",
+            "lineNumber": 170
+          },
+          {
+            "text": "- **&#96;I2c&#96;**: I2C peripheral driver.",
+            "lineNumber": 171
+          },
+          {
+            "text": "- **&#96;I2cBus&#96;**: I2C bus handle.",
+            "lineNumber": 172
+          },
+          {
+            "text": "- **&#96;Config&#96;**: I2C configuration.",
+            "lineNumber": 173
+          },
+          {
+            "text": "- **&#96;ClockSpeed&#96;**: I2C clock speed.",
+            "lineNumber": 174
+          },
+          {
+            "lineNumber": 175
+          },
+          {
+            "text": "#### &#96;esp_hal::adc&#96; (ADC - Analog-to-Digital)",
+            "lineNumber": 176
+          },
+          {
+            "text": "- **&#96;Adc&#96;**: ADC peripheral driver.",
+            "lineNumber": 177
+          },
+          {
+            "text": "- **&#96;AdcPin&#96;**: ADC pin.",
+            "lineNumber": 178
+          },
+          {
+            "text": "- **&#96;Resolution&#96;**: ADC resolution.",
+            "lineNumber": 179
+          },
+          {
+            "text": "- **&#96;Attenuation&#96;**: ADC attenuation.",
+            "lineNumber": 180
+          }
+        ]
+      },
+      "score": 0.35776954889297485
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_13-34Z-agents-md-file-explanation.md",
+        "range": {
+          "startPosition": {
+            "line": 15780
+          },
+          "endPosition": {
+            "line": 15800
+          }
+        },
+        "contents": "        \"oldStart\": 97,\n        \"newStart\": 97,\n        \"oldLines\": 4,\n        \"newLines\": 33,\n        \"linesAdded\": 29\n      }\n    ],\n    \"editor\": \"EDITOR_AI\"\n  },\n  \"shouldAutoFixLints\": true,\n  \"resultForModel\": \"Success. Updated the following files:\\nM docs/crates/esp-hal.md\",\n  \"contentsAfterEdit\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs you’ll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; → &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 2) GPIO: create an output pin\\n\\nFrom the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\nhttps://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::gpio::{Io, Level, Output};\\n\\nlet io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\nlet mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n\\n// led.set_high();\\n// led.set_low();\\n// led.toggle();\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 3) Timers: general-purpose timers (TIMG)\\n\\nThe timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\nhttps://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::timer::{OneShotTimer, PeriodicTimer};\\nuse esp_hal::timer::timg::TimerGroup;\\nuse embassy_time::Duration;\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\n\\nlet mut one_shot = OneShotTimer::new(timg0.timer0);\\none_shot.delay_millis(500);\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\nlet mut periodic = PeriodicTimer::new(timg0.timer0);\\nperiodic.start(Duration::from_secs(1));\\nloop {\\n    periodic.wait();\\n}\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n## API inventory (navigation-first)\\n\\n&amp;#96;esp-hal&amp;#96; is a large crate. Instead of duplicating the full rustdoc listing here, use:\\n\\n- Full API index (All Items): https://docs.rs/esp-hal/latest/esp_hal/all.html\\n- Module index: https://docs.rs/esp-hal/latest/esp_hal/#modules\\n\\nBelow is a “what you should click first” map:\\n\\n- **Core entrypoints**\\n  - **&amp;#96;esp_hal::init(config)&amp;#96;**: takes ownership of peripherals and applies global configuration.\\n  - **&amp;#96;esp_hal::Config&amp;#96;**: global configuration (clocks, etc).\\n  - **&amp;#96;esp_hal::peripherals::Peripherals&amp;#96;**: the singleton peripheral container returned by &amp;#96;init&amp;#96;.\\n\\n- **Concurrency/driver modes**\\n  - **&amp;#96;esp_hal::Blocking&amp;#96;**: marker for blocking driver mode.\\n  - **&amp;#96;esp_hal::Async&amp;#96;**: marker for async driver mode.\\n\\n- **Modules you’ll use early**\\n  - **&amp;#96;esp_hal::gpio&amp;#96;**: digital I/O pins (&amp;#96;Io&amp;#96;, &amp;#96;Input&amp;#96;, &amp;#96;Output&amp;#96;, &amp;#96;Level&amp;#96;, pull/drive settings).\\n  - **&amp;#96;esp_hal::timer&amp;#96;**: timers (&amp;#96;PeriodicTimer&amp;#96;, &amp;#96;OneShotTimer&amp;#96;, &amp;#96;TimerGroup&amp;#96;, &amp;#96;systimer&amp;#96;, etc.).\\n  - **&amp;#96;esp_hal::clock&amp;#96;**: clock configuration (&amp;#96;CpuClock&amp;#96;, PLL/clock tree pieces).\\n  - **&amp;#96;esp_hal::interrupt&amp;#96;**: interrupt enabling/handlers + software interrupts.\\n  - **&amp;#96;esp_hal::uart&amp;#96;**: UART peripheral drivers.\\n  - **&amp;#96;esp_hal::spi&amp;#96;**: SPI peripheral drivers.\\n  - **&amp;#96;esp_hal::i2c&amp;#96;**: I2C peripheral drivers.\\n\\nIf you want, tell me the exact board/pinout you have and which peripheral you’re using next (UART/I2C/SPI/GPIO), and I’ll add a “golden example” section for that module using the exact types from &amp;#96;esp-hal&amp;#96; v1.0.\\n\\n\\n\"\n}\n&#96;&#96;&#96;\nUser decision: **accepted**\n\nStatus: **completed**\n\n\n&lt;/details&gt;",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "        \"oldStart\": 97,",
+            "lineNumber": 15781
+          },
+          {
+            "text": "        \"newStart\": 97,",
+            "lineNumber": 15782
+          },
+          {
+            "text": "        \"oldLines\": 4,",
+            "lineNumber": 15783
+          },
+          {
+            "text": "        \"newLines\": 33,",
+            "lineNumber": 15784
+          },
+          {
+            "text": "        \"linesAdded\": 29",
+            "lineNumber": 15785
+          },
+          {
+            "text": "      }",
+            "lineNumber": 15786
+          },
+          {
+            "text": "    ],",
+            "lineNumber": 15787
+          },
+          {
+            "text": "    \"editor\": \"EDITOR_AI\"",
+            "lineNumber": 15788
+          },
+          {
+            "text": "  },",
+            "lineNumber": 15789
+          },
+          {
+            "text": "  \"shouldAutoFixLints\": true,",
+            "lineNumber": 15790
+          },
+          {
+            "text": "  \"resultForModel\": \"Success. Updated the following files:\\nM docs/crates/esp-hal.md\",",
+            "lineNumber": 15791
+          },
+          {
+            "text": "  \"contentsAfterEdit\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs you’ll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; → &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 2) GPIO: create an output pin\\n\\nFrom the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\nhttps://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::gpio::{Io, Level, Output};\\n\\nlet io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\nlet mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n\\n// led.set_high();\\n// led.set_low();\\n// led.toggle();\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 3) Timers: general-purpose timers (TIMG)\\n\\nThe timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\nhttps://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::timer::{OneShotTimer, PeriodicTimer};\\nuse esp_hal::timer::timg::TimerGroup;\\nuse embassy_time::Duration;\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\n\\nlet mut one_shot = OneShotTimer::new(timg0.timer0);\\none_shot.delay_millis(500);\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\nlet mut periodic = PeriodicTimer::new(timg0.timer0);\\nperiodic.start(Duration::from_secs(1));\\nloop {\\n    periodic.wait();\\n}\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n## API inventory (navigation-first)\\n\\n&amp;#96;esp-hal&amp;#96; is a large crate. Instead of duplicating the full rustdoc listing here, use:\\n\\n- Full API index (All Items): https://docs.rs/esp-hal/latest/esp_hal/all.html\\n- Module index: https://docs.rs/esp-hal/latest/esp_hal/#modules\\n\\nBelow is a “what you should click first” map:\\n\\n- **Core entrypoints**\\n  - **&amp;#96;esp_hal::init(config)&amp;#96;**: takes ownership of peripherals and applies global configuration.\\n  - **&amp;#96;esp_hal::Config&amp;#96;**: global configuration (clocks, etc).\\n  - **&amp;#96;esp_hal::peripherals::Peripherals&amp;#96;**: the singleton peripheral container returned by &amp;#96;init&amp;#96;.\\n\\n- **Concurrency/driver modes**\\n  - **&amp;#96;esp_hal::Blocking&amp;#96;**: marker for blocking driver mode.\\n  - **&amp;#96;esp_hal::Async&amp;#96;**: marker for async driver mode.\\n\\n- **Modules you’ll use early**\\n  - **&amp;#96;esp_hal::gpio&amp;#96;**: digital I/O pins (&amp;#96;Io&amp;#96;, &amp;#96;Input&amp;#96;, &amp;#96;Output&amp;#96;, &amp;#96;Level&amp;#96;, pull/drive settings).\\n  - **&amp;#96;esp_hal::timer&amp;#96;**: timers (&amp;#96;PeriodicTimer&amp;#96;, &amp;#96;OneShotTimer&amp;#96;, &amp;#96;TimerGroup&amp;#96;, &amp;#96;systimer&amp;#96;, etc.).\\n  - **&amp;#96;esp_hal::clock&amp;#96;**: clock configuration (&amp;#96;CpuClock&amp;#96;, PLL/clock tree pieces).\\n  - **&amp;#96;esp_hal::interrupt&amp;#96;**: interrupt enabling/handlers + software interrupts.\\n  - **&amp;#96;esp_hal::uart&amp;#96;**: UART peripheral drivers.\\n  - **&amp;#96;esp_hal::spi&amp;#96;**: SPI peripheral drivers.\\n  - **&amp;#96;esp_hal::i2c&amp;#96;**: I2C peripheral drivers.\\n\\nIf you want, tell me the exact board/pinout you have and which peripheral you’re using next (UART/I2C/SPI/GPIO), and I’ll add a “golden example” section for that module using the exact types from &amp;#96;esp-hal&amp;#96; v1.0.\\n\\n\\n\"",
+            "lineNumber": 15792
+          },
+          {
+            "text": "}",
+            "lineNumber": 15793
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 15794
+          },
+          {
+            "text": "User decision: **accepted**",
+            "lineNumber": 15795
+          },
+          {
+            "lineNumber": 15796
+          },
+          {
+            "text": "Status: **completed**",
+            "lineNumber": 15797
+          },
+          {
+            "lineNumber": 15798
+          },
+          {
+            "lineNumber": 15799
+          },
+          {
+            "text": "&lt;/details&gt;",
+            "lineNumber": 15800
+          }
+        ]
+      },
+      "score": 0.34585100412368774
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_13-34Z-agents-md-file-explanation.md",
+        "range": {
+          "startPosition": {
+            "line": 14578
+          },
+          "endPosition": {
+            "line": 14598
+          }
+        },
+        "contents": "        \"oldStart\": 38,\n        \"newStart\": 45,\n        \"oldLines\": 4,\n        \"newLines\": 57,\n        \"linesAdded\": 53\n      }\n    ],\n    \"editor\": \"EDITOR_AI\"\n  },\n  \"shouldAutoFixLints\": true,\n  \"resultForModel\": \"Success. Updated the following files:\\nM docs/crates/esp-hal.md\",\n  \"contentsAfterEdit\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs you’ll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; → &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 2) GPIO: create an output pin\\n\\nFrom the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\nhttps://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::gpio::{Io, Level, Output};\\n\\nlet io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\nlet mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n\\n// led.set_high();\\n// led.set_low();\\n// led.toggle();\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 3) Timers: general-purpose timers (TIMG)\\n\\nThe timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\nhttps://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::timer::{OneShotTimer, PeriodicTimer};\\nuse esp_hal::timer::timg::TimerGroup;\\nuse embassy_time::Duration;\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\n\\nlet mut one_shot = OneShotTimer::new(timg0.timer0);\\none_shot.delay_millis(500);\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\nlet mut periodic = PeriodicTimer::new(timg0.timer0);\\nperiodic.start(Duration::from_secs(1));\\nloop {\\n    periodic.wait();\\n}\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n\\n\"\n}\n&#96;&#96;&#96;\nUser decision: **accepted**\n\nStatus: **completed**\n\n\n&lt;/details&gt;",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "        \"oldStart\": 38,",
+            "lineNumber": 14579
+          },
+          {
+            "text": "        \"newStart\": 45,",
+            "lineNumber": 14580
+          },
+          {
+            "text": "        \"oldLines\": 4,",
+            "lineNumber": 14581
+          },
+          {
+            "text": "        \"newLines\": 57,",
+            "lineNumber": 14582
+          },
+          {
+            "text": "        \"linesAdded\": 53",
+            "lineNumber": 14583
+          },
+          {
+            "text": "      }",
+            "lineNumber": 14584
+          },
+          {
+            "text": "    ],",
+            "lineNumber": 14585
+          },
+          {
+            "text": "    \"editor\": \"EDITOR_AI\"",
+            "lineNumber": 14586
+          },
+          {
+            "text": "  },",
+            "lineNumber": 14587
+          },
+          {
+            "text": "  \"shouldAutoFixLints\": true,",
+            "lineNumber": 14588
+          },
+          {
+            "text": "  \"resultForModel\": \"Success. Updated the following files:\\nM docs/crates/esp-hal.md\",",
+            "lineNumber": 14589
+          },
+          {
+            "text": "  \"contentsAfterEdit\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32‑C3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs you’ll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; → &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 2) GPIO: create an output pin\\n\\nFrom the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\nhttps://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::gpio::{Io, Level, Output};\\n\\nlet io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\nlet mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n\\n// led.set_high();\\n// led.set_low();\\n// led.toggle();\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n### 3) Timers: general-purpose timers (TIMG)\\n\\nThe timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\nhttps://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::timer::{OneShotTimer, PeriodicTimer};\\nuse esp_hal::timer::timg::TimerGroup;\\nuse embassy_time::Duration;\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\n\\nlet mut one_shot = OneShotTimer::new(timg0.timer0);\\none_shot.delay_millis(500);\\n\\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\\nlet mut periodic = PeriodicTimer::new(timg0.timer0);\\nperiodic.start(Duration::from_secs(1));\\nloop {\\n    periodic.wait();\\n}\\n&amp;#96;&amp;#96;&amp;#96;\\n\\n\\n\"",
+            "lineNumber": 14590
+          },
+          {
+            "text": "}",
+            "lineNumber": 14591
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 14592
+          },
+          {
+            "text": "User decision: **accepted**",
+            "lineNumber": 14593
+          },
+          {
+            "lineNumber": 14594
+          },
+          {
+            "text": "Status: **completed**",
+            "lineNumber": 14595
+          },
+          {
+            "lineNumber": 14596
+          },
+          {
+            "lineNumber": 14597
+          },
+          {
+            "text": "&lt;/details&gt;",
+            "lineNumber": 14598
+          }
+        ]
+      },
+      "score": 0.34036505222320557
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {
+            "line": 469
+          },
+          "endPosition": {
+            "line": 550
+          }
+        },
+        "contents": "image.draw(&amp;mut display).unwrap();\n&#96;&#96;&#96;\n\n### Button-controlled display update\n\n&#96;&#96;&#96;rust\nlet mut led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());\nlet button = Input::new(peripherals.GPIO0, InputConfig::default());\nlet delay = Delay::new();\n\nloop {\n    if button.is_low() {\n        led.set_high();\n        \n        // Update display\n        display.clear(Rgb565::BLACK).unwrap();\n        // ... draw updated content\n        \n        delay.delay_millis(50);  // Debounce\n    } else {\n        led.set_low();\n    }\n}\n&#96;&#96;&#96;\n\n## Gotchas and best practices\n\n### 1. Deny mem_forget\n\n**Always add this deny:**\n&#96;&#96;&#96;rust\n#![deny(\n    clippy::mem_forget,\n    reason = \"mem::forget is generally not safe to do with esp_hal types, especially those \\\n    holding buffers for the duration of a data transfer.\"\n)]\n&#96;&#96;&#96;\n\n**Why:** Display drivers hold SPI buffers during transfers. Forgetting them can cause undefined behavior.\n\n### 2. Buffer lifetime\n\nFor &#96;mipidsi&#96;, the buffer must live as long as the display:\n\n&#96;&#96;&#96;rust\n// Good: Buffer lives long enough\nlet mut buffer = [0u8; 2048];\nlet interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);\nlet mut display = Builder::new(ILI9341Rgb565, interface).init(...).unwrap();\n// buffer must not be dropped while display exists\n&#96;&#96;&#96;\n\n### 3. SPI frequency tuning\n\n- Start with 4 MHz\n- Increase gradually if display supports it\n- Watch for display artifacts (corruption, flickering)\n- Reduce if you see issues\n\n### 4. Display initialization order\n\n1. Create SPI peripheral\n2. Create GPIO pins (CS, DC, RST)\n3. Create SPI device\n4. Create interface\n5. Initialize display\n6. Clear display\n7. Set orientation (if needed)\n\n### 5. Color format\n\n- Use &#96;Rgb565&#96; (16-bit color) for most displays\n- Some displays support other formats (check driver docs)\n- Color constants: &#96;Rgb565::BLACK&#96;, &#96;Rgb565::WHITE&#96;, &#96;Rgb565::RED&#96;, etc.\n\n### 6. Memory usage\n\n- **Flash**: Images embedded with &#96;include_bytes!()&#96; consume flash\n- **RAM**: Display buffers consume RAM (especially with &#96;mipidsi&#96;)\n- **Stack**: Keep large buffers off stack (use static or heap)",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "image.draw(&amp;mut display).unwrap();",
+            "lineNumber": 470
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 471
+          },
+          {
+            "lineNumber": 472
+          },
+          {
+            "text": "### Button-controlled display update",
+            "lineNumber": 473
+          },
+          {
+            "lineNumber": 474
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 475
+          },
+          {
+            "text": "let mut led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());",
+            "lineNumber": 476
+          },
+          {
+            "text": "let button = Input::new(peripherals.GPIO0, InputConfig::default());",
+            "lineNumber": 477
+          },
+          {
+            "text": "let delay = Delay::new();",
+            "lineNumber": 478
+          },
+          {
+            "lineNumber": 479
+          },
+          {
+            "text": "loop {",
+            "lineNumber": 480
+          },
+          {
+            "text": "    if button.is_low() {",
+            "lineNumber": 481
+          },
+          {
+            "text": "        led.set_high();",
+            "lineNumber": 482
+          },
+          {
+            "text": "        ",
+            "lineNumber": 483
+          },
+          {
+            "text": "        // Update display",
+            "lineNumber": 484
+          },
+          {
+            "text": "        display.clear(Rgb565::BLACK).unwrap();",
+            "lineNumber": 485
+          },
+          {
+            "text": "        // ... draw updated content",
+            "lineNumber": 486
+          },
+          {
+            "text": "        ",
+            "lineNumber": 487
+          },
+          {
+            "text": "        delay.delay_millis(50);  // Debounce",
+            "lineNumber": 488
+          },
+          {
+            "text": "    } else {",
+            "lineNumber": 489
+          },
+          {
+            "text": "        led.set_low();",
+            "lineNumber": 490
+          },
+          {
+            "text": "    }",
+            "lineNumber": 491
+          },
+          {
+            "text": "}",
+            "lineNumber": 492
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 493
+          },
+          {
+            "lineNumber": 494
+          },
+          {
+            "text": "## Gotchas and best practices",
+            "lineNumber": 495
+          },
+          {
+            "lineNumber": 496
+          },
+          {
+            "text": "### 1. Deny mem_forget",
+            "lineNumber": 497
+          },
+          {
+            "lineNumber": 498
+          },
+          {
+            "text": "**Always add this deny:**",
+            "lineNumber": 499
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 500
+          },
+          {
+            "text": "#![deny(",
+            "lineNumber": 501
+          },
+          {
+            "text": "    clippy::mem_forget,",
+            "lineNumber": 502
+          },
+          {
+            "text": "    reason = \"mem::forget is generally not safe to do with esp_hal types, especially those \\",
+            "lineNumber": 503
+          },
+          {
+            "text": "    holding buffers for the duration of a data transfer.\"",
+            "lineNumber": 504
+          },
+          {
+            "text": ")]",
+            "lineNumber": 505
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 506
+          },
+          {
+            "lineNumber": 507
+          },
+          {
+            "text": "**Why:** Display drivers hold SPI buffers during transfers. Forgetting them can cause undefined behavior.",
+            "lineNumber": 508
+          },
+          {
+            "lineNumber": 509
+          },
+          {
+            "text": "### 2. Buffer lifetime",
+            "lineNumber": 510
+          },
+          {
+            "lineNumber": 511
+          },
+          {
+            "text": "For &#96;mipidsi&#96;, the buffer must live as long as the display:",
+            "lineNumber": 512
+          },
+          {
+            "lineNumber": 513
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 514
+          },
+          {
+            "text": "// Good: Buffer lives long enough",
+            "lineNumber": 515
+          },
+          {
+            "text": "let mut buffer = [0u8; 2048];",
+            "lineNumber": 516
+          },
+          {
+            "text": "let interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);",
+            "lineNumber": 517
+          },
+          {
+            "text": "let mut display = Builder::new(ILI9341Rgb565, interface).init(...).unwrap();",
+            "lineNumber": 518
+          },
+          {
+            "text": "// buffer must not be dropped while display exists",
+            "lineNumber": 519
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 520
+          },
+          {
+            "lineNumber": 521
+          },
+          {
+            "text": "### 3. SPI frequency tuning",
+            "lineNumber": 522
+          },
+          {
+            "lineNumber": 523
+          },
+          {
+            "text": "- Start with 4 MHz",
+            "lineNumber": 524
+          },
+          {
+            "text": "- Increase gradually if display supports it",
+            "lineNumber": 525
+          },
+          {
+            "text": "- Watch for display artifacts (corruption, flickering)",
+            "lineNumber": 526
+          },
+          {
+            "text": "- Reduce if you see issues",
+            "lineNumber": 527
+          },
+          {
+            "lineNumber": 528
+          },
+          {
+            "text": "### 4. Display initialization order",
+            "lineNumber": 529
+          },
+          {
+            "lineNumber": 530
+          },
+          {
+            "text": "1. Create SPI peripheral",
+            "lineNumber": 531
+          },
+          {
+            "text": "2. Create GPIO pins (CS, DC, RST)",
+            "lineNumber": 532
+          },
+          {
+            "text": "3. Create SPI device",
+            "lineNumber": 533
+          },
+          {
+            "text": "4. Create interface",
+            "lineNumber": 534
+          },
+          {
+            "text": "5. Initialize display",
+            "lineNumber": 535
+          },
+          {
+            "text": "6. Clear display",
+            "lineNumber": 536
+          },
+          {
+            "text": "7. Set orientation (if needed)",
+            "lineNumber": 537
+          },
+          {
+            "lineNumber": 538
+          },
+          {
+            "text": "### 5. Color format",
+            "lineNumber": 539
+          },
+          {
+            "lineNumber": 540
+          },
+          {
+            "text": "- Use &#96;Rgb565&#96; (16-bit color) for most displays",
+            "lineNumber": 541
+          },
+          {
+            "text": "- Some displays support other formats (check driver docs)",
+            "lineNumber": 542
+          },
+          {
+            "text": "- Color constants: &#96;Rgb565::BLACK&#96;, &#96;Rgb565::WHITE&#96;, &#96;Rgb565::RED&#96;, etc.",
+            "lineNumber": 543
+          },
+          {
+            "lineNumber": 544
+          },
+          {
+            "text": "### 6. Memory usage",
+            "lineNumber": 545
+          },
+          {
+            "lineNumber": 546
+          },
+          {
+            "text": "- **Flash**: Images embedded with &#96;include_bytes!()&#96; consume flash",
+            "lineNumber": 547
+          },
+          {
+            "text": "- **RAM**: Display buffers consume RAM (especially with &#96;mipidsi&#96;)",
+            "lineNumber": 548
+          },
+          {
+            "text": "- **Stack**: Keep large buffers off stack (use static or heap)",
+            "lineNumber": 549
+          }
+        ]
+      },
+      "score": 0.3390212953090668
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-hal.md",
+        "range": {
+          "startPosition": {
+            "line": 178
+          },
+          "endPosition": {
+            "line": 247
+          }
+        },
+        "contents": "- **&#96;Resolution&#96;**: ADC resolution.\n- **&#96;Attenuation&#96;**: ADC attenuation.\n\n#### &#96;esp_hal::dac&#96; (DAC - Digital-to-Analog)\n- **&#96;Dac&#96;**: DAC peripheral driver.\n- **&#96;DacChannel&#96;**: DAC channel.\n\n#### &#96;esp_hal::ledc&#96; (LED PWM Controller)\n- **&#96;LedcTimer&#96;**: LEDC timer.\n- **&#96;LedcChannel&#96;**: LEDC channel.\n- **&#96;Resolution&#96;**: LEDC resolution.\n- **&#96;ClockSource&#96;**: LEDC clock source.\n\n#### &#96;esp_hal::rmt&#96; (Remote Control)\n- **&#96;Rmt&#96;**: RMT peripheral driver.\n- **&#96;RmtChannel&#96;**: RMT channel.\n- **&#96;Pulse&#96;**: RMT pulse.\n\n#### &#96;esp_hal::usb_serial_jtag&#96; (USB Serial JTAG)\n- **&#96;UsbSerialJtag&#96;**: USB Serial JTAG driver.\n\n#### &#96;esp_hal::systimer&#96; (System Timer)\n- **&#96;SystemTimer&#96;**: System timer.\n- **&#96;Alarm&#96;**: System timer alarm.\n- **&#96;Target&#96;**: System timer target.\n\n#### &#96;esp_hal::peripherals&#96; (Peripheral Access)\n- **&#96;Peripherals&#96;**: Peripheral container.\n- Individual peripheral types (e.g., &#96;GPIO&#96;, &#96;UART0&#96;, &#96;SPI2&#96;, &#96;I2C0&#96;, &#96;TIMG0&#96;, etc.).\n\n#### &#96;esp_hal::ram&#96; (RAM Attributes)\n- **&#96;#[ram(reclaimed)]&#96;**: Attribute for reclaimed RAM.\n- **&#96;#[ram(psram)]&#96;**: Attribute for PSRAM.\n\n#### &#96;esp_hal::reset&#96; (Reset)\n- **&#96;Reset&#96;**: Reset controller.\n- **&#96;ResetReason&#96;**: Reset reason enum.\n\n#### &#96;esp_hal::rtc&#96; (RTC - Real-Time Clock)\n- **&#96;Rtc&#96;**: RTC peripheral.\n- **&#96;DateTime&#96;**: RTC date/time.\n\n#### &#96;esp_hal::efuse&#96; (eFuse)\n- **&#96;Efuse&#96;**: eFuse peripheral.\n- Various eFuse field accessors.\n\n#### &#96;esp_hal::flash&#96; (Flash)\n- **&#96;Flash&#96;**: Flash peripheral.\n- **&#96;FlashSize&#96;**: Flash size.\n\n#### &#96;esp_hal::dma&#96; (DMA)\n- **&#96;Dma&#96;**: DMA controller.\n- **&#96;DmaChannel&#96;**: DMA channel.\n- **&#96;DmaTransfer&#96;**: DMA transfer.\n\n#### &#96;esp_hal::soc&#96; (SoC-specific)\n- SoC-specific types and constants.\n\n### Additional Modules\n- **&#96;esp_hal::rng&#96;**: Random number generator.\n- **&#96;esp_hal::sha&#96;**: SHA hashing.\n- **&#96;esp_hal::aes&#96;**: AES encryption.\n- **&#96;esp_hal::rsa&#96;**: RSA encryption.\n- **&#96;esp_hal::hmac&#96;**: HMAC.\n- **&#96;esp_hal::ds&#96;**: Digital signature.\n- **&#96;esp_hal::temperature_sensor&#96;**: Temperature sensor.\n- **&#96;esp_hal::touch&#96;**: Touch sensor (ESP32-S2/S3).\n- **&#96;esp_hal::twai&#96;**: Two-Wire Automotive Interface (CAN).\n- **&#96;esp_hal::parl_io&#96;**: Parallel I/O (ESP32-S3).",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "- **&#96;Resolution&#96;**: ADC resolution.",
+            "lineNumber": 179
+          },
+          {
+            "text": "- **&#96;Attenuation&#96;**: ADC attenuation.",
+            "lineNumber": 180
+          },
+          {
+            "lineNumber": 181
+          },
+          {
+            "text": "#### &#96;esp_hal::dac&#96; (DAC - Digital-to-Analog)",
+            "lineNumber": 182
+          },
+          {
+            "text": "- **&#96;Dac&#96;**: DAC peripheral driver.",
+            "lineNumber": 183
+          },
+          {
+            "text": "- **&#96;DacChannel&#96;**: DAC channel.",
+            "lineNumber": 184
+          },
+          {
+            "lineNumber": 185
+          },
+          {
+            "text": "#### &#96;esp_hal::ledc&#96; (LED PWM Controller)",
+            "lineNumber": 186
+          },
+          {
+            "text": "- **&#96;LedcTimer&#96;**: LEDC timer.",
+            "lineNumber": 187
+          },
+          {
+            "text": "- **&#96;LedcChannel&#96;**: LEDC channel.",
+            "lineNumber": 188
+          },
+          {
+            "text": "- **&#96;Resolution&#96;**: LEDC resolution.",
+            "lineNumber": 189
+          },
+          {
+            "text": "- **&#96;ClockSource&#96;**: LEDC clock source.",
+            "lineNumber": 190
+          },
+          {
+            "lineNumber": 191
+          },
+          {
+            "text": "#### &#96;esp_hal::rmt&#96; (Remote Control)",
+            "lineNumber": 192
+          },
+          {
+            "text": "- **&#96;Rmt&#96;**: RMT peripheral driver.",
+            "lineNumber": 193
+          },
+          {
+            "text": "- **&#96;RmtChannel&#96;**: RMT channel.",
+            "lineNumber": 194
+          },
+          {
+            "text": "- **&#96;Pulse&#96;**: RMT pulse.",
+            "lineNumber": 195
+          },
+          {
+            "lineNumber": 196
+          },
+          {
+            "text": "#### &#96;esp_hal::usb_serial_jtag&#96; (USB Serial JTAG)",
+            "lineNumber": 197
+          },
+          {
+            "text": "- **&#96;UsbSerialJtag&#96;**: USB Serial JTAG driver.",
+            "lineNumber": 198
+          },
+          {
+            "lineNumber": 199
+          },
+          {
+            "text": "#### &#96;esp_hal::systimer&#96; (System Timer)",
+            "lineNumber": 200
+          },
+          {
+            "text": "- **&#96;SystemTimer&#96;**: System timer.",
+            "lineNumber": 201
+          },
+          {
+            "text": "- **&#96;Alarm&#96;**: System timer alarm.",
+            "lineNumber": 202
+          },
+          {
+            "text": "- **&#96;Target&#96;**: System timer target.",
+            "lineNumber": 203
+          },
+          {
+            "lineNumber": 204
+          },
+          {
+            "text": "#### &#96;esp_hal::peripherals&#96; (Peripheral Access)",
+            "lineNumber": 205
+          },
+          {
+            "text": "- **&#96;Peripherals&#96;**: Peripheral container.",
+            "lineNumber": 206
+          },
+          {
+            "text": "- Individual peripheral types (e.g., &#96;GPIO&#96;, &#96;UART0&#96;, &#96;SPI2&#96;, &#96;I2C0&#96;, &#96;TIMG0&#96;, etc.).",
+            "lineNumber": 207
+          },
+          {
+            "lineNumber": 208
+          },
+          {
+            "text": "#### &#96;esp_hal::ram&#96; (RAM Attributes)",
+            "lineNumber": 209
+          },
+          {
+            "text": "- **&#96;#[ram(reclaimed)]&#96;**: Attribute for reclaimed RAM.",
+            "lineNumber": 210
+          },
+          {
+            "text": "- **&#96;#[ram(psram)]&#96;**: Attribute for PSRAM.",
+            "lineNumber": 211
+          },
+          {
+            "lineNumber": 212
+          },
+          {
+            "text": "#### &#96;esp_hal::reset&#96; (Reset)",
+            "lineNumber": 213
+          },
+          {
+            "text": "- **&#96;Reset&#96;**: Reset controller.",
+            "lineNumber": 214
+          },
+          {
+            "text": "- **&#96;ResetReason&#96;**: Reset reason enum.",
+            "lineNumber": 215
+          },
+          {
+            "lineNumber": 216
+          },
+          {
+            "text": "#### &#96;esp_hal::rtc&#96; (RTC - Real-Time Clock)",
+            "lineNumber": 217
+          },
+          {
+            "text": "- **&#96;Rtc&#96;**: RTC peripheral.",
+            "lineNumber": 218
+          },
+          {
+            "text": "- **&#96;DateTime&#96;**: RTC date/time.",
+            "lineNumber": 219
+          },
+          {
+            "lineNumber": 220
+          },
+          {
+            "text": "#### &#96;esp_hal::efuse&#96; (eFuse)",
+            "lineNumber": 221
+          },
+          {
+            "text": "- **&#96;Efuse&#96;**: eFuse peripheral.",
+            "lineNumber": 222
+          },
+          {
+            "text": "- Various eFuse field accessors.",
+            "lineNumber": 223
+          },
+          {
+            "lineNumber": 224
+          },
+          {
+            "text": "#### &#96;esp_hal::flash&#96; (Flash)",
+            "lineNumber": 225
+          },
+          {
+            "text": "- **&#96;Flash&#96;**: Flash peripheral.",
+            "lineNumber": 226
+          },
+          {
+            "text": "- **&#96;FlashSize&#96;**: Flash size.",
+            "lineNumber": 227
+          },
+          {
+            "lineNumber": 228
+          },
+          {
+            "text": "#### &#96;esp_hal::dma&#96; (DMA)",
+            "lineNumber": 229
+          },
+          {
+            "text": "- **&#96;Dma&#96;**: DMA controller.",
+            "lineNumber": 230
+          },
+          {
+            "text": "- **&#96;DmaChannel&#96;**: DMA channel.",
+            "lineNumber": 231
+          },
+          {
+            "text": "- **&#96;DmaTransfer&#96;**: DMA transfer.",
+            "lineNumber": 232
+          },
+          {
+            "lineNumber": 233
+          },
+          {
+            "text": "#### &#96;esp_hal::soc&#96; (SoC-specific)",
+            "lineNumber": 234
+          },
+          {
+            "text": "- SoC-specific types and constants.",
+            "lineNumber": 235
+          },
+          {
+            "lineNumber": 236
+          },
+          {
+            "text": "### Additional Modules",
+            "lineNumber": 237
+          },
+          {
+            "text": "- **&#96;esp_hal::rng&#96;**: Random number generator.",
+            "lineNumber": 238
+          },
+          {
+            "text": "- **&#96;esp_hal::sha&#96;**: SHA hashing.",
+            "lineNumber": 239
+          },
+          {
+            "text": "- **&#96;esp_hal::aes&#96;**: AES encryption.",
+            "lineNumber": 240
+          },
+          {
+            "text": "- **&#96;esp_hal::rsa&#96;**: RSA encryption.",
+            "lineNumber": 241
+          },
+          {
+            "text": "- **&#96;esp_hal::hmac&#96;**: HMAC.",
+            "lineNumber": 242
+          },
+          {
+            "text": "- **&#96;esp_hal::ds&#96;**: Digital signature.",
+            "lineNumber": 243
+          },
+          {
+            "text": "- **&#96;esp_hal::temperature_sensor&#96;**: Temperature sensor.",
+            "lineNumber": 244
+          },
+          {
+            "text": "- **&#96;esp_hal::touch&#96;**: Touch sensor (ESP32-S2/S3).",
+            "lineNumber": 245
+          },
+          {
+            "text": "- **&#96;esp_hal::twai&#96;**: Two-Wire Automotive Interface (CAN).",
+            "lineNumber": 246
+          },
+          {
+            "text": "- **&#96;esp_hal::parl_io&#96;**: Parallel I/O (ESP32-S3).",
+            "lineNumber": 247
+          }
+        ]
+      },
+      "score": 0.33826780319213867
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./Cargo.toml",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 77
+          }
+        },
+        "contents": "[package]\nedition      = \"2024\"\nname         = \"waveshare-esp32-sandbox-1\"\nrust-version = \"1.88\"\nversion      = \"0.1.0\"\n\n[[bin]]\nname = \"waveshare-esp32-sandbox-1\"\npath = \"./src/bin/main.rs\"\n\n[dependencies]\nesp-hal = { version = \"~1.0\", features = [\"esp32c3\", \"log-04\", \"unstable\"] }\n\nesp-rtos = { version = \"0.2.0\", features = [\n  \"embassy\",\n  \"esp-alloc\",\n  \"esp-radio\",\n  \"esp32c3\",\n  \"log-04\",\n] }\n\nesp-bootloader-esp-idf = { version = \"0.4.0\", features = [\"esp32c3\", \"log-04\"] }\nlog                    = \"0.4.27\"\n\nembassy-net = { version = \"0.7.1\", features = [\n  \"dhcpv4\",\n  \"log\",\n  \"medium-ethernet\",\n  \"tcp\",\n  \"udp\",\n] }\nembedded-io = \"0.7.1\"\nembedded-io-async = \"0.7.0\"\nesp-alloc = \"0.9.0\"\nesp-println = { version = \"0.16.1\", features = [\"esp32c3\", \"log-04\"] }\n# for more networking protocol support see https://crates.io/crates/edge-net\nembassy-executor = { version = \"0.9.1\", features = [\"log\"] }\nembassy-time = { version = \"0.5.0\", features = [\"log\"] }\nesp-radio = { version = \"0.17.0\", features = [\n  \"esp-alloc\",\n  \"esp32c3\",\n  \"log-04\",\n  \"smoltcp\",\n  \"unstable\",\n  \"wifi\",\n] }\nsmoltcp = { version = \"0.12.0\", default-features = false, features = [\n  \"log\",\n  \"medium-ethernet\",\n  \"multicast\",\n  \"proto-dhcpv4\",\n  \"proto-dns\",\n  \"proto-ipv4\",\n  \"socket-dns\",\n  \"socket-icmp\",\n  \"socket-raw\",\n  \"socket-tcp\",\n  \"socket-udp\",\n] }\n\ncritical-section = \"1.2.0\"\nstatic_cell      = \"2.1.1\"\n\n\n[profile.dev]\n# Rust debug is too slow.\n# For debug builds always builds with some optimization\nopt-level = \"s\"\n\n[profile.release]\ncodegen-units    = 1     # LLVM can perform better optimizations using a single thread\ndebug            = 2\ndebug-assertions = false\nincremental      = false\nlto              = 'fat'\nopt-level        = 's'\noverflow-checks  = false",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "[package]",
+            "lineNumber": 1
+          },
+          {
+            "text": "edition      = \"2024\"",
+            "lineNumber": 2
+          },
+          {
+            "text": "name         = \"waveshare-esp32-sandbox-1\"",
+            "lineNumber": 3
+          },
+          {
+            "text": "rust-version = \"1.88\"",
+            "lineNumber": 4
+          },
+          {
+            "text": "version      = \"0.1.0\"",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "[[bin]]",
+            "lineNumber": 7
+          },
+          {
+            "text": "name = \"waveshare-esp32-sandbox-1\"",
+            "lineNumber": 8
+          },
+          {
+            "text": "path = \"./src/bin/main.rs\"",
+            "lineNumber": 9
+          },
+          {
+            "lineNumber": 10
+          },
+          {
+            "text": "[dependencies]",
+            "lineNumber": 11
+          },
+          {
+            "text": "esp-hal = { version = \"~1.0\", features = [\"esp32c3\", \"log-04\", \"unstable\"] }",
+            "lineNumber": 12
+          },
+          {
+            "lineNumber": 13
+          },
+          {
+            "text": "esp-rtos = { version = \"0.2.0\", features = [",
+            "lineNumber": 14
+          },
+          {
+            "text": "  \"embassy\",",
+            "lineNumber": 15
+          },
+          {
+            "text": "  \"esp-alloc\",",
+            "lineNumber": 16
+          },
+          {
+            "text": "  \"esp-radio\",",
+            "lineNumber": 17
+          },
+          {
+            "text": "  \"esp32c3\",",
+            "lineNumber": 18
+          },
+          {
+            "text": "  \"log-04\",",
+            "lineNumber": 19
+          },
+          {
+            "text": "] }",
+            "lineNumber": 20
+          },
+          {
+            "lineNumber": 21
+          },
+          {
+            "text": "esp-bootloader-esp-idf = { version = \"0.4.0\", features = [\"esp32c3\", \"log-04\"] }",
+            "lineNumber": 22
+          },
+          {
+            "text": "log                    = \"0.4.27\"",
+            "lineNumber": 23
+          },
+          {
+            "lineNumber": 24
+          },
+          {
+            "text": "embassy-net = { version = \"0.7.1\", features = [",
+            "lineNumber": 25
+          },
+          {
+            "text": "  \"dhcpv4\",",
+            "lineNumber": 26
+          },
+          {
+            "text": "  \"log\",",
+            "lineNumber": 27
+          },
+          {
+            "text": "  \"medium-ethernet\",",
+            "lineNumber": 28
+          },
+          {
+            "text": "  \"tcp\",",
+            "lineNumber": 29
+          },
+          {
+            "text": "  \"udp\",",
+            "lineNumber": 30
+          },
+          {
+            "text": "] }",
+            "lineNumber": 31
+          },
+          {
+            "text": "embedded-io = \"0.7.1\"",
+            "lineNumber": 32
+          },
+          {
+            "text": "embedded-io-async = \"0.7.0\"",
+            "lineNumber": 33
+          },
+          {
+            "text": "esp-alloc = \"0.9.0\"",
+            "lineNumber": 34
+          },
+          {
+            "text": "esp-println = { version = \"0.16.1\", features = [\"esp32c3\", \"log-04\"] }",
+            "lineNumber": 35
+          },
+          {
+            "text": "# for more networking protocol support see https://crates.io/crates/edge-net",
+            "lineNumber": 36
+          },
+          {
+            "text": "embassy-executor = { version = \"0.9.1\", features = [\"log\"] }",
+            "lineNumber": 37
+          },
+          {
+            "text": "embassy-time = { version = \"0.5.0\", features = [\"log\"] }",
+            "lineNumber": 38
+          },
+          {
+            "text": "esp-radio = { version = \"0.17.0\", features = [",
+            "lineNumber": 39
+          },
+          {
+            "text": "  \"esp-alloc\",",
+            "lineNumber": 40
+          },
+          {
+            "text": "  \"esp32c3\",",
+            "lineNumber": 41
+          },
+          {
+            "text": "  \"log-04\",",
+            "lineNumber": 42
+          },
+          {
+            "text": "  \"smoltcp\",",
+            "lineNumber": 43
+          },
+          {
+            "text": "  \"unstable\",",
+            "lineNumber": 44
+          },
+          {
+            "text": "  \"wifi\",",
+            "lineNumber": 45
+          },
+          {
+            "text": "] }",
+            "lineNumber": 46
+          },
+          {
+            "text": "smoltcp = { version = \"0.12.0\", default-features = false, features = [",
+            "lineNumber": 47
+          },
+          {
+            "text": "  \"log\",",
+            "lineNumber": 48
+          },
+          {
+            "text": "  \"medium-ethernet\",",
+            "lineNumber": 49
+          },
+          {
+            "text": "  \"multicast\",",
+            "lineNumber": 50
+          },
+          {
+            "text": "  \"proto-dhcpv4\",",
+            "lineNumber": 51
+          },
+          {
+            "text": "  \"proto-dns\",",
+            "lineNumber": 52
+          },
+          {
+            "text": "  \"proto-ipv4\",",
+            "lineNumber": 53
+          },
+          {
+            "text": "  \"socket-dns\",",
+            "lineNumber": 54
+          },
+          {
+            "text": "  \"socket-icmp\",",
+            "lineNumber": 55
+          },
+          {
+            "text": "  \"socket-raw\",",
+            "lineNumber": 56
+          },
+          {
+            "text": "  \"socket-tcp\",",
+            "lineNumber": 57
+          },
+          {
+            "text": "  \"socket-udp\",",
+            "lineNumber": 58
+          },
+          {
+            "text": "] }",
+            "lineNumber": 59
+          },
+          {
+            "lineNumber": 60
+          },
+          {
+            "text": "critical-section = \"1.2.0\"",
+            "lineNumber": 61
+          },
+          {
+            "text": "static_cell      = \"2.1.1\"",
+            "lineNumber": 62
+          },
+          {
+            "lineNumber": 63
+          },
+          {
+            "lineNumber": 64
+          },
+          {
+            "text": "[profile.dev]",
+            "lineNumber": 65
+          },
+          {
+            "text": "# Rust debug is too slow.",
+            "lineNumber": 66
+          },
+          {
+            "text": "# For debug builds always builds with some optimization",
+            "lineNumber": 67
+          },
+          {
+            "text": "opt-level = \"s\"",
+            "lineNumber": 68
+          },
+          {
+            "lineNumber": 69
+          },
+          {
+            "text": "[profile.release]",
+            "lineNumber": 70
+          },
+          {
+            "text": "codegen-units    = 1     # LLVM can perform better optimizations using a single thread",
+            "lineNumber": 71
+          },
+          {
+            "text": "debug            = 2",
+            "lineNumber": 72
+          },
+          {
+            "text": "debug-assertions = false",
+            "lineNumber": 73
+          },
+          {
+            "text": "incremental      = false",
+            "lineNumber": 74
+          },
+          {
+            "text": "lto              = 'fat'",
+            "lineNumber": 75
+          },
+          {
+            "text": "opt-level        = 's'",
+            "lineNumber": 76
+          },
+          {
+            "text": "overflow-checks  = false",
+            "lineNumber": 77
+          }
+        ]
+      },
+      "score": 0.3382612466812134
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {
+            "line": 68
+          },
+          "endPosition": {
+            "line": 149
+          }
+        },
+        "contents": "The &#96;mipidsi&#96; crate supports multiple display controllers and is more flexible:\n\n**Pros:**\n- Supports multiple display controllers (ILI9341, ILI9342C, ST7789, etc.)\n- More modern API\n- Better performance\n- Active development\n\n**Cons:**\n- Slightly more complex setup\n- Requires buffer allocation\n\n**Usage:**\n&#96;&#96;&#96;rust\nuse mipidsi::{\n    Builder,\n    models::ILI9341Rgb565,  // or ILI9342CRgb565, etc.\n    options::{Orientation, Rotation},\n    interface::SpiInterface,\n};\n&#96;&#96;&#96;\n\n**Recommendation:** Use &#96;mipidsi&#96; for new projects as it's more flexible and actively maintained.\n\n## SPI configuration\n\n### Basic SPI setup\n\n&#96;&#96;&#96;rust\nuse esp_hal::spi::master::{Spi, Config as SpiConfig};\nuse esp_hal::spi::Mode as SpiMode;\nuse esp_hal::time::Rate;\nuse embedded_hal_bus::spi::ExclusiveDevice;\n\n// Create SPI peripheral\nlet spi = Spi::new(\n    peripherals.SPI2,  // Use SPI2 or SPI3\n    SpiConfig::default()\n        .with_frequency(Rate::from_mhz(4))  // 4 MHz (adjust for your display)\n        .with_mode(SpiMode::_0),            // SPI mode 0\n)\n.unwrap()\n.with_sck(peripherals.GPIO18)   // Clock pin\n.with_mosi(peripherals.GPIO23); // Data pin\n&#96;&#96;&#96;\n\n### SPI frequency considerations\n\n- **Lower frequencies (1-4 MHz)**: More reliable, works with longer wires\n- **Higher frequencies (8-40 MHz)**: Faster updates, requires shorter wires\n- **Start with 4 MHz**: Good balance of speed and reliability\n\n### SPI mode\n\nMost displays use **SPI Mode 0**:\n- Clock idle low\n- Data sampled on rising edge\n\nCheck your display datasheet if you encounter issues.\n\n### Creating SPI device\n\n&#96;&#96;&#96;rust\nuse esp_hal::gpio::{Level, Output, OutputConfig};\n\nlet cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());\nlet spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();\n&#96;&#96;&#96;\n\n**Note:** &#96;ExclusiveDevice&#96; ensures only one device uses the SPI bus at a time.\n\n## Display initialization\n\n### Using ili9341 crate\n\n&#96;&#96;&#96;rust\nuse display_interface_spi::SPIInterface;\nuse ili9341::{DisplaySize240x320, Ili9341, Orientation};\nuse esp_hal::delay::Delay;\n\nlet cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "The &#96;mipidsi&#96; crate supports multiple display controllers and is more flexible:",
+            "lineNumber": 69
+          },
+          {
+            "lineNumber": 70
+          },
+          {
+            "text": "**Pros:**",
+            "lineNumber": 71
+          },
+          {
+            "text": "- Supports multiple display controllers (ILI9341, ILI9342C, ST7789, etc.)",
+            "lineNumber": 72
+          },
+          {
+            "text": "- More modern API",
+            "lineNumber": 73
+          },
+          {
+            "text": "- Better performance",
+            "lineNumber": 74
+          },
+          {
+            "text": "- Active development",
+            "lineNumber": 75
+          },
+          {
+            "lineNumber": 76
+          },
+          {
+            "text": "**Cons:**",
+            "lineNumber": 77
+          },
+          {
+            "text": "- Slightly more complex setup",
+            "lineNumber": 78
+          },
+          {
+            "text": "- Requires buffer allocation",
+            "lineNumber": 79
+          },
+          {
+            "lineNumber": 80
+          },
+          {
+            "text": "**Usage:**",
+            "lineNumber": 81
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 82
+          },
+          {
+            "text": "use mipidsi::{",
+            "lineNumber": 83
+          },
+          {
+            "text": "    Builder,",
+            "lineNumber": 84
+          },
+          {
+            "text": "    models::ILI9341Rgb565,  // or ILI9342CRgb565, etc.",
+            "lineNumber": 85
+          },
+          {
+            "text": "    options::{Orientation, Rotation},",
+            "lineNumber": 86
+          },
+          {
+            "text": "    interface::SpiInterface,",
+            "lineNumber": 87
+          },
+          {
+            "text": "};",
+            "lineNumber": 88
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 89
+          },
+          {
+            "lineNumber": 90
+          },
+          {
+            "text": "**Recommendation:** Use &#96;mipidsi&#96; for new projects as it's more flexible and actively maintained.",
+            "lineNumber": 91
+          },
+          {
+            "lineNumber": 92
+          },
+          {
+            "text": "## SPI configuration",
+            "lineNumber": 93
+          },
+          {
+            "lineNumber": 94
+          },
+          {
+            "text": "### Basic SPI setup",
+            "lineNumber": 95
+          },
+          {
+            "lineNumber": 96
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 97
+          },
+          {
+            "text": "use esp_hal::spi::master::{Spi, Config as SpiConfig};",
+            "lineNumber": 98
+          },
+          {
+            "text": "use esp_hal::spi::Mode as SpiMode;",
+            "lineNumber": 99
+          },
+          {
+            "text": "use esp_hal::time::Rate;",
+            "lineNumber": 100
+          },
+          {
+            "text": "use embedded_hal_bus::spi::ExclusiveDevice;",
+            "lineNumber": 101
+          },
+          {
+            "lineNumber": 102
+          },
+          {
+            "text": "// Create SPI peripheral",
+            "lineNumber": 103
+          },
+          {
+            "text": "let spi = Spi::new(",
+            "lineNumber": 104
+          },
+          {
+            "text": "    peripherals.SPI2,  // Use SPI2 or SPI3",
+            "lineNumber": 105
+          },
+          {
+            "text": "    SpiConfig::default()",
+            "lineNumber": 106
+          },
+          {
+            "text": "        .with_frequency(Rate::from_mhz(4))  // 4 MHz (adjust for your display)",
+            "lineNumber": 107
+          },
+          {
+            "text": "        .with_mode(SpiMode::_0),            // SPI mode 0",
+            "lineNumber": 108
+          },
+          {
+            "text": ")",
+            "lineNumber": 109
+          },
+          {
+            "text": ".unwrap()",
+            "lineNumber": 110
+          },
+          {
+            "text": ".with_sck(peripherals.GPIO18)   // Clock pin",
+            "lineNumber": 111
+          },
+          {
+            "text": ".with_mosi(peripherals.GPIO23); // Data pin",
+            "lineNumber": 112
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 113
+          },
+          {
+            "lineNumber": 114
+          },
+          {
+            "text": "### SPI frequency considerations",
+            "lineNumber": 115
+          },
+          {
+            "lineNumber": 116
+          },
+          {
+            "text": "- **Lower frequencies (1-4 MHz)**: More reliable, works with longer wires",
+            "lineNumber": 117
+          },
+          {
+            "text": "- **Higher frequencies (8-40 MHz)**: Faster updates, requires shorter wires",
+            "lineNumber": 118
+          },
+          {
+            "text": "- **Start with 4 MHz**: Good balance of speed and reliability",
+            "lineNumber": 119
+          },
+          {
+            "lineNumber": 120
+          },
+          {
+            "text": "### SPI mode",
+            "lineNumber": 121
+          },
+          {
+            "lineNumber": 122
+          },
+          {
+            "text": "Most displays use **SPI Mode 0**:",
+            "lineNumber": 123
+          },
+          {
+            "text": "- Clock idle low",
+            "lineNumber": 124
+          },
+          {
+            "text": "- Data sampled on rising edge",
+            "lineNumber": 125
+          },
+          {
+            "lineNumber": 126
+          },
+          {
+            "text": "Check your display datasheet if you encounter issues.",
+            "lineNumber": 127
+          },
+          {
+            "lineNumber": 128
+          },
+          {
+            "text": "### Creating SPI device",
+            "lineNumber": 129
+          },
+          {
+            "lineNumber": 130
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 131
+          },
+          {
+            "text": "use esp_hal::gpio::{Level, Output, OutputConfig};",
+            "lineNumber": 132
+          },
+          {
+            "lineNumber": 133
+          },
+          {
+            "text": "let cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());",
+            "lineNumber": 134
+          },
+          {
+            "text": "let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();",
+            "lineNumber": 135
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 136
+          },
+          {
+            "lineNumber": 137
+          },
+          {
+            "text": "**Note:** &#96;ExclusiveDevice&#96; ensures only one device uses the SPI bus at a time.",
+            "lineNumber": 138
+          },
+          {
+            "lineNumber": 139
+          },
+          {
+            "text": "## Display initialization",
+            "lineNumber": 140
+          },
+          {
+            "lineNumber": 141
+          },
+          {
+            "text": "### Using ili9341 crate",
+            "lineNumber": 142
+          },
+          {
+            "lineNumber": 143
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 144
+          },
+          {
+            "text": "use display_interface_spi::SPIInterface;",
+            "lineNumber": 145
+          },
+          {
+            "text": "use ili9341::{DisplaySize240x320, Ili9341, Orientation};",
+            "lineNumber": 146
+          },
+          {
+            "text": "use esp_hal::delay::Delay;",
+            "lineNumber": 147
+          },
+          {
+            "lineNumber": 148
+          },
+          {
+            "text": "let cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());",
+            "lineNumber": 149
+          }
+        ]
+      },
+      "score": 0.33296656608581543
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {
+            "line": 394
+          },
+          "endPosition": {
+            "line": 474
+          }
+        },
+        "contents": "#![no_main]\n#![deny(clippy::mem_forget)]\n\nuse esp_hal::clock::CpuClock;\nuse esp_hal::main;\nuse embedded_graphics::prelude::*;\nuse embedded_graphics::pixelcolor::Rgb565;\n\n#[main]\nfn main() -&gt; ! {\n    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\n    let peripherals = esp_hal::init(config);\n\n    // 1. Setup SPI\n    let spi = Spi::new(\n        peripherals.SPI2,\n        SpiConfig::default()\n            .with_frequency(Rate::from_mhz(4))\n            .with_mode(SpiMode::_0),\n    )\n    .unwrap()\n    .with_sck(peripherals.GPIO18)\n    .with_mosi(peripherals.GPIO23);\n\n    // 2. Setup GPIO pins\n    let cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());\n    let dc = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());\n    let reset = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());\n\n    // 3. Create SPI device and interface\n    let mut buffer = [0u8; 2048];\n    let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();\n    let interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);\n\n    // 4. Initialize display\n    let mut display = Builder::new(ILI9341Rgb565, interface)\n        .reset_pin(reset)\n        .init(&amp;mut Delay::new())\n        .unwrap();\n\n    // 5. Clear and set orientation\n    display.clear(Rgb565::BLACK).unwrap();\n    display.set_orientation(\n        Orientation::default().rotate(Rotation::Deg270)\n    ).unwrap();\n\n    // 6. Your drawing code here\n    \n    loop {\n        // Main loop\n    }\n}\n&#96;&#96;&#96;\n\n### Display update pattern\n\n&#96;&#96;&#96;rust\n// Clear display\ndisplay.clear(Rgb565::BLACK).unwrap();\n\n// Draw text\nlet text_style = MonoTextStyle::new(&amp;PROFONT_24_POINT, Rgb565::WHITE);\nText::with_baseline(\n    \"Status: OK\",\n    Point::new(10, 10),\n    text_style,\n    Baseline::Top,\n)\n.draw(&amp;mut display)\n.unwrap();\n\n// Draw image\nlet bmp_data = include_bytes!(\"../../image.bmp\");\nlet bmp = Bmp::from_slice(bmp_data).unwrap();\nlet image = Image::new(&amp;bmp, Point::new(10, 50));\nimage.draw(&amp;mut display).unwrap();\n&#96;&#96;&#96;\n\n### Button-controlled display update",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "#![no_main]",
+            "lineNumber": 395
+          },
+          {
+            "text": "#![deny(clippy::mem_forget)]",
+            "lineNumber": 396
+          },
+          {
+            "lineNumber": 397
+          },
+          {
+            "text": "use esp_hal::clock::CpuClock;",
+            "lineNumber": 398
+          },
+          {
+            "text": "use esp_hal::main;",
+            "lineNumber": 399
+          },
+          {
+            "text": "use embedded_graphics::prelude::*;",
+            "lineNumber": 400
+          },
+          {
+            "text": "use embedded_graphics::pixelcolor::Rgb565;",
+            "lineNumber": 401
+          },
+          {
+            "lineNumber": 402
+          },
+          {
+            "text": "#[main]",
+            "lineNumber": 403
+          },
+          {
+            "text": "fn main() -&gt; ! {",
+            "lineNumber": 404
+          },
+          {
+            "text": "    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());",
+            "lineNumber": 405
+          },
+          {
+            "text": "    let peripherals = esp_hal::init(config);",
+            "lineNumber": 406
+          },
+          {
+            "lineNumber": 407
+          },
+          {
+            "text": "    // 1. Setup SPI",
+            "lineNumber": 408
+          },
+          {
+            "text": "    let spi = Spi::new(",
+            "lineNumber": 409
+          },
+          {
+            "text": "        peripherals.SPI2,",
+            "lineNumber": 410
+          },
+          {
+            "text": "        SpiConfig::default()",
+            "lineNumber": 411
+          },
+          {
+            "text": "            .with_frequency(Rate::from_mhz(4))",
+            "lineNumber": 412
+          },
+          {
+            "text": "            .with_mode(SpiMode::_0),",
+            "lineNumber": 413
+          },
+          {
+            "text": "    )",
+            "lineNumber": 414
+          },
+          {
+            "text": "    .unwrap()",
+            "lineNumber": 415
+          },
+          {
+            "text": "    .with_sck(peripherals.GPIO18)",
+            "lineNumber": 416
+          },
+          {
+            "text": "    .with_mosi(peripherals.GPIO23);",
+            "lineNumber": 417
+          },
+          {
+            "lineNumber": 418
+          },
+          {
+            "text": "    // 2. Setup GPIO pins",
+            "lineNumber": 419
+          },
+          {
+            "text": "    let cs = Output::new(peripherals.GPIO15, Level::Low, OutputConfig::default());",
+            "lineNumber": 420
+          },
+          {
+            "text": "    let dc = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());",
+            "lineNumber": 421
+          },
+          {
+            "text": "    let reset = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());",
+            "lineNumber": 422
+          },
+          {
+            "lineNumber": 423
+          },
+          {
+            "text": "    // 3. Create SPI device and interface",
+            "lineNumber": 424
+          },
+          {
+            "text": "    let mut buffer = [0u8; 2048];",
+            "lineNumber": 425
+          },
+          {
+            "text": "    let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();",
+            "lineNumber": 426
+          },
+          {
+            "text": "    let interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);",
+            "lineNumber": 427
+          },
+          {
+            "lineNumber": 428
+          },
+          {
+            "text": "    // 4. Initialize display",
+            "lineNumber": 429
+          },
+          {
+            "text": "    let mut display = Builder::new(ILI9341Rgb565, interface)",
+            "lineNumber": 430
+          },
+          {
+            "text": "        .reset_pin(reset)",
+            "lineNumber": 431
+          },
+          {
+            "text": "        .init(&amp;mut Delay::new())",
+            "lineNumber": 432
+          },
+          {
+            "text": "        .unwrap();",
+            "lineNumber": 433
+          },
+          {
+            "lineNumber": 434
+          },
+          {
+            "text": "    // 5. Clear and set orientation",
+            "lineNumber": 435
+          },
+          {
+            "text": "    display.clear(Rgb565::BLACK).unwrap();",
+            "lineNumber": 436
+          },
+          {
+            "text": "    display.set_orientation(",
+            "lineNumber": 437
+          },
+          {
+            "text": "        Orientation::default().rotate(Rotation::Deg270)",
+            "lineNumber": 438
+          },
+          {
+            "text": "    ).unwrap();",
+            "lineNumber": 439
+          },
+          {
+            "lineNumber": 440
+          },
+          {
+            "text": "    // 6. Your drawing code here",
+            "lineNumber": 441
+          },
+          {
+            "text": "    ",
+            "lineNumber": 442
+          },
+          {
+            "text": "    loop {",
+            "lineNumber": 443
+          },
+          {
+            "text": "        // Main loop",
+            "lineNumber": 444
+          },
+          {
+            "text": "    }",
+            "lineNumber": 445
+          },
+          {
+            "text": "}",
+            "lineNumber": 446
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 447
+          },
+          {
+            "lineNumber": 448
+          },
+          {
+            "text": "### Display update pattern",
+            "lineNumber": 449
+          },
+          {
+            "lineNumber": 450
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 451
+          },
+          {
+            "text": "// Clear display",
+            "lineNumber": 452
+          },
+          {
+            "text": "display.clear(Rgb565::BLACK).unwrap();",
+            "lineNumber": 453
+          },
+          {
+            "lineNumber": 454
+          },
+          {
+            "text": "// Draw text",
+            "lineNumber": 455
+          },
+          {
+            "text": "let text_style = MonoTextStyle::new(&amp;PROFONT_24_POINT, Rgb565::WHITE);",
+            "lineNumber": 456
+          },
+          {
+            "text": "Text::with_baseline(",
+            "lineNumber": 457
+          },
+          {
+            "text": "    \"Status: OK\",",
+            "lineNumber": 458
+          },
+          {
+            "text": "    Point::new(10, 10),",
+            "lineNumber": 459
+          },
+          {
+            "text": "    text_style,",
+            "lineNumber": 460
+          },
+          {
+            "text": "    Baseline::Top,",
+            "lineNumber": 461
+          },
+          {
+            "text": ")",
+            "lineNumber": 462
+          },
+          {
+            "text": ".draw(&amp;mut display)",
+            "lineNumber": 463
+          },
+          {
+            "text": ".unwrap();",
+            "lineNumber": 464
+          },
+          {
+            "lineNumber": 465
+          },
+          {
+            "text": "// Draw image",
+            "lineNumber": 466
+          },
+          {
+            "text": "let bmp_data = include_bytes!(\"../../image.bmp\");",
+            "lineNumber": 467
+          },
+          {
+            "text": "let bmp = Bmp::from_slice(bmp_data).unwrap();",
+            "lineNumber": 468
+          },
+          {
+            "text": "let image = Image::new(&amp;bmp, Point::new(10, 50));",
+            "lineNumber": 469
+          },
+          {
+            "text": "image.draw(&amp;mut display).unwrap();",
+            "lineNumber": 470
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 471
+          },
+          {
+            "lineNumber": 472
+          },
+          {
+            "text": "### Button-controlled display update",
+            "lineNumber": 473
+          }
+        ]
+      },
+      "score": 0.3322041928768158
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {
+            "line": 307
+          },
+          "endPosition": {
+            "line": 400
+          }
+        },
+        "contents": "use embedded_graphics::prelude::*;\nuse tinybmp::Bmp;\n\n// Include image at compile time\nlet bmp_data = include_bytes!(\"../../image.bmp\");\nlet bmp = Bmp::from_slice(bmp_data).unwrap();\n\n// Create image and draw\nlet image = Image::new(&amp;bmp, Point::new(10, 0));\nimage.draw(&amp;mut display).unwrap();\n&#96;&#96;&#96;\n\n### Image file preparation\n\n1. **Format**: Use BMP format (24-bit or less)\n2. **Size**: Keep images small to fit in flash\n3. **Location**: Place in project root or &#96;src/&#96; directory\n4. **Include**: Use &#96;include_bytes!()&#96; macro for compile-time embedding\n\n### Image positioning\n\n&#96;&#96;&#96;rust\n// Top-left corner\nlet image = Image::new(&amp;bmp, Point::new(0, 0));\n\n// Centered (example for 240x320 display)\nlet image = Image::new(&amp;bmp, Point::new(10, 0));\n\n// Custom position\nlet image = Image::new(&amp;bmp, Point::new(x, y));\n&#96;&#96;&#96;\n\n### Image size considerations\n\n- **Memory**: Images are embedded in flash, not RAM\n- **Flash usage**: Large images consume significant flash space\n- **Performance**: Larger images take longer to render\n- **Recommendation**: Optimize images before embedding\n\n## Input handling\n\n### Button input pattern\n\n&#96;&#96;&#96;rust\nuse esp_hal::gpio::{Input, InputConfig, Level};\n\nlet button = Input::new(peripherals.GPIO0, InputConfig::default());\n\nloop {\n    if button.is_low() {\n        // Button pressed (assuming pull-up, active low)\n        println!(\"Button Pressed\");\n        // Handle button press\n        delay.delay_millis(50);  // Debounce delay\n    }\n}\n&#96;&#96;&#96;\n\n### Debouncing\n\nAlways add debounce delay to prevent multiple triggers:\n\n&#96;&#96;&#96;rust\nif button.is_low() {\n    delay.delay_millis(50);  // 50ms debounce\n    // Handle press\n}\n&#96;&#96;&#96;\n\n### Button configuration\n\n&#96;&#96;&#96;rust\n// Pull-up configuration (button connects to GND when pressed)\nlet button = Input::new(\n    peripherals.GPIO0,\n    InputConfig::default()  // Uses internal pull-up\n);\n\n// For active-high buttons, you may need external pull-down\n&#96;&#96;&#96;\n\n## Common patterns\n\n### Complete display setup pattern\n\n&#96;&#96;&#96;rust\n#![no_std]\n#![no_main]\n#![deny(clippy::mem_forget)]\n\nuse esp_hal::clock::CpuClock;\nuse esp_hal::main;\nuse embedded_graphics::prelude::*;",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "use embedded_graphics::prelude::*;",
+            "lineNumber": 308
+          },
+          {
+            "text": "use tinybmp::Bmp;",
+            "lineNumber": 309
+          },
+          {
+            "lineNumber": 310
+          },
+          {
+            "text": "// Include image at compile time",
+            "lineNumber": 311
+          },
+          {
+            "text": "let bmp_data = include_bytes!(\"../../image.bmp\");",
+            "lineNumber": 312
+          },
+          {
+            "text": "let bmp = Bmp::from_slice(bmp_data).unwrap();",
+            "lineNumber": 313
+          },
+          {
+            "lineNumber": 314
+          },
+          {
+            "text": "// Create image and draw",
+            "lineNumber": 315
+          },
+          {
+            "text": "let image = Image::new(&amp;bmp, Point::new(10, 0));",
+            "lineNumber": 316
+          },
+          {
+            "text": "image.draw(&amp;mut display).unwrap();",
+            "lineNumber": 317
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 318
+          },
+          {
+            "lineNumber": 319
+          },
+          {
+            "text": "### Image file preparation",
+            "lineNumber": 320
+          },
+          {
+            "lineNumber": 321
+          },
+          {
+            "text": "1. **Format**: Use BMP format (24-bit or less)",
+            "lineNumber": 322
+          },
+          {
+            "text": "2. **Size**: Keep images small to fit in flash",
+            "lineNumber": 323
+          },
+          {
+            "text": "3. **Location**: Place in project root or &#96;src/&#96; directory",
+            "lineNumber": 324
+          },
+          {
+            "text": "4. **Include**: Use &#96;include_bytes!()&#96; macro for compile-time embedding",
+            "lineNumber": 325
+          },
+          {
+            "lineNumber": 326
+          },
+          {
+            "text": "### Image positioning",
+            "lineNumber": 327
+          },
+          {
+            "lineNumber": 328
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 329
+          },
+          {
+            "text": "// Top-left corner",
+            "lineNumber": 330
+          },
+          {
+            "text": "let image = Image::new(&amp;bmp, Point::new(0, 0));",
+            "lineNumber": 331
+          },
+          {
+            "lineNumber": 332
+          },
+          {
+            "text": "// Centered (example for 240x320 display)",
+            "lineNumber": 333
+          },
+          {
+            "text": "let image = Image::new(&amp;bmp, Point::new(10, 0));",
+            "lineNumber": 334
+          },
+          {
+            "lineNumber": 335
+          },
+          {
+            "text": "// Custom position",
+            "lineNumber": 336
+          },
+          {
+            "text": "let image = Image::new(&amp;bmp, Point::new(x, y));",
+            "lineNumber": 337
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 338
+          },
+          {
+            "lineNumber": 339
+          },
+          {
+            "text": "### Image size considerations",
+            "lineNumber": 340
+          },
+          {
+            "lineNumber": 341
+          },
+          {
+            "text": "- **Memory**: Images are embedded in flash, not RAM",
+            "lineNumber": 342
+          },
+          {
+            "text": "- **Flash usage**: Large images consume significant flash space",
+            "lineNumber": 343
+          },
+          {
+            "text": "- **Performance**: Larger images take longer to render",
+            "lineNumber": 344
+          },
+          {
+            "text": "- **Recommendation**: Optimize images before embedding",
+            "lineNumber": 345
+          },
+          {
+            "lineNumber": 346
+          },
+          {
+            "text": "## Input handling",
+            "lineNumber": 347
+          },
+          {
+            "lineNumber": 348
+          },
+          {
+            "text": "### Button input pattern",
+            "lineNumber": 349
+          },
+          {
+            "lineNumber": 350
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 351
+          },
+          {
+            "text": "use esp_hal::gpio::{Input, InputConfig, Level};",
+            "lineNumber": 352
+          },
+          {
+            "lineNumber": 353
+          },
+          {
+            "text": "let button = Input::new(peripherals.GPIO0, InputConfig::default());",
+            "lineNumber": 354
+          },
+          {
+            "lineNumber": 355
+          },
+          {
+            "text": "loop {",
+            "lineNumber": 356
+          },
+          {
+            "text": "    if button.is_low() {",
+            "lineNumber": 357
+          },
+          {
+            "text": "        // Button pressed (assuming pull-up, active low)",
+            "lineNumber": 358
+          },
+          {
+            "text": "        println!(\"Button Pressed\");",
+            "lineNumber": 359
+          },
+          {
+            "text": "        // Handle button press",
+            "lineNumber": 360
+          },
+          {
+            "text": "        delay.delay_millis(50);  // Debounce delay",
+            "lineNumber": 361
+          },
+          {
+            "text": "    }",
+            "lineNumber": 362
+          },
+          {
+            "text": "}",
+            "lineNumber": 363
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 364
+          },
+          {
+            "lineNumber": 365
+          },
+          {
+            "text": "### Debouncing",
+            "lineNumber": 366
+          },
+          {
+            "lineNumber": 367
+          },
+          {
+            "text": "Always add debounce delay to prevent multiple triggers:",
+            "lineNumber": 368
+          },
+          {
+            "lineNumber": 369
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 370
+          },
+          {
+            "text": "if button.is_low() {",
+            "lineNumber": 371
+          },
+          {
+            "text": "    delay.delay_millis(50);  // 50ms debounce",
+            "lineNumber": 372
+          },
+          {
+            "text": "    // Handle press",
+            "lineNumber": 373
+          },
+          {
+            "text": "}",
+            "lineNumber": 374
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 375
+          },
+          {
+            "lineNumber": 376
+          },
+          {
+            "text": "### Button configuration",
+            "lineNumber": 377
+          },
+          {
+            "lineNumber": 378
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 379
+          },
+          {
+            "text": "// Pull-up configuration (button connects to GND when pressed)",
+            "lineNumber": 380
+          },
+          {
+            "text": "let button = Input::new(",
+            "lineNumber": 381
+          },
+          {
+            "text": "    peripherals.GPIO0,",
+            "lineNumber": 382
+          },
+          {
+            "text": "    InputConfig::default()  // Uses internal pull-up",
+            "lineNumber": 383
+          },
+          {
+            "text": ");",
+            "lineNumber": 384
+          },
+          {
+            "lineNumber": 385
+          },
+          {
+            "text": "// For active-high buttons, you may need external pull-down",
+            "lineNumber": 386
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 387
+          },
+          {
+            "lineNumber": 388
+          },
+          {
+            "text": "## Common patterns",
+            "lineNumber": 389
+          },
+          {
+            "lineNumber": 390
+          },
+          {
+            "text": "### Complete display setup pattern",
+            "lineNumber": 391
+          },
+          {
+            "lineNumber": 392
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 393
+          },
+          {
+            "text": "#![no_std]",
+            "lineNumber": 394
+          },
+          {
+            "text": "#![no_main]",
+            "lineNumber": 395
+          },
+          {
+            "text": "#![deny(clippy::mem_forget)]",
+            "lineNumber": 396
+          },
+          {
+            "lineNumber": 397
+          },
+          {
+            "text": "use esp_hal::clock::CpuClock;",
+            "lineNumber": 398
+          },
+          {
+            "text": "use esp_hal::main;",
+            "lineNumber": 399
+          },
+          {
+            "text": "use embedded_graphics::prelude::*;",
+            "lineNumber": 400
+          }
+        ]
+      },
+      "score": 0.3319303095340729
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 72
+          }
+        },
+        "contents": "# Display and graphics programming\n\nThis document provides comprehensive guidance for working with TFT displays and graphics on ESP32 using Rust. It covers SPI display setup, text rendering, image display, and common patterns.\n\n## Table of contents\n\n- [Hardware setup](#hardware-setup)\n- [Display driver selection](#display-driver-selection)\n- [SPI configuration](#spi-configuration)\n- [Display initialization](#display-initialization)\n- [Text rendering](#text-rendering)\n- [Image rendering](#image-rendering)\n- [Input handling](#input-handling)\n- [Common patterns](#common-patterns)\n- [Gotchas and best practices](#gotchas-and-best-practices)\n- [Complete examples](#complete-examples)\n\n## Hardware setup\n\n### Typical TFT display connections\n\nMost TFT displays use SPI for communication and require several control pins:\n\n- **SCK (Serial Clock)**: SPI clock pin\n- **MOSI (Master Out Slave In)**: SPI data pin\n- **CS (Chip Select)**: Selects the display on SPI bus\n- **DC (Data/Command)**: Distinguishes data from commands\n- **RST (Reset)**: Hardware reset pin\n- **VCC**: Power (usually 3.3V or 5V)\n- **GND**: Ground\n\n### Pin assignment example (ESP32)\n\nCommon pin assignments (adjust for your board):\n\n&#96;&#96;&#96;rust\nlet sck = peripherals.GPIO18;   // SPI clock\nlet mosi = peripherals.GPIO23;  // SPI data\nlet cs = peripherals.GPIO15;    // Chip select\nlet dc = peripherals.GPIO2;     // Data/command\nlet reset = peripherals.GPIO4;  // Reset\n&#96;&#96;&#96;\n\n**Note:** Pin numbers vary by board. Check your board's pinout diagram.\n\n## Display driver selection\n\n### ili9341 crate (older approach)\n\nThe &#96;ili9341&#96; crate provides direct support for ILI9341 displays:\n\n**Pros:**\n- Simple API\n- Good for basic use cases\n- Well-established\n\n**Cons:**\n- Limited to ILI9341 displays\n- Less flexible\n\n**Usage:**\n&#96;&#96;&#96;rust\nuse ili9341::{DisplaySize240x320, Ili9341, Orientation};\nuse display_interface_spi::SPIInterface;\n&#96;&#96;&#96;\n\n### mipidsi crate (recommended)\n\nThe &#96;mipidsi&#96; crate supports multiple display controllers and is more flexible:\n\n**Pros:**\n- Supports multiple display controllers (ILI9341, ILI9342C, ST7789, etc.)",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# Display and graphics programming",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "This document provides comprehensive guidance for working with TFT displays and graphics on ESP32 using Rust. It covers SPI display setup, text rendering, image display, and common patterns.",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "## Table of contents",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "- [Hardware setup](#hardware-setup)",
+            "lineNumber": 7
+          },
+          {
+            "text": "- [Display driver selection](#display-driver-selection)",
+            "lineNumber": 8
+          },
+          {
+            "text": "- [SPI configuration](#spi-configuration)",
+            "lineNumber": 9
+          },
+          {
+            "text": "- [Display initialization](#display-initialization)",
+            "lineNumber": 10
+          },
+          {
+            "text": "- [Text rendering](#text-rendering)",
+            "lineNumber": 11
+          },
+          {
+            "text": "- [Image rendering](#image-rendering)",
+            "lineNumber": 12
+          },
+          {
+            "text": "- [Input handling](#input-handling)",
+            "lineNumber": 13
+          },
+          {
+            "text": "- [Common patterns](#common-patterns)",
+            "lineNumber": 14
+          },
+          {
+            "text": "- [Gotchas and best practices](#gotchas-and-best-practices)",
+            "lineNumber": 15
+          },
+          {
+            "text": "- [Complete examples](#complete-examples)",
+            "lineNumber": 16
+          },
+          {
+            "lineNumber": 17
+          },
+          {
+            "text": "## Hardware setup",
+            "lineNumber": 18
+          },
+          {
+            "lineNumber": 19
+          },
+          {
+            "text": "### Typical TFT display connections",
+            "lineNumber": 20
+          },
+          {
+            "lineNumber": 21
+          },
+          {
+            "text": "Most TFT displays use SPI for communication and require several control pins:",
+            "lineNumber": 22
+          },
+          {
+            "lineNumber": 23
+          },
+          {
+            "text": "- **SCK (Serial Clock)**: SPI clock pin",
+            "lineNumber": 24
+          },
+          {
+            "text": "- **MOSI (Master Out Slave In)**: SPI data pin",
+            "lineNumber": 25
+          },
+          {
+            "text": "- **CS (Chip Select)**: Selects the display on SPI bus",
+            "lineNumber": 26
+          },
+          {
+            "text": "- **DC (Data/Command)**: Distinguishes data from commands",
+            "lineNumber": 27
+          },
+          {
+            "text": "- **RST (Reset)**: Hardware reset pin",
+            "lineNumber": 28
+          },
+          {
+            "text": "- **VCC**: Power (usually 3.3V or 5V)",
+            "lineNumber": 29
+          },
+          {
+            "text": "- **GND**: Ground",
+            "lineNumber": 30
+          },
+          {
+            "lineNumber": 31
+          },
+          {
+            "text": "### Pin assignment example (ESP32)",
+            "lineNumber": 32
+          },
+          {
+            "lineNumber": 33
+          },
+          {
+            "text": "Common pin assignments (adjust for your board):",
+            "lineNumber": 34
+          },
+          {
+            "lineNumber": 35
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 36
+          },
+          {
+            "text": "let sck = peripherals.GPIO18;   // SPI clock",
+            "lineNumber": 37
+          },
+          {
+            "text": "let mosi = peripherals.GPIO23;  // SPI data",
+            "lineNumber": 38
+          },
+          {
+            "text": "let cs = peripherals.GPIO15;    // Chip select",
+            "lineNumber": 39
+          },
+          {
+            "text": "let dc = peripherals.GPIO2;     // Data/command",
+            "lineNumber": 40
+          },
+          {
+            "text": "let reset = peripherals.GPIO4;  // Reset",
+            "lineNumber": 41
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 42
+          },
+          {
+            "lineNumber": 43
+          },
+          {
+            "text": "**Note:** Pin numbers vary by board. Check your board's pinout diagram.",
+            "lineNumber": 44
+          },
+          {
+            "lineNumber": 45
+          },
+          {
+            "text": "## Display driver selection",
+            "lineNumber": 46
+          },
+          {
+            "lineNumber": 47
+          },
+          {
+            "text": "### ili9341 crate (older approach)",
+            "lineNumber": 48
+          },
+          {
+            "lineNumber": 49
+          },
+          {
+            "text": "The &#96;ili9341&#96; crate provides direct support for ILI9341 displays:",
+            "lineNumber": 50
+          },
+          {
+            "lineNumber": 51
+          },
+          {
+            "text": "**Pros:**",
+            "lineNumber": 52
+          },
+          {
+            "text": "- Simple API",
+            "lineNumber": 53
+          },
+          {
+            "text": "- Good for basic use cases",
+            "lineNumber": 54
+          },
+          {
+            "text": "- Well-established",
+            "lineNumber": 55
+          },
+          {
+            "lineNumber": 56
+          },
+          {
+            "text": "**Cons:**",
+            "lineNumber": 57
+          },
+          {
+            "text": "- Limited to ILI9341 displays",
+            "lineNumber": 58
+          },
+          {
+            "text": "- Less flexible",
+            "lineNumber": 59
+          },
+          {
+            "lineNumber": 60
+          },
+          {
+            "text": "**Usage:**",
+            "lineNumber": 61
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 62
+          },
+          {
+            "text": "use ili9341::{DisplaySize240x320, Ili9341, Orientation};",
+            "lineNumber": 63
+          },
+          {
+            "text": "use display_interface_spi::SPIInterface;",
+            "lineNumber": 64
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 65
+          },
+          {
+            "lineNumber": 66
+          },
+          {
+            "text": "### mipidsi crate (recommended)",
+            "lineNumber": 67
+          },
+          {
+            "lineNumber": 68
+          },
+          {
+            "text": "The &#96;mipidsi&#96; crate supports multiple display controllers and is more flexible:",
+            "lineNumber": 69
+          },
+          {
+            "lineNumber": 70
+          },
+          {
+            "text": "**Pros:**",
+            "lineNumber": 71
+          },
+          {
+            "text": "- Supports multiple display controllers (ILI9341, ILI9342C, ST7789, etc.)",
+            "lineNumber": 72
+          }
+        ]
+      },
+      "score": 0.32901450991630554
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_14-23Z-esp-rust-development-guidelines-and-resources.md",
+        "range": {
+          "startPosition": {
+            "line": 3361
+          },
+          "endPosition": {
+            "line": 3373,
+            "column": 10
+          }
+        },
+        "contents": "    {\n      \"codeBlock\": {\n        \"relativeWorkspacePath\": \"./docs/crates/esp-hal.md\",\n        \"range\": {\n          \"startPosition\": {},\n          \"endPosition\": {\n            \"line\": 60\n          }\n        },\n        \"contents\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32âC3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs youâll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; â &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\",\n        \"signatures\": {},\n        \"detailedLines\": [\n          ",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "    {",
+            "lineNumber": 3362
+          },
+          {
+            "text": "      \"codeBlock\": {",
+            "lineNumber": 3363
+          },
+          {
+            "text": "        \"relativeWorkspacePath\": \"./docs/crates/esp-hal.md\",",
+            "lineNumber": 3364
+          },
+          {
+            "text": "        \"range\": {",
+            "lineNumber": 3365
+          },
+          {
+            "text": "          \"startPosition\": {},",
+            "lineNumber": 3366
+          },
+          {
+            "text": "          \"endPosition\": {",
+            "lineNumber": 3367
+          },
+          {
+            "text": "            \"line\": 60",
+            "lineNumber": 3368
+          },
+          {
+            "text": "          }",
+            "lineNumber": 3369
+          },
+          {
+            "text": "        },",
+            "lineNumber": 3370
+          },
+          {
+            "text": "        \"contents\": \"# &amp;#96;esp-hal&amp;#96; (~1.0)\\n\\n## What it does in this repo\\n\\nHardware abstraction layer for ESP32âC3 peripherals + clocks/timers/interrupts.\\n\\nUsed directly in &amp;#96;src/bin/main.rs&amp;#96; for:\\n\\n- &amp;#96;esp_hal::Config&amp;#96; (CPU clock config)\\n- &amp;#96;esp_hal::init(...)&amp;#96; (take peripherals)\\n- &amp;#96;esp_hal::timer::timg::TimerGroup&amp;#96; (timer used to start Embassy via &amp;#96;esp-rtos&amp;#96;)\\n- software interrupts (&amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl&amp;#96;)\\n\\n## Key links\\n\\n- API docs (docs.rs): https://docs.rs/esp-hal/\\n- Espressif-hosted chip docs (handy for target-specific items): https://docs.espressif.com/projects/rust/\\n- Project repo: https://github.com/esp-rs/esp-hal\\n- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n\\nUseful module docs on &amp;#96;docs.rs&amp;#96;:\\n\\n- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n\\n## APIs youâll likely use first\\n\\n- **Initialization**\\n  - &amp;#96;esp_hal::Config::default()&amp;#96;\\n  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\\n  - &amp;#96;esp_hal::init(config)&amp;#96; â &amp;#96;peripherals&amp;#96;\\n- **Clocks**\\n  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\\n- **Timers**\\n  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\\n- **Interrupt plumbing**\\n  - &amp;#96;esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT)&amp;#96;\\n- **RAM placement attributes** (used by &amp;#96;esp-alloc&amp;#96; macro)\\n  - &amp;#96;#[esp_hal::ram(reclaimed)]&amp;#96; (reclaimed RAM heap)\\n\\n## Async note\\n\\nRust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html\\n\\n## How to use it (practical patterns)\\n\\n### 1) Initialize peripherals\\n\\nThis is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n\\n&amp;#96;&amp;#96;&amp;#96;rust\\nuse esp_hal::clock::CpuClock;\\n\\nlet config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\nlet peripherals = esp_hal::init(config);\\n&amp;#96;&amp;#96;&amp;#96;\",",
+            "lineNumber": 3371
+          },
+          {
+            "text": "        \"signatures\": {},",
+            "lineNumber": 3372
+          },
+          {
+            "text": "        \"detailedLines\": [",
+            "lineNumber": 3373
+          },
+          {
+            "text": "          ",
+            "lineNumber": 3374
+          }
+        ]
+      },
+      "score": 0.316601037979126
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_13-34Z-agents-md-file-explanation.md",
+        "range": {
+          "startPosition": {
+            "line": 14558
+          },
+          "endPosition": {
+            "line": 14581
+          }
+        },
+        "contents": "    \"languageId\": \"markdown\"\n  }\n}\n&#96;&#96;&#96;\nResult:\n\n&#96;&#96;&#96;json\n{\n  \"diff\": {\n    \"chunks\": [\n      {\n        \"diffString\": \"  - Project repo: https://github.com/esp-rs/esp-hal\\n  - Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n+ \\n+ Useful module docs on &amp;#96;docs.rs&amp;#96;:\\n+ \\n+ - GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n+ - Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n+ - Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n+ - Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n  \\n  ## APIs you’ll likely use first\",\n        \"oldStart\": 18,\n        \"newStart\": 18,\n        \"oldLines\": 4,\n        \"newLines\": 11,\n        \"linesAdded\": 7\n      },\n      {\n        \"diffString\": \"  Rust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\n  https://docs.espressif.com/projects/rust/book/application-development/async.html\\n+ \\n+ ## How to use it (practical patterns)\\n+ \\n+ ### 1) Initialize peripherals\\n+ \\n+ This is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::clock::CpuClock;\\n+ \\n+ let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\n+ let peripherals = esp_hal::init(config);\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n+ ### 2) GPIO: create an output pin\\n+ \\n+ From the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\n+ https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::gpio::{Io, Level, Output};\\n+ \\n+ let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\n+ let mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n+ \\n+ // led.set_high();\\n+ // led.set_low();\\n+ // led.toggle();\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n+ ### 3) Timers: general-purpose timers (TIMG)\\n+ \\n+ The timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\n+ https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::timer::{OneShotTimer, PeriodicTimer};\\n+ use esp_hal::timer::timg::TimerGroup;\\n+ use embassy_time::Duration;\\n+ \\n+ let timg0 = TimerGroup::new(peripherals.TIMG0);\\n+ \\n+ let mut one_shot = OneShotTimer::new(timg0.timer0);\\n+ one_shot.delay_millis(500);\\n+ \\n+ let timg0 = TimerGroup::new(peripherals.TIMG0);\\n+ let mut periodic = PeriodicTimer::new(timg0.timer0);\\n+ periodic.start(Duration::from_secs(1));\\n+ loop {\\n+     periodic.wait();\\n+ }\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n  \\n  \",\n        \"oldStart\": 38,\n        \"newStart\": 45,\n        \"oldLines\": 4,",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "    \"languageId\": \"markdown\"",
+            "lineNumber": 14559
+          },
+          {
+            "text": "  }",
+            "lineNumber": 14560
+          },
+          {
+            "text": "}",
+            "lineNumber": 14561
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 14562
+          },
+          {
+            "text": "Result:",
+            "lineNumber": 14563
+          },
+          {
+            "lineNumber": 14564
+          },
+          {
+            "text": "&#96;&#96;&#96;json",
+            "lineNumber": 14565
+          },
+          {
+            "text": "{",
+            "lineNumber": 14566
+          },
+          {
+            "text": "  \"diff\": {",
+            "lineNumber": 14567
+          },
+          {
+            "text": "    \"chunks\": [",
+            "lineNumber": 14568
+          },
+          {
+            "text": "      {",
+            "lineNumber": 14569
+          },
+          {
+            "text": "        \"diffString\": \"  - Project repo: https://github.com/esp-rs/esp-hal\\n  - Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\\n+ \\n+ Useful module docs on &amp;#96;docs.rs&amp;#96;:\\n+ \\n+ - GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n+ - Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n+ - Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\\n+ - Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\\n  \\n  ## APIs you’ll likely use first\",",
+            "lineNumber": 14570
+          },
+          {
+            "text": "        \"oldStart\": 18,",
+            "lineNumber": 14571
+          },
+          {
+            "text": "        \"newStart\": 18,",
+            "lineNumber": 14572
+          },
+          {
+            "text": "        \"oldLines\": 4,",
+            "lineNumber": 14573
+          },
+          {
+            "text": "        \"newLines\": 11,",
+            "lineNumber": 14574
+          },
+          {
+            "text": "        \"linesAdded\": 7",
+            "lineNumber": 14575
+          },
+          {
+            "text": "      },",
+            "lineNumber": 14576
+          },
+          {
+            "text": "      {",
+            "lineNumber": 14577
+          },
+          {
+            "text": "        \"diffString\": \"  Rust-on-ESP notes that many &amp;#96;esp-hal&amp;#96; drivers are constructed in blocking mode and can be converted to async via &amp;#96;into_async&amp;#96;; async drivers are often &amp;#96;!Send&amp;#96; due to core/interrupt binding:\\n  https://docs.espressif.com/projects/rust/book/application-development/async.html\\n+ \\n+ ## How to use it (practical patterns)\\n+ \\n+ ### 1) Initialize peripherals\\n+ \\n+ This is the standard &amp;#96;esp-hal&amp;#96; bring-up pattern used in this repo:\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::clock::CpuClock;\\n+ \\n+ let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\\n+ let peripherals = esp_hal::init(config);\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n+ ### 2) GPIO: create an output pin\\n+ \\n+ From the GPIO module docs, the main “user-facing” types include &amp;#96;Io&amp;#96;, &amp;#96;Output&amp;#96;, and &amp;#96;Level&amp;#96;:\\n+ https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::gpio::{Io, Level, Output};\\n+ \\n+ let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);\\n+ let mut led = Output::new(io.pins.gpio2, Level::Low); // pick the correct pin for your board\\n+ \\n+ // led.set_high();\\n+ // led.set_low();\\n+ // led.toggle();\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n+ ### 3) Timers: general-purpose timers (TIMG)\\n+ \\n+ The timer module shows how to wrap a hardware timer into a one-shot or periodic timer:\\n+ https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\\n+ \\n+ &amp;#96;&amp;#96;&amp;#96;rust\\n+ use esp_hal::timer::{OneShotTimer, PeriodicTimer};\\n+ use esp_hal::timer::timg::TimerGroup;\\n+ use embassy_time::Duration;\\n+ \\n+ let timg0 = TimerGroup::new(peripherals.TIMG0);\\n+ \\n+ let mut one_shot = OneShotTimer::new(timg0.timer0);\\n+ one_shot.delay_millis(500);\\n+ \\n+ let timg0 = TimerGroup::new(peripherals.TIMG0);\\n+ let mut periodic = PeriodicTimer::new(timg0.timer0);\\n+ periodic.start(Duration::from_secs(1));\\n+ loop {\\n+     periodic.wait();\\n+ }\\n+ &amp;#96;&amp;#96;&amp;#96;\\n+ \\n  \\n  \",",
+            "lineNumber": 14578
+          },
+          {
+            "text": "        \"oldStart\": 38,",
+            "lineNumber": 14579
+          },
+          {
+            "text": "        \"newStart\": 45,",
+            "lineNumber": 14580
+          },
+          {
+            "text": "        \"oldLines\": 4,",
+            "lineNumber": 14581
+          }
+        ]
+      },
+      "score": 0.31554293632507324
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/practical-tips.md",
+        "range": {
+          "startPosition": {
+            "line": 162
+          },
+          "endPosition": {
+            "line": 236
+          }
+        },
+        "contents": "- Mixing short-lived and long-lived allocations\n\n### Reclaimed RAM\n\nThis project uses reclaimed RAM for the heap (configured in &#96;src/bin/main.rs&#96;):\n\n&#96;&#96;&#96;rust\nesp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 66320);\n&#96;&#96;&#96;\n\n**Benefits:**\n- Uses RAM that's only needed during boot\n- Maximizes available heap for runtime\n- Recommended approach for most applications\n\n### Stack usage guidelines\n\n- Keep buffers off the stack for large data (&gt;100 bytes)\n- This project denies &#96;clippy::large_stack_frames&#96; to enforce this\n- Prefer static storage or heap for network frames, image buffers, etc.\n\n### One global allocator rule\n\n**Critical:** You can only have **one** global allocator. Don't introduce a second one.\n\n## Driver usage patterns\n\n### Proper driver construction\n\n**Use &#96;PeripheralRef&#96; API** instead of &#96;free(self) -&gt; Self&#96; methods:\n\n&#96;&#96;&#96;rust\n// Good: Using PeripheralRef\nlet mut led = Output::new(peripherals.GPIO2, Level::High, OutputConfig::default());\n&#96;&#96;&#96;\n\n### Driver destruction\n\nDrivers should implement &#96;Drop&#96; to reset peripherals to idle state. **Never use &#96;core::mem::forget&#96;** on HAL types - it prevents proper cleanup.\n\nConsider adding to your project:\n&#96;&#96;&#96;rust\n#![deny(clippy::mem_forget)]\n&#96;&#96;&#96;\n\n### Library development with esp-hal\n\nWhen creating libraries that depend on &#96;esp-hal&#96;:\n\n&#96;&#96;&#96;toml\n[dependencies]\nesp-hal = { version = \"~1.0\", default-features = false }\n&#96;&#96;&#96;\n\n**Why:**\n- Prevents unintended feature activation\n- Allows final application to select chip features\n- Use &#96;requires-unstable&#96; feature for better error messages if unstable features are needed\n\n## OTA (Over-The-Air) updates\n\n### Partition table requirements\n\nFor OTA updates, your partition table must include:\n- At least two &#96;app&#96; partitions (&#96;ota_0&#96; and &#96;ota_1&#96;)\n- An &#96;ota_data&#96; partition for tracking which partition to boot\n\n### Rust crates for OTA\n\n**&#96;esp-ota&#96;** - Transport-agnostic OTA updates:\n- Works with any transport mechanism (WiFi, Bluetooth, etc.)\n- Requires partition table with &#96;ota_0&#96; and &#96;ota_1&#96;\n- Provides safe Rust API for OTA operations",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "- Mixing short-lived and long-lived allocations",
+            "lineNumber": 163
+          },
+          {
+            "lineNumber": 164
+          },
+          {
+            "text": "### Reclaimed RAM",
+            "lineNumber": 165
+          },
+          {
+            "lineNumber": 166
+          },
+          {
+            "text": "This project uses reclaimed RAM for the heap (configured in &#96;src/bin/main.rs&#96;):",
+            "lineNumber": 167
+          },
+          {
+            "lineNumber": 168
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 169
+          },
+          {
+            "text": "esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 66320);",
+            "lineNumber": 170
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 171
+          },
+          {
+            "lineNumber": 172
+          },
+          {
+            "text": "**Benefits:**",
+            "lineNumber": 173
+          },
+          {
+            "text": "- Uses RAM that's only needed during boot",
+            "lineNumber": 174
+          },
+          {
+            "text": "- Maximizes available heap for runtime",
+            "lineNumber": 175
+          },
+          {
+            "text": "- Recommended approach for most applications",
+            "lineNumber": 176
+          },
+          {
+            "lineNumber": 177
+          },
+          {
+            "text": "### Stack usage guidelines",
+            "lineNumber": 178
+          },
+          {
+            "lineNumber": 179
+          },
+          {
+            "text": "- Keep buffers off the stack for large data (&gt;100 bytes)",
+            "lineNumber": 180
+          },
+          {
+            "text": "- This project denies &#96;clippy::large_stack_frames&#96; to enforce this",
+            "lineNumber": 181
+          },
+          {
+            "text": "- Prefer static storage or heap for network frames, image buffers, etc.",
+            "lineNumber": 182
+          },
+          {
+            "lineNumber": 183
+          },
+          {
+            "text": "### One global allocator rule",
+            "lineNumber": 184
+          },
+          {
+            "lineNumber": 185
+          },
+          {
+            "text": "**Critical:** You can only have **one** global allocator. Don't introduce a second one.",
+            "lineNumber": 186
+          },
+          {
+            "lineNumber": 187
+          },
+          {
+            "text": "## Driver usage patterns",
+            "lineNumber": 188
+          },
+          {
+            "lineNumber": 189
+          },
+          {
+            "text": "### Proper driver construction",
+            "lineNumber": 190
+          },
+          {
+            "lineNumber": 191
+          },
+          {
+            "text": "**Use &#96;PeripheralRef&#96; API** instead of &#96;free(self) -&gt; Self&#96; methods:",
+            "lineNumber": 192
+          },
+          {
+            "lineNumber": 193
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 194
+          },
+          {
+            "text": "// Good: Using PeripheralRef",
+            "lineNumber": 195
+          },
+          {
+            "text": "let mut led = Output::new(peripherals.GPIO2, Level::High, OutputConfig::default());",
+            "lineNumber": 196
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 197
+          },
+          {
+            "lineNumber": 198
+          },
+          {
+            "text": "### Driver destruction",
+            "lineNumber": 199
+          },
+          {
+            "lineNumber": 200
+          },
+          {
+            "text": "Drivers should implement &#96;Drop&#96; to reset peripherals to idle state. **Never use &#96;core::mem::forget&#96;** on HAL types - it prevents proper cleanup.",
+            "lineNumber": 201
+          },
+          {
+            "lineNumber": 202
+          },
+          {
+            "text": "Consider adding to your project:",
+            "lineNumber": 203
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 204
+          },
+          {
+            "text": "#![deny(clippy::mem_forget)]",
+            "lineNumber": 205
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 206
+          },
+          {
+            "lineNumber": 207
+          },
+          {
+            "text": "### Library development with esp-hal",
+            "lineNumber": 208
+          },
+          {
+            "lineNumber": 209
+          },
+          {
+            "text": "When creating libraries that depend on &#96;esp-hal&#96;:",
+            "lineNumber": 210
+          },
+          {
+            "lineNumber": 211
+          },
+          {
+            "text": "&#96;&#96;&#96;toml",
+            "lineNumber": 212
+          },
+          {
+            "text": "[dependencies]",
+            "lineNumber": 213
+          },
+          {
+            "text": "esp-hal = { version = \"~1.0\", default-features = false }",
+            "lineNumber": 214
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 215
+          },
+          {
+            "lineNumber": 216
+          },
+          {
+            "text": "**Why:**",
+            "lineNumber": 217
+          },
+          {
+            "text": "- Prevents unintended feature activation",
+            "lineNumber": 218
+          },
+          {
+            "text": "- Allows final application to select chip features",
+            "lineNumber": 219
+          },
+          {
+            "text": "- Use &#96;requires-unstable&#96; feature for better error messages if unstable features are needed",
+            "lineNumber": 220
+          },
+          {
+            "lineNumber": 221
+          },
+          {
+            "text": "## OTA (Over-The-Air) updates",
+            "lineNumber": 222
+          },
+          {
+            "lineNumber": 223
+          },
+          {
+            "text": "### Partition table requirements",
+            "lineNumber": 224
+          },
+          {
+            "lineNumber": 225
+          },
+          {
+            "text": "For OTA updates, your partition table must include:",
+            "lineNumber": 226
+          },
+          {
+            "text": "- At least two &#96;app&#96; partitions (&#96;ota_0&#96; and &#96;ota_1&#96;)",
+            "lineNumber": 227
+          },
+          {
+            "text": "- An &#96;ota_data&#96; partition for tracking which partition to boot",
+            "lineNumber": 228
+          },
+          {
+            "lineNumber": 229
+          },
+          {
+            "text": "### Rust crates for OTA",
+            "lineNumber": 230
+          },
+          {
+            "lineNumber": 231
+          },
+          {
+            "text": "**&#96;esp-ota&#96;** - Transport-agnostic OTA updates:",
+            "lineNumber": 232
+          },
+          {
+            "text": "- Works with any transport mechanism (WiFi, Bluetooth, etc.)",
+            "lineNumber": 233
+          },
+          {
+            "text": "- Requires partition table with &#96;ota_0&#96; and &#96;ota_1&#96;",
+            "lineNumber": 234
+          },
+          {
+            "text": "- Provides safe Rust API for OTA operations",
+            "lineNumber": 235
+          }
+        ]
+      },
+      "score": 0.31242600083351135
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./.specstory/history/2026-01-01_14-23Z-esp-rust-development-guidelines-and-resources.md",
+        "range": {
+          "startPosition": {
+            "line": 3439
+          },
+          "endPosition": {
+            "line": 3509
+          }
+        },
+        "contents": "          {\n            \"text\": \"- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\",\n            \"lineNumber\": 19\n          },\n          {\n            \"lineNumber\": 20\n          },\n          {\n            \"text\": \"Useful module docs on &amp;#96;docs.rs&amp;#96;:\",\n            \"lineNumber\": 21\n          },\n          {\n            \"lineNumber\": 22\n          },\n          {\n            \"text\": \"- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\",\n            \"lineNumber\": 23\n          },\n          {\n            \"text\": \"- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\",\n            \"lineNumber\": 24\n          },\n          {\n            \"text\": \"- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\",\n            \"lineNumber\": 25\n          },\n          {\n            \"text\": \"- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\",\n            \"lineNumber\": 26\n          },\n          {\n            \"lineNumber\": 27\n          },\n          {\n            \"text\": \"## APIs youâll likely use first\",\n            \"lineNumber\": 28\n          },\n          {\n            \"lineNumber\": 29\n          },\n          {\n            \"text\": \"- **Initialization**\",\n            \"lineNumber\": 30\n          },\n          {\n            \"text\": \"  - &amp;#96;esp_hal::Config::default()&amp;#96;\",\n            \"lineNumber\": 31\n          },\n          {\n            \"text\": \"  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\",\n            \"lineNumber\": 32\n          },\n          {\n            \"text\": \"  - &amp;#96;esp_hal::init(config)&amp;#96; â &amp;#96;peripherals&amp;#96;\",\n            \"lineNumber\": 33\n          },\n          {\n            \"text\": \"- **Clocks**\",\n            \"lineNumber\": 34\n          },\n          {\n            \"text\": \"  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\",\n            \"lineNumber\": 35\n          },\n          {\n            \"text\": \"- **Timers**\",\n            \"lineNumber\": 36\n          },\n          {\n            \"text\": \"  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\",",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "          {",
+            "lineNumber": 3440
+          },
+          {
+            "text": "            \"text\": \"- Examples: https://github.com/esp-rs/esp-hal/tree/main/examples\",",
+            "lineNumber": 3441
+          },
+          {
+            "text": "            \"lineNumber\": 19",
+            "lineNumber": 3442
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3443
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3444
+          },
+          {
+            "text": "            \"lineNumber\": 20",
+            "lineNumber": 3445
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3446
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3447
+          },
+          {
+            "text": "            \"text\": \"Useful module docs on &amp;#96;docs.rs&amp;#96;:\",",
+            "lineNumber": 3448
+          },
+          {
+            "text": "            \"lineNumber\": 21",
+            "lineNumber": 3449
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3450
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3451
+          },
+          {
+            "text": "            \"lineNumber\": 22",
+            "lineNumber": 3452
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3453
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3454
+          },
+          {
+            "text": "            \"text\": \"- GPIO: https://docs.rs/esp-hal/latest/esp_hal/gpio/index.html\",",
+            "lineNumber": 3455
+          },
+          {
+            "text": "            \"lineNumber\": 23",
+            "lineNumber": 3456
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3457
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3458
+          },
+          {
+            "text": "            \"text\": \"- Timers: https://docs.rs/esp-hal/latest/esp_hal/timer/index.html\",",
+            "lineNumber": 3459
+          },
+          {
+            "text": "            \"lineNumber\": 24",
+            "lineNumber": 3460
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3461
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3462
+          },
+          {
+            "text": "            \"text\": \"- Clocks: https://docs.rs/esp-hal/latest/esp_hal/clock/index.html\",",
+            "lineNumber": 3463
+          },
+          {
+            "text": "            \"lineNumber\": 25",
+            "lineNumber": 3464
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3465
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3466
+          },
+          {
+            "text": "            \"text\": \"- Interrupts: https://docs.rs/esp-hal/latest/esp_hal/interrupt/index.html\",",
+            "lineNumber": 3467
+          },
+          {
+            "text": "            \"lineNumber\": 26",
+            "lineNumber": 3468
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3469
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3470
+          },
+          {
+            "text": "            \"lineNumber\": 27",
+            "lineNumber": 3471
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3472
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3473
+          },
+          {
+            "text": "            \"text\": \"## APIs youâll likely use first\",",
+            "lineNumber": 3474
+          },
+          {
+            "text": "            \"lineNumber\": 28",
+            "lineNumber": 3475
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3476
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3477
+          },
+          {
+            "text": "            \"lineNumber\": 29",
+            "lineNumber": 3478
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3479
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3480
+          },
+          {
+            "text": "            \"text\": \"- **Initialization**\",",
+            "lineNumber": 3481
+          },
+          {
+            "text": "            \"lineNumber\": 30",
+            "lineNumber": 3482
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3483
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3484
+          },
+          {
+            "text": "            \"text\": \"  - &amp;#96;esp_hal::Config::default()&amp;#96;\",",
+            "lineNumber": 3485
+          },
+          {
+            "text": "            \"lineNumber\": 31",
+            "lineNumber": 3486
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3487
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3488
+          },
+          {
+            "text": "            \"text\": \"  - &amp;#96;Config::with_cpu_clock(...)&amp;#96;\",",
+            "lineNumber": 3489
+          },
+          {
+            "text": "            \"lineNumber\": 32",
+            "lineNumber": 3490
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3491
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3492
+          },
+          {
+            "text": "            \"text\": \"  - &amp;#96;esp_hal::init(config)&amp;#96; â &amp;#96;peripherals&amp;#96;\",",
+            "lineNumber": 3493
+          },
+          {
+            "text": "            \"lineNumber\": 33",
+            "lineNumber": 3494
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3495
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3496
+          },
+          {
+            "text": "            \"text\": \"- **Clocks**\",",
+            "lineNumber": 3497
+          },
+          {
+            "text": "            \"lineNumber\": 34",
+            "lineNumber": 3498
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3499
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3500
+          },
+          {
+            "text": "            \"text\": \"  - &amp;#96;esp_hal::clock::CpuClock::max()&amp;#96;\",",
+            "lineNumber": 3501
+          },
+          {
+            "text": "            \"lineNumber\": 35",
+            "lineNumber": 3502
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3503
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3504
+          },
+          {
+            "text": "            \"text\": \"- **Timers**\",",
+            "lineNumber": 3505
+          },
+          {
+            "text": "            \"lineNumber\": 36",
+            "lineNumber": 3506
+          },
+          {
+            "text": "          },",
+            "lineNumber": 3507
+          },
+          {
+            "text": "          {",
+            "lineNumber": 3508
+          },
+          {
+            "text": "            \"text\": \"  - &amp;#96;esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0)&amp;#96;\",",
+            "lineNumber": 3509
+          }
+        ]
+      },
+      "score": 0.30859169363975525
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/display-graphics.md",
+        "range": {
+          "startPosition": {
+            "line": 619
+          },
+          "endPosition": {
+            "line": 698
+          }
+        },
+        "contents": "fn main() -&gt; ! {\n    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());\n    let peripherals = esp_hal::init(config);\n\n    // SPI setup\n    let spi = Spi::new(\n        peripherals.SPI2,\n        SpiConfig::default()\n            .with_frequency(Rate::from_mhz(4))\n            .with_mode(SpiMode::_0),\n    )\n    .unwrap()\n    .with_sck(peripherals.GPIO18)\n    .with_mosi(peripherals.GPIO23);\n\n    // GPIO setup\n    let cs = Output::new(peripherals.GPIO5, Level::Low, OutputConfig::default());\n    let dc = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());\n    let reset = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());\n\n    // Display initialization\n    let mut buffer = [0u8; 2048];\n    let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();\n    let interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);\n\n    let mut display = Builder::new(ILI9341Rgb565, interface)\n        .reset_pin(reset)\n        .init(&amp;mut Delay::new())\n        .unwrap();\n\n    display.clear(Rgb565::BLACK).unwrap();\n    display.set_orientation(\n        Orientation::default().rotate(Rotation::Deg270)\n    ).unwrap();\n\n    // Text rendering\n    let text_style = MonoTextStyle::new(&amp;PROFONT_24_POINT, Rgb565::GREEN);\n    Text::with_baseline(\n        \"Hello ESP32\",\n        Point::new(60, 80),\n        text_style,\n        Baseline::Top,\n    )\n    .draw(&amp;mut display)\n    .unwrap();\n\n    loop {\n        // Main loop\n    }\n}\n&#96;&#96;&#96;\n\n### Example 2: Image display\n\n&#96;&#96;&#96;rust\n#![no_std]\n#![no_main]\n#![deny(clippy::mem_forget)]\n\nuse esp_hal::clock::CpuClock;\nuse esp_hal::main;\nuse embedded_graphics::{\n    image::Image,\n    pixelcolor::Rgb565,\n    prelude::*,\n};\nuse tinybmp::Bmp;\nuse mipidsi::{\n    Builder,\n    models::ILI9342CRgb565,\n    options::{Orientation, Rotation},\n    interface::SpiInterface,\n};\n// ... (SPI and GPIO setup same as above)\n\n#[main]\nfn main() -&gt; ! {\n    // ... (display initialization same as above)",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "fn main() -&gt; ! {",
+            "lineNumber": 620
+          },
+          {
+            "text": "    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());",
+            "lineNumber": 621
+          },
+          {
+            "text": "    let peripherals = esp_hal::init(config);",
+            "lineNumber": 622
+          },
+          {
+            "lineNumber": 623
+          },
+          {
+            "text": "    // SPI setup",
+            "lineNumber": 624
+          },
+          {
+            "text": "    let spi = Spi::new(",
+            "lineNumber": 625
+          },
+          {
+            "text": "        peripherals.SPI2,",
+            "lineNumber": 626
+          },
+          {
+            "text": "        SpiConfig::default()",
+            "lineNumber": 627
+          },
+          {
+            "text": "            .with_frequency(Rate::from_mhz(4))",
+            "lineNumber": 628
+          },
+          {
+            "text": "            .with_mode(SpiMode::_0),",
+            "lineNumber": 629
+          },
+          {
+            "text": "    )",
+            "lineNumber": 630
+          },
+          {
+            "text": "    .unwrap()",
+            "lineNumber": 631
+          },
+          {
+            "text": "    .with_sck(peripherals.GPIO18)",
+            "lineNumber": 632
+          },
+          {
+            "text": "    .with_mosi(peripherals.GPIO23);",
+            "lineNumber": 633
+          },
+          {
+            "lineNumber": 634
+          },
+          {
+            "text": "    // GPIO setup",
+            "lineNumber": 635
+          },
+          {
+            "text": "    let cs = Output::new(peripherals.GPIO5, Level::Low, OutputConfig::default());",
+            "lineNumber": 636
+          },
+          {
+            "text": "    let dc = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());",
+            "lineNumber": 637
+          },
+          {
+            "text": "    let reset = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());",
+            "lineNumber": 638
+          },
+          {
+            "lineNumber": 639
+          },
+          {
+            "text": "    // Display initialization",
+            "lineNumber": 640
+          },
+          {
+            "text": "    let mut buffer = [0u8; 2048];",
+            "lineNumber": 641
+          },
+          {
+            "text": "    let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();",
+            "lineNumber": 642
+          },
+          {
+            "text": "    let interface = SpiInterface::new(spi_dev, dc, &amp;mut buffer);",
+            "lineNumber": 643
+          },
+          {
+            "lineNumber": 644
+          },
+          {
+            "text": "    let mut display = Builder::new(ILI9341Rgb565, interface)",
+            "lineNumber": 645
+          },
+          {
+            "text": "        .reset_pin(reset)",
+            "lineNumber": 646
+          },
+          {
+            "text": "        .init(&amp;mut Delay::new())",
+            "lineNumber": 647
+          },
+          {
+            "text": "        .unwrap();",
+            "lineNumber": 648
+          },
+          {
+            "lineNumber": 649
+          },
+          {
+            "text": "    display.clear(Rgb565::BLACK).unwrap();",
+            "lineNumber": 650
+          },
+          {
+            "text": "    display.set_orientation(",
+            "lineNumber": 651
+          },
+          {
+            "text": "        Orientation::default().rotate(Rotation::Deg270)",
+            "lineNumber": 652
+          },
+          {
+            "text": "    ).unwrap();",
+            "lineNumber": 653
+          },
+          {
+            "lineNumber": 654
+          },
+          {
+            "text": "    // Text rendering",
+            "lineNumber": 655
+          },
+          {
+            "text": "    let text_style = MonoTextStyle::new(&amp;PROFONT_24_POINT, Rgb565::GREEN);",
+            "lineNumber": 656
+          },
+          {
+            "text": "    Text::with_baseline(",
+            "lineNumber": 657
+          },
+          {
+            "text": "        \"Hello ESP32\",",
+            "lineNumber": 658
+          },
+          {
+            "text": "        Point::new(60, 80),",
+            "lineNumber": 659
+          },
+          {
+            "text": "        text_style,",
+            "lineNumber": 660
+          },
+          {
+            "text": "        Baseline::Top,",
+            "lineNumber": 661
+          },
+          {
+            "text": "    )",
+            "lineNumber": 662
+          },
+          {
+            "text": "    .draw(&amp;mut display)",
+            "lineNumber": 663
+          },
+          {
+            "text": "    .unwrap();",
+            "lineNumber": 664
+          },
+          {
+            "lineNumber": 665
+          },
+          {
+            "text": "    loop {",
+            "lineNumber": 666
+          },
+          {
+            "text": "        // Main loop",
+            "lineNumber": 667
+          },
+          {
+            "text": "    }",
+            "lineNumber": 668
+          },
+          {
+            "text": "}",
+            "lineNumber": 669
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 670
+          },
+          {
+            "lineNumber": 671
+          },
+          {
+            "text": "### Example 2: Image display",
+            "lineNumber": 672
+          },
+          {
+            "lineNumber": 673
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 674
+          },
+          {
+            "text": "#![no_std]",
+            "lineNumber": 675
+          },
+          {
+            "text": "#![no_main]",
+            "lineNumber": 676
+          },
+          {
+            "text": "#![deny(clippy::mem_forget)]",
+            "lineNumber": 677
+          },
+          {
+            "lineNumber": 678
+          },
+          {
+            "text": "use esp_hal::clock::CpuClock;",
+            "lineNumber": 679
+          },
+          {
+            "text": "use esp_hal::main;",
+            "lineNumber": 680
+          },
+          {
+            "text": "use embedded_graphics::{",
+            "lineNumber": 681
+          },
+          {
+            "text": "    image::Image,",
+            "lineNumber": 682
+          },
+          {
+            "text": "    pixelcolor::Rgb565,",
+            "lineNumber": 683
+          },
+          {
+            "text": "    prelude::*,",
+            "lineNumber": 684
+          },
+          {
+            "text": "};",
+            "lineNumber": 685
+          },
+          {
+            "text": "use tinybmp::Bmp;",
+            "lineNumber": 686
+          },
+          {
+            "text": "use mipidsi::{",
+            "lineNumber": 687
+          },
+          {
+            "text": "    Builder,",
+            "lineNumber": 688
+          },
+          {
+            "text": "    models::ILI9342CRgb565,",
+            "lineNumber": 689
+          },
+          {
+            "text": "    options::{Orientation, Rotation},",
+            "lineNumber": 690
+          },
+          {
+            "text": "    interface::SpiInterface,",
+            "lineNumber": 691
+          },
+          {
+            "text": "};",
+            "lineNumber": 692
+          },
+          {
+            "text": "// ... (SPI and GPIO setup same as above)",
+            "lineNumber": 693
+          },
+          {
+            "lineNumber": 694
+          },
+          {
+            "text": "#[main]",
+            "lineNumber": 695
+          },
+          {
+            "text": "fn main() -&gt; ! {",
+            "lineNumber": 696
+          },
+          {
+            "text": "    // ... (display initialization same as above)",
+            "lineNumber": 697
+          }
+        ]
+      },
+      "score": 0.30707231163978577
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/stack.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 39
+          }
+        },
+        "contents": "# Stack &amp; architecture (this repo)\n\n## What you’re building\n\nThis repository targets **ESP32‑C3** (RISC‑V) using **bare-metal Rust**:\n\n- &#96;#![no_std]&#96; (no Rust standard library)\n- async concurrency via **Embassy**\n- hardware access via **esp-hal**\n- Wi‑Fi/BLE controller via **esp-radio**\n- logging via Rust &#96;log&#96; + &#96;esp-println&#96;\n- heap allocator via &#96;esp-alloc&#96; (using reclaimed RAM)\n\nSee Rust-on-ESP “Application Development” overview:\nhttps://docs.espressif.com/projects/rust/book/application-development/index.html\n\n## Key repo files\n\n- &#96;Cargo.toml&#96;: dependencies and chip/feature selection (&#96;esp32c3&#96;, &#96;log-04&#96;, &#96;unstable&#96;)\n- &#96;rust-toolchain.toml&#96;: pins toolchain components/targets (&#96;riscv32imc-unknown-none-elf&#96;)\n- &#96;build.rs&#96;: adds linker args and prints nicer link errors (don’t remove)\n- &#96;src/bin/main.rs&#96;: main entry point (&#96;#[esp_rtos::main]&#96;), logger init, allocator init, Embassy start, Wi‑Fi init\n\n## Runtime model\n\n### Boot\n\nEspressif devices typically use a ROM bootloader (1st stage) + optional 2nd-stage bootloader that sets up memory, partitions, and enables OTA flows.\n\nRust-on-ESP “Application Startup and Bootloader”:\nhttps://docs.espressif.com/projects/rust/book/application-development/bootloader.html\n\n### Async tasks\n\nEmbassy uses a fixed set of statically allocated tasks; you spawn tasks using a &#96;Spawner&#96;.\n\nRust-on-ESP “Async Options”:\nhttps://docs.espressif.com/projects/rust/book/application-development/async.html",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# Stack &amp; architecture (this repo)",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "## What you’re building",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "This repository targets **ESP32‑C3** (RISC‑V) using **bare-metal Rust**:",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "- &#96;#![no_std]&#96; (no Rust standard library)",
+            "lineNumber": 7
+          },
+          {
+            "text": "- async concurrency via **Embassy**",
+            "lineNumber": 8
+          },
+          {
+            "text": "- hardware access via **esp-hal**",
+            "lineNumber": 9
+          },
+          {
+            "text": "- Wi‑Fi/BLE controller via **esp-radio**",
+            "lineNumber": 10
+          },
+          {
+            "text": "- logging via Rust &#96;log&#96; + &#96;esp-println&#96;",
+            "lineNumber": 11
+          },
+          {
+            "text": "- heap allocator via &#96;esp-alloc&#96; (using reclaimed RAM)",
+            "lineNumber": 12
+          },
+          {
+            "lineNumber": 13
+          },
+          {
+            "text": "See Rust-on-ESP “Application Development” overview:",
+            "lineNumber": 14
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/index.html",
+            "lineNumber": 15
+          },
+          {
+            "lineNumber": 16
+          },
+          {
+            "text": "## Key repo files",
+            "lineNumber": 17
+          },
+          {
+            "lineNumber": 18
+          },
+          {
+            "text": "- &#96;Cargo.toml&#96;: dependencies and chip/feature selection (&#96;esp32c3&#96;, &#96;log-04&#96;, &#96;unstable&#96;)",
+            "lineNumber": 19
+          },
+          {
+            "text": "- &#96;rust-toolchain.toml&#96;: pins toolchain components/targets (&#96;riscv32imc-unknown-none-elf&#96;)",
+            "lineNumber": 20
+          },
+          {
+            "text": "- &#96;build.rs&#96;: adds linker args and prints nicer link errors (don’t remove)",
+            "lineNumber": 21
+          },
+          {
+            "text": "- &#96;src/bin/main.rs&#96;: main entry point (&#96;#[esp_rtos::main]&#96;), logger init, allocator init, Embassy start, Wi‑Fi init",
+            "lineNumber": 22
+          },
+          {
+            "lineNumber": 23
+          },
+          {
+            "text": "## Runtime model",
+            "lineNumber": 24
+          },
+          {
+            "lineNumber": 25
+          },
+          {
+            "text": "### Boot",
+            "lineNumber": 26
+          },
+          {
+            "lineNumber": 27
+          },
+          {
+            "text": "Espressif devices typically use a ROM bootloader (1st stage) + optional 2nd-stage bootloader that sets up memory, partitions, and enables OTA flows.",
+            "lineNumber": 28
+          },
+          {
+            "lineNumber": 29
+          },
+          {
+            "text": "Rust-on-ESP “Application Startup and Bootloader”:",
+            "lineNumber": 30
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/bootloader.html",
+            "lineNumber": 31
+          },
+          {
+            "lineNumber": 32
+          },
+          {
+            "text": "### Async tasks",
+            "lineNumber": 33
+          },
+          {
+            "lineNumber": 34
+          },
+          {
+            "text": "Embassy uses a fixed set of statically allocated tasks; you spawn tasks using a &#96;Spawner&#96;.",
+            "lineNumber": 35
+          },
+          {
+            "lineNumber": 36
+          },
+          {
+            "text": "Rust-on-ESP “Async Options”:",
+            "lineNumber": 37
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/async.html",
+            "lineNumber": 38
+          }
+        ]
+      },
+      "score": 0.30566513538360596
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-radio.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 57
+          }
+        },
+        "contents": "# &#96;esp-radio&#96; (0.17.0)\n\n## What it does in this repo\n\nProvides the Wi‑Fi/BLE controller stack for Espressif chips in the esp-rs ecosystem.\n\nIn &#96;src/bin/main.rs&#96; we:\n\n- call &#96;esp_radio::init()&#96; to initialize the radio subsystem\n- create a Wi‑Fi controller using &#96;esp_radio::wifi::new(...)&#96;\n\n## Key links\n\n- API docs (docs.rs): https://docs.rs/esp-radio/0.17.0/esp_radio/\n- Crate page: https://crates.io/crates/esp-radio\n- Upstream repo/issues: https://github.com/esp-rs/esp-hal (esp-rs workspace)\n\nNote: docs.rs currently fails to build the crate documentation for &#96;esp-radio&#96; 0.17.0, so the authoritative hosted API docs are here (ESP32‑C3):\nhttps://docs.espressif.com/projects/rust/esp-radio/0.17.0/esp32c3/esp_radio/index.html\n\n## APIs you’ll likely use first\n\n- &#96;esp_radio::init() -&gt; Result&lt;_, _&gt;&#96;\n- &#96;esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, config)&#96;\n\n## Gotchas\n\n- &#96;esp-radio&#96; needs an async/time/scheduler integration. In this repo that is provided by &#96;esp-rtos&#96; (see &#96;esp_rtos::start(...)&#96;).\n- Be mindful of large buffers (keep them off stack; this repo denies &#96;clippy::large_stack_frames&#96;).\n\n## How to use it (ESP32‑C3)\n\nThe ESP32‑C3 docs list:\n\n- &#96;esp_radio::init&#96; (function): initialize Wi‑Fi and/or BLE\n- &#96;esp_radio::wifi&#96; module: Wi‑Fi API surface\n- &#96;esp_radio::Controller&#96; (struct): controller for the radio driver\n\nReference (ESP32‑C3 docs): https://docs.espressif.com/projects/rust/esp-radio/0.17.0/esp32c3/esp_radio/index.html\n\n### Minimal bring-up (what this repo already does)\n\n&#96;&#96;&#96;rust\nuse log::info;\n\n// After esp-hal init + allocator + esp-rtos start...\nlet radio_init = esp_radio::init().expect(\"Failed to initialize Wi-Fi/BLE controller\");\nlet (mut wifi_controller, _interfaces) =\n    esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, Default::default())\n        .expect(\"Failed to initialize Wi-Fi controller\");\n\ninfo!(\"Wi-Fi controller created: {:?}\", core::any::type_name::&lt;_&gt;());\nlet _ = wifi_controller;\n&#96;&#96;&#96;\n\n### Important build note (from esp-radio docs)",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# &#96;esp-radio&#96; (0.17.0)",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "## What it does in this repo",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "Provides the Wi‑Fi/BLE controller stack for Espressif chips in the esp-rs ecosystem.",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "In &#96;src/bin/main.rs&#96; we:",
+            "lineNumber": 7
+          },
+          {
+            "lineNumber": 8
+          },
+          {
+            "text": "- call &#96;esp_radio::init()&#96; to initialize the radio subsystem",
+            "lineNumber": 9
+          },
+          {
+            "text": "- create a Wi‑Fi controller using &#96;esp_radio::wifi::new(...)&#96;",
+            "lineNumber": 10
+          },
+          {
+            "lineNumber": 11
+          },
+          {
+            "text": "## Key links",
+            "lineNumber": 12
+          },
+          {
+            "lineNumber": 13
+          },
+          {
+            "text": "- API docs (docs.rs): https://docs.rs/esp-radio/0.17.0/esp_radio/",
+            "lineNumber": 14
+          },
+          {
+            "text": "- Crate page: https://crates.io/crates/esp-radio",
+            "lineNumber": 15
+          },
+          {
+            "text": "- Upstream repo/issues: https://github.com/esp-rs/esp-hal (esp-rs workspace)",
+            "lineNumber": 16
+          },
+          {
+            "lineNumber": 17
+          },
+          {
+            "text": "Note: docs.rs currently fails to build the crate documentation for &#96;esp-radio&#96; 0.17.0, so the authoritative hosted API docs are here (ESP32‑C3):",
+            "lineNumber": 18
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/esp-radio/0.17.0/esp32c3/esp_radio/index.html",
+            "lineNumber": 19
+          },
+          {
+            "lineNumber": 20
+          },
+          {
+            "text": "## APIs you’ll likely use first",
+            "lineNumber": 21
+          },
+          {
+            "lineNumber": 22
+          },
+          {
+            "text": "- &#96;esp_radio::init() -&gt; Result&lt;_, _&gt;&#96;",
+            "lineNumber": 23
+          },
+          {
+            "text": "- &#96;esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, config)&#96;",
+            "lineNumber": 24
+          },
+          {
+            "lineNumber": 25
+          },
+          {
+            "text": "## Gotchas",
+            "lineNumber": 26
+          },
+          {
+            "lineNumber": 27
+          },
+          {
+            "text": "- &#96;esp-radio&#96; needs an async/time/scheduler integration. In this repo that is provided by &#96;esp-rtos&#96; (see &#96;esp_rtos::start(...)&#96;).",
+            "lineNumber": 28
+          },
+          {
+            "text": "- Be mindful of large buffers (keep them off stack; this repo denies &#96;clippy::large_stack_frames&#96;).",
+            "lineNumber": 29
+          },
+          {
+            "lineNumber": 30
+          },
+          {
+            "text": "## How to use it (ESP32‑C3)",
+            "lineNumber": 31
+          },
+          {
+            "lineNumber": 32
+          },
+          {
+            "text": "The ESP32‑C3 docs list:",
+            "lineNumber": 33
+          },
+          {
+            "lineNumber": 34
+          },
+          {
+            "text": "- &#96;esp_radio::init&#96; (function): initialize Wi‑Fi and/or BLE",
+            "lineNumber": 35
+          },
+          {
+            "text": "- &#96;esp_radio::wifi&#96; module: Wi‑Fi API surface",
+            "lineNumber": 36
+          },
+          {
+            "text": "- &#96;esp_radio::Controller&#96; (struct): controller for the radio driver",
+            "lineNumber": 37
+          },
+          {
+            "lineNumber": 38
+          },
+          {
+            "text": "Reference (ESP32‑C3 docs): https://docs.espressif.com/projects/rust/esp-radio/0.17.0/esp32c3/esp_radio/index.html",
+            "lineNumber": 39
+          },
+          {
+            "lineNumber": 40
+          },
+          {
+            "text": "### Minimal bring-up (what this repo already does)",
+            "lineNumber": 41
+          },
+          {
+            "lineNumber": 42
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 43
+          },
+          {
+            "text": "use log::info;",
+            "lineNumber": 44
+          },
+          {
+            "lineNumber": 45
+          },
+          {
+            "text": "// After esp-hal init + allocator + esp-rtos start...",
+            "lineNumber": 46
+          },
+          {
+            "text": "let radio_init = esp_radio::init().expect(\"Failed to initialize Wi-Fi/BLE controller\");",
+            "lineNumber": 47
+          },
+          {
+            "text": "let (mut wifi_controller, _interfaces) =",
+            "lineNumber": 48
+          },
+          {
+            "text": "    esp_radio::wifi::new(&amp;radio_init, peripherals.WIFI, Default::default())",
+            "lineNumber": 49
+          },
+          {
+            "text": "        .expect(\"Failed to initialize Wi-Fi controller\");",
+            "lineNumber": 50
+          },
+          {
+            "lineNumber": 51
+          },
+          {
+            "text": "info!(\"Wi-Fi controller created: {:?}\", core::any::type_name::&lt;_&gt;());",
+            "lineNumber": 52
+          },
+          {
+            "text": "let _ = wifi_controller;",
+            "lineNumber": 53
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 54
+          },
+          {
+            "lineNumber": 55
+          },
+          {
+            "text": "### Important build note (from esp-radio docs)",
+            "lineNumber": 56
+          }
+        ]
+      },
+      "score": 0.2997854948043823
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./AGENTS.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 27
+          }
+        },
+        "contents": "# AGENTS.md\n\nThis file documents **project-specific conventions and guardrails** for AI coding agents (and humans) working in this repository.\n\n**IMPORTANT**: Always consult this file (AGENTS.md), the &#96;docs/&#96; folder, AND the generated Rust documentation in &#96;target/riscv32imc-unknown-none-elf/doc/&#96; when developing. The &#96;docs/&#96; folder contains detailed crate-specific documentation, architectural patterns, and implementation guides. The generated docs (via &#96;cargo doc&#96;) provide interactive HTML documentation with exact API signatures—explore them interactively for precise type information.\n\n## Project summary (what this repo is)\n\n- **Target**: ESP32-C3 (RISC‑V), &#96;riscv32imc-unknown-none-elf&#96; (see &#96;rust-toolchain.toml&#96;)\n- **Runtime model**: &#96;no_std&#96; + async via Embassy, integrated via &#96;esp-rtos&#96;\n- **HAL**: &#96;esp-hal&#96; &#96;~1.0&#96; (with &#96;unstable&#96; feature enabled)\n- **Wi‑Fi/BLE controller**: &#96;esp-radio&#96;\n- **Logging**: &#96;log&#96; facade via &#96;esp-println&#96; logger (see &#96;src/bin/main.rs&#96;)\n- **Heap**: &#96;esp-alloc&#96; using reclaimed RAM (see &#96;src/bin/main.rs&#96;)\n- **Bootloader/OTA support**: ESP-IDF 2nd stage bootloader support crate &#96;esp-bootloader-esp-idf&#96;\n\nHelpful background reading:\n- Rust-on-ESP “Application Development” chapters (bootloader, configuration, logging, alloc, async, testing, OTA): &#96;https://docs.espressif.com/projects/rust/book/application-development/index.html&#96;\n- ESP Rust ecosystem index (tools, templates, examples): &#96;https://github.com/esp-rs/awesome-esp-rust&#96;\n\n## Golden rules for agents (don’t break these)\n\n- **Don’t accidentally add &#96;std&#96;**: This repo is intentionally &#96;#![no_std]&#96;. Only introduce &#96;std&#96; if explicitly requested.\n- **Don’t remove/disable &#96;build.rs&#96;**: It wires up linker args (e.g. &#96;linkall.x&#96;) and prints friendlier link errors.\n- **Be stingy with stack**: Keep buffers off stack; prefer static storage or heap where appropriate. Note we already deny &#96;clippy::large_stack_frames&#96;.\n- **Keep the target stable**: Don’t change &#96;riscv32imc-unknown-none-elf&#96; / &#96;esp32c3&#96; without a clear reason and explicit approval.\n- **Dependency upgrades are opt-in**: Don’t bump versions unless asked (embedded regressions are costly).",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# AGENTS.md",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "This file documents **project-specific conventions and guardrails** for AI coding agents (and humans) working in this repository.",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "**IMPORTANT**: Always consult this file (AGENTS.md), the &#96;docs/&#96; folder, AND the generated Rust documentation in &#96;target/riscv32imc-unknown-none-elf/doc/&#96; when developing. The &#96;docs/&#96; folder contains detailed crate-specific documentation, architectural patterns, and implementation guides. The generated docs (via &#96;cargo doc&#96;) provide interactive HTML documentation with exact API signatures—explore them interactively for precise type information.",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "## Project summary (what this repo is)",
+            "lineNumber": 7
+          },
+          {
+            "lineNumber": 8
+          },
+          {
+            "text": "- **Target**: ESP32-C3 (RISC‑V), &#96;riscv32imc-unknown-none-elf&#96; (see &#96;rust-toolchain.toml&#96;)",
+            "lineNumber": 9
+          },
+          {
+            "text": "- **Runtime model**: &#96;no_std&#96; + async via Embassy, integrated via &#96;esp-rtos&#96;",
+            "lineNumber": 10
+          },
+          {
+            "text": "- **HAL**: &#96;esp-hal&#96; &#96;~1.0&#96; (with &#96;unstable&#96; feature enabled)",
+            "lineNumber": 11
+          },
+          {
+            "text": "- **Wi‑Fi/BLE controller**: &#96;esp-radio&#96;",
+            "lineNumber": 12
+          },
+          {
+            "text": "- **Logging**: &#96;log&#96; facade via &#96;esp-println&#96; logger (see &#96;src/bin/main.rs&#96;)",
+            "lineNumber": 13
+          },
+          {
+            "text": "- **Heap**: &#96;esp-alloc&#96; using reclaimed RAM (see &#96;src/bin/main.rs&#96;)",
+            "lineNumber": 14
+          },
+          {
+            "text": "- **Bootloader/OTA support**: ESP-IDF 2nd stage bootloader support crate &#96;esp-bootloader-esp-idf&#96;",
+            "lineNumber": 15
+          },
+          {
+            "lineNumber": 16
+          },
+          {
+            "text": "Helpful background reading:",
+            "lineNumber": 17
+          },
+          {
+            "text": "- Rust-on-ESP “Application Development” chapters (bootloader, configuration, logging, alloc, async, testing, OTA): &#96;https://docs.espressif.com/projects/rust/book/application-development/index.html&#96;",
+            "lineNumber": 18
+          },
+          {
+            "text": "- ESP Rust ecosystem index (tools, templates, examples): &#96;https://github.com/esp-rs/awesome-esp-rust&#96;",
+            "lineNumber": 19
+          },
+          {
+            "lineNumber": 20
+          },
+          {
+            "text": "## Golden rules for agents (don’t break these)",
+            "lineNumber": 21
+          },
+          {
+            "lineNumber": 22
+          },
+          {
+            "text": "- **Don’t accidentally add &#96;std&#96;**: This repo is intentionally &#96;#![no_std]&#96;. Only introduce &#96;std&#96; if explicitly requested.",
+            "lineNumber": 23
+          },
+          {
+            "text": "- **Don’t remove/disable &#96;build.rs&#96;**: It wires up linker args (e.g. &#96;linkall.x&#96;) and prints friendlier link errors.",
+            "lineNumber": 24
+          },
+          {
+            "text": "- **Be stingy with stack**: Keep buffers off stack; prefer static storage or heap where appropriate. Note we already deny &#96;clippy::large_stack_frames&#96;.",
+            "lineNumber": 25
+          },
+          {
+            "text": "- **Keep the target stable**: Don’t change &#96;riscv32imc-unknown-none-elf&#96; / &#96;esp32c3&#96; without a clear reason and explicit approval.",
+            "lineNumber": 26
+          },
+          {
+            "text": "- **Dependency upgrades are opt-in**: Don’t bump versions unless asked (embedded regressions are costly).",
+            "lineNumber": 27
+          }
+        ]
+      },
+      "score": 0.2997223138809204
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/practical-tips.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 73
+          }
+        },
+        "contents": "# Practical development tips and patterns\n\nThis document consolidates practical tips, common patterns, gotchas, and best practices gathered from the ESP32 Rust ecosystem, community resources, and real-world development experience.\n\n## Table of contents\n\n- [Project setup](#project-setup)\n- [Async and Embassy patterns](#async-and-embassy-patterns)\n- [Memory management](#memory-management)\n- [Driver usage patterns](#driver-usage-patterns)\n- [OTA (Over-The-Air) updates](#ota-over-the-air-updates)\n- [Common gotchas](#common-gotchas)\n- [Performance tips](#performance-tips)\n- [Debugging tips](#debugging-tips)\n\n## Project setup\n\n### Using esp-generate\n\nWhen creating new projects, &#96;esp-generate&#96; is the recommended approach:\n\n&#96;&#96;&#96;bash\ncargo install esp-generate --locked\nesp-generate --chip esp32c3 your_project_name\ncd your_project_name\n&#96;&#96;&#96;\n\n**Tips:**\n- Enable \"Embassy framework support\" during setup\n- If Embassy option is unavailable, first enable \"Enable unstable HAL features\"\n- The generated project includes proper &#96;build.rs&#96;, &#96;.cargo/config.toml&#96;, and project structure\n\n### Toolchain management with espup\n\nFor multi-machine setups or CI/CD, use &#96;espup&#96;:\n\n&#96;&#96;&#96;bash\ncargo install espup\nespup install\n&#96;&#96;&#96;\n\n**Benefits:**\n- Automatically installs and configures required toolchains\n- Consistent setup across machines\n- Easier CI/CD integration\n\n### Project structure best practices\n\n- Keep &#96;build.rs&#96; - it wires up linker args and provides better error messages\n- Use &#96;.cargo/config.toml&#96; for persistent configuration (env vars override it)\n- After changing config, do a clean rebuild: &#96;cargo clean &amp;&amp; cargo build&#96;\n\n## Async and Embassy patterns\n\n### Basic task spawning pattern\n\n&#96;&#96;&#96;rust\nuse embassy_executor::Spawner;\nuse embassy_time::{Duration, Timer};\nuse log::info;\n\n#[embassy_executor::task]\nasync fn blinky_task() -&gt; ! {\n    loop {\n        info!(\"tick\");\n        Timer::after(Duration::from_secs(1)).await;\n    }\n}\n\n#[esp_rtos::main]\nasync fn main(spawner: Spawner) -&gt; ! {\n    spawner.spawn(blinky_task()).unwrap();\n    ",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# Practical development tips and patterns",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "This document consolidates practical tips, common patterns, gotchas, and best practices gathered from the ESP32 Rust ecosystem, community resources, and real-world development experience.",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "## Table of contents",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "- [Project setup](#project-setup)",
+            "lineNumber": 7
+          },
+          {
+            "text": "- [Async and Embassy patterns](#async-and-embassy-patterns)",
+            "lineNumber": 8
+          },
+          {
+            "text": "- [Memory management](#memory-management)",
+            "lineNumber": 9
+          },
+          {
+            "text": "- [Driver usage patterns](#driver-usage-patterns)",
+            "lineNumber": 10
+          },
+          {
+            "text": "- [OTA (Over-The-Air) updates](#ota-over-the-air-updates)",
+            "lineNumber": 11
+          },
+          {
+            "text": "- [Common gotchas](#common-gotchas)",
+            "lineNumber": 12
+          },
+          {
+            "text": "- [Performance tips](#performance-tips)",
+            "lineNumber": 13
+          },
+          {
+            "text": "- [Debugging tips](#debugging-tips)",
+            "lineNumber": 14
+          },
+          {
+            "lineNumber": 15
+          },
+          {
+            "text": "## Project setup",
+            "lineNumber": 16
+          },
+          {
+            "lineNumber": 17
+          },
+          {
+            "text": "### Using esp-generate",
+            "lineNumber": 18
+          },
+          {
+            "lineNumber": 19
+          },
+          {
+            "text": "When creating new projects, &#96;esp-generate&#96; is the recommended approach:",
+            "lineNumber": 20
+          },
+          {
+            "lineNumber": 21
+          },
+          {
+            "text": "&#96;&#96;&#96;bash",
+            "lineNumber": 22
+          },
+          {
+            "text": "cargo install esp-generate --locked",
+            "lineNumber": 23
+          },
+          {
+            "text": "esp-generate --chip esp32c3 your_project_name",
+            "lineNumber": 24
+          },
+          {
+            "text": "cd your_project_name",
+            "lineNumber": 25
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 26
+          },
+          {
+            "lineNumber": 27
+          },
+          {
+            "text": "**Tips:**",
+            "lineNumber": 28
+          },
+          {
+            "text": "- Enable \"Embassy framework support\" during setup",
+            "lineNumber": 29
+          },
+          {
+            "text": "- If Embassy option is unavailable, first enable \"Enable unstable HAL features\"",
+            "lineNumber": 30
+          },
+          {
+            "text": "- The generated project includes proper &#96;build.rs&#96;, &#96;.cargo/config.toml&#96;, and project structure",
+            "lineNumber": 31
+          },
+          {
+            "lineNumber": 32
+          },
+          {
+            "text": "### Toolchain management with espup",
+            "lineNumber": 33
+          },
+          {
+            "lineNumber": 34
+          },
+          {
+            "text": "For multi-machine setups or CI/CD, use &#96;espup&#96;:",
+            "lineNumber": 35
+          },
+          {
+            "lineNumber": 36
+          },
+          {
+            "text": "&#96;&#96;&#96;bash",
+            "lineNumber": 37
+          },
+          {
+            "text": "cargo install espup",
+            "lineNumber": 38
+          },
+          {
+            "text": "espup install",
+            "lineNumber": 39
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 40
+          },
+          {
+            "lineNumber": 41
+          },
+          {
+            "text": "**Benefits:**",
+            "lineNumber": 42
+          },
+          {
+            "text": "- Automatically installs and configures required toolchains",
+            "lineNumber": 43
+          },
+          {
+            "text": "- Consistent setup across machines",
+            "lineNumber": 44
+          },
+          {
+            "text": "- Easier CI/CD integration",
+            "lineNumber": 45
+          },
+          {
+            "lineNumber": 46
+          },
+          {
+            "text": "### Project structure best practices",
+            "lineNumber": 47
+          },
+          {
+            "lineNumber": 48
+          },
+          {
+            "text": "- Keep &#96;build.rs&#96; - it wires up linker args and provides better error messages",
+            "lineNumber": 49
+          },
+          {
+            "text": "- Use &#96;.cargo/config.toml&#96; for persistent configuration (env vars override it)",
+            "lineNumber": 50
+          },
+          {
+            "text": "- After changing config, do a clean rebuild: &#96;cargo clean &amp;&amp; cargo build&#96;",
+            "lineNumber": 51
+          },
+          {
+            "lineNumber": 52
+          },
+          {
+            "text": "## Async and Embassy patterns",
+            "lineNumber": 53
+          },
+          {
+            "lineNumber": 54
+          },
+          {
+            "text": "### Basic task spawning pattern",
+            "lineNumber": 55
+          },
+          {
+            "lineNumber": 56
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 57
+          },
+          {
+            "text": "use embassy_executor::Spawner;",
+            "lineNumber": 58
+          },
+          {
+            "text": "use embassy_time::{Duration, Timer};",
+            "lineNumber": 59
+          },
+          {
+            "text": "use log::info;",
+            "lineNumber": 60
+          },
+          {
+            "lineNumber": 61
+          },
+          {
+            "text": "#[embassy_executor::task]",
+            "lineNumber": 62
+          },
+          {
+            "text": "async fn blinky_task() -&gt; ! {",
+            "lineNumber": 63
+          },
+          {
+            "text": "    loop {",
+            "lineNumber": 64
+          },
+          {
+            "text": "        info!(\"tick\");",
+            "lineNumber": 65
+          },
+          {
+            "text": "        Timer::after(Duration::from_secs(1)).await;",
+            "lineNumber": 66
+          },
+          {
+            "text": "    }",
+            "lineNumber": 67
+          },
+          {
+            "text": "}",
+            "lineNumber": 68
+          },
+          {
+            "lineNumber": 69
+          },
+          {
+            "text": "#[esp_rtos::main]",
+            "lineNumber": 70
+          },
+          {
+            "text": "async fn main(spawner: Spawner) -&gt; ! {",
+            "lineNumber": 71
+          },
+          {
+            "text": "    spawner.spawn(blinky_task()).unwrap();",
+            "lineNumber": 72
+          },
+          {
+            "text": "    ",
+            "lineNumber": 73
+          }
+        ]
+      },
+      "score": 0.29584163427352905
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/configuration.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 35
+          }
+        },
+        "contents": "# Configuration (esp-config)\n\nRust-on-ESP “Configuration”:\nhttps://docs.espressif.com/projects/rust/book/application-development/configuration.html\n\n## What esp-config is for\n\nThe &#96;esp-config&#96; crate provides a way to manage configuration settings that don’t fit into Cargo features, for &#96;esp-*&#96; crates.\n\nReference:\nhttps://docs.espressif.com/projects/rust/book/application-development/configuration.html\n\n## How to set configuration\n\nRust-on-ESP describes two primary methods:\n\n1) **Environment variables** (e.g. &#96;ESP_HAL_CONFIG_*&#96;)\n2) **&#96;.cargo/config.toml&#96;** &#96;[env]&#96; section (persistent, committed)\n\nRust-on-ESP recommends doing a **clean build** after changing &#96;.cargo/config.toml&#96;.\n\nReference:\nhttps://docs.espressif.com/projects/rust/book/application-development/configuration.html\n\n## Multi-config projects (optional pattern)\n\nIf you want multiple build configurations (different boards/targets), Rust-on-ESP suggests:\n\n- a baseline &#96;.cargo/config.toml&#96;\n- additional config files under &#96;.cargo/&#96;\n- (recommended) Cargo aliases to select configs\n\nReference:\nhttps://docs.espressif.com/projects/rust/book/application-development/configuration.html",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# Configuration (esp-config)",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "Rust-on-ESP “Configuration”:",
+            "lineNumber": 3
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/configuration.html",
+            "lineNumber": 4
+          },
+          {
+            "lineNumber": 5
+          },
+          {
+            "text": "## What esp-config is for",
+            "lineNumber": 6
+          },
+          {
+            "lineNumber": 7
+          },
+          {
+            "text": "The &#96;esp-config&#96; crate provides a way to manage configuration settings that don’t fit into Cargo features, for &#96;esp-*&#96; crates.",
+            "lineNumber": 8
+          },
+          {
+            "lineNumber": 9
+          },
+          {
+            "text": "Reference:",
+            "lineNumber": 10
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/configuration.html",
+            "lineNumber": 11
+          },
+          {
+            "lineNumber": 12
+          },
+          {
+            "text": "## How to set configuration",
+            "lineNumber": 13
+          },
+          {
+            "lineNumber": 14
+          },
+          {
+            "text": "Rust-on-ESP describes two primary methods:",
+            "lineNumber": 15
+          },
+          {
+            "lineNumber": 16
+          },
+          {
+            "text": "1) **Environment variables** (e.g. &#96;ESP_HAL_CONFIG_*&#96;)",
+            "lineNumber": 17
+          },
+          {
+            "text": "2) **&#96;.cargo/config.toml&#96;** &#96;[env]&#96; section (persistent, committed)",
+            "lineNumber": 18
+          },
+          {
+            "lineNumber": 19
+          },
+          {
+            "text": "Rust-on-ESP recommends doing a **clean build** after changing &#96;.cargo/config.toml&#96;.",
+            "lineNumber": 20
+          },
+          {
+            "lineNumber": 21
+          },
+          {
+            "text": "Reference:",
+            "lineNumber": 22
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/configuration.html",
+            "lineNumber": 23
+          },
+          {
+            "lineNumber": 24
+          },
+          {
+            "text": "## Multi-config projects (optional pattern)",
+            "lineNumber": 25
+          },
+          {
+            "lineNumber": 26
+          },
+          {
+            "text": "If you want multiple build configurations (different boards/targets), Rust-on-ESP suggests:",
+            "lineNumber": 27
+          },
+          {
+            "lineNumber": 28
+          },
+          {
+            "text": "- a baseline &#96;.cargo/config.toml&#96;",
+            "lineNumber": 29
+          },
+          {
+            "text": "- additional config files under &#96;.cargo/&#96;",
+            "lineNumber": 30
+          },
+          {
+            "text": "- (recommended) Cargo aliases to select configs",
+            "lineNumber": 31
+          },
+          {
+            "lineNumber": 32
+          },
+          {
+            "text": "Reference:",
+            "lineNumber": 33
+          },
+          {
+            "text": "https://docs.espressif.com/projects/rust/book/application-development/configuration.html",
+            "lineNumber": 34
+          }
+        ]
+      },
+      "score": 0.29534539580345154
+    },
+    {
+      "codeBlock": {
+        "relativeWorkspacePath": "./docs/crates/esp-rtos.md",
+        "range": {
+          "startPosition": {},
+          "endPosition": {
+            "line": 69
+          }
+        },
+        "contents": "# &#96;esp-rtos&#96; (0.2.0)\n\n## What it does in this repo\n\nProvides the runtime integration that ties &#96;esp-hal&#96; to Embassy:\n\n- &#96;#[esp_rtos::main]&#96; attribute macro for an async &#96;main&#96;\n- scheduler/time-driver wiring via &#96;esp_rtos::start(...)&#96;\n\nIn &#96;src/bin/main.rs&#96;, we:\n\n- declare &#96;#[esp_rtos::main] async fn main(spawner: Spawner) -&gt; !&#96;\n- call &#96;esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);&#96;\n\n## Key links\n\n- API docs (docs.rs): https://docs.rs/esp-rtos/0.2.0/esp_rtos/\n- Crate page: https://crates.io/crates/esp-rtos\n- Rust-on-ESP async overview: https://docs.espressif.com/projects/rust/book/application-development/async.html\n\n## APIs you’ll likely use first\n\n- &#96;#[esp_rtos::main]&#96; (entrypoint macro)\n- &#96;esp_rtos::start(timer, software_interrupt)&#96; (start Embassy integration)\n\n## Gotchas\n\n- If you see link errors mentioning &#96;esp_rtos_*&#96; (and &#96;esp-radio&#96; “no scheduler enabled”), it often means the runtime wasn’t started correctly (see the hint printed by &#96;build.rs&#96;).\n\n## How to use it (what matters in practice)\n\n### 1) Use the &#96;#[esp_rtos::main]&#96; entrypoint\n\nThis macro gives you an async &#96;main&#96; and a &#96;Spawner&#96;:\n\n&#96;&#96;&#96;rust\nuse embassy_executor::Spawner;\n\n#[esp_rtos::main]\nasync fn main(_spawner: Spawner) -&gt; ! {\n    loop {}\n}\n&#96;&#96;&#96;\n\n### 2) Start the integration (timer + software interrupt)\n\nThis repo uses TIMG0 + SW interrupt 0 to start Embassy integration:\n\n&#96;&#96;&#96;rust\nuse esp_hal::timer::timg::TimerGroup;\n\nlet timg0 = TimerGroup::new(peripherals.TIMG0);\nlet sw_interrupt =\n    esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);\n\nesp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);\n&#96;&#96;&#96;\n\n## Complete API inventory\n\nFull API index: See local docs at &#96;target/riscv32imc-unknown-none-elf/doc/esp_rtos/all.html&#96;\n\n### Structs\n- **&#96;CurrentThreadHandle&#96;**: Handle to the current thread.\n- **&#96;embassy::Executor&#96;**: Embassy executor integration.\n- **&#96;embassy::InterruptExecutor&#96;**: Embassy interrupt executor integration.\n- **&#96;semaphore::Semaphore&#96;**: Semaphore for synchronization.\n\n### Traits",
+        "signatures": {},
+        "detailedLines": [
+          {
+            "text": "# &#96;esp-rtos&#96; (0.2.0)",
+            "lineNumber": 1
+          },
+          {
+            "lineNumber": 2
+          },
+          {
+            "text": "## What it does in this repo",
+            "lineNumber": 3
+          },
+          {
+            "lineNumber": 4
+          },
+          {
+            "text": "Provides the runtime integration that ties &#96;esp-hal&#96; to Embassy:",
+            "lineNumber": 5
+          },
+          {
+            "lineNumber": 6
+          },
+          {
+            "text": "- &#96;#[esp_rtos::main]&#96; attribute macro for an async &#96;main&#96;",
+            "lineNumber": 7
+          },
+          {
+            "text": "- scheduler/time-driver wiring via &#96;esp_rtos::start(...)&#96;",
+            "lineNumber": 8
+          },
+          {
+            "lineNumber": 9
+          },
+          {
+            "text": "In &#96;src/bin/main.rs&#96;, we:",
+            "lineNumber": 10
+          },
+          {
+            "lineNumber": 11
+          },
+          {
+            "text": "- declare &#96;#[esp_rtos::main] async fn main(spawner: Spawner) -&gt; !&#96;",
+            "lineNumber": 12
+          },
+          {
+            "text": "- call &#96;esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);&#96;",
+            "lineNumber": 13
+          },
+          {
+            "lineNumber": 14
+          },
+          {
+            "text": "## Key links",
+            "lineNumber": 15
+          },
+          {
+            "lineNumber": 16
+          },
+          {
+            "text": "- API docs (docs.rs): https://docs.rs/esp-rtos/0.2.0/esp_rtos/",
+            "lineNumber": 17
+          },
+          {
+            "text": "- Crate page: https://crates.io/crates/esp-rtos",
+            "lineNumber": 18
+          },
+          {
+            "text": "- Rust-on-ESP async overview: https://docs.espressif.com/projects/rust/book/application-development/async.html",
+            "lineNumber": 19
+          },
+          {
+            "lineNumber": 20
+          },
+          {
+            "text": "## APIs you’ll likely use first",
+            "lineNumber": 21
+          },
+          {
+            "lineNumber": 22
+          },
+          {
+            "text": "- &#96;#[esp_rtos::main]&#96; (entrypoint macro)",
+            "lineNumber": 23
+          },
+          {
+            "text": "- &#96;esp_rtos::start(timer, software_interrupt)&#96; (start Embassy integration)",
+            "lineNumber": 24
+          },
+          {
+            "lineNumber": 25
+          },
+          {
+            "text": "## Gotchas",
+            "lineNumber": 26
+          },
+          {
+            "lineNumber": 27
+          },
+          {
+            "text": "- If you see link errors mentioning &#96;esp_rtos_*&#96; (and &#96;esp-radio&#96; “no scheduler enabled”), it often means the runtime wasn’t started correctly (see the hint printed by &#96;build.rs&#96;).",
+            "lineNumber": 28
+          },
+          {
+            "lineNumber": 29
+          },
+          {
+            "text": "## How to use it (what matters in practice)",
+            "lineNumber": 30
+          },
+          {
+            "lineNumber": 31
+          },
+          {
+            "text": "### 1) Use the &#96;#[esp_rtos::main]&#96; entrypoint",
+            "lineNumber": 32
+          },
+          {
+            "lineNumber": 33
+          },
+          {
+            "text": "This macro gives you an async &#96;main&#96; and a &#96;Spawner&#96;:",
+            "lineNumber": 34
+          },
+          {
+            "lineNumber": 35
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 36
+          },
+          {
+            "text": "use embassy_executor::Spawner;",
+            "lineNumber": 37
+          },
+          {
+            "lineNumber": 38
+          },
+          {
+            "text": "#[esp_rtos::main]",
+            "lineNumber": 39
+          },
+          {
+            "text": "async fn main(_spawner: Spawner) -&gt; ! {",
+            "lineNumber": 40
+          },
+          {
+            "text": "    loop {}",
+            "lineNumber": 41
+          },
+          {
+            "text": "}",
+            "lineNumber": 42
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 43
+          },
+          {
+            "lineNumber": 44
+          },
+          {
+            "text": "### 2) Start the integration (timer + software interrupt)",
+            "lineNumber": 45
+          },
+          {
+            "lineNumber": 46
+          },
+          {
+            "text": "This repo uses TIMG0 + SW interrupt 0 to start Embassy integration:",
+            "lineNumber": 47
+          },
+          {
+            "lineNumber": 48
+          },
+          {
+            "text": "&#96;&#96;&#96;rust",
+            "lineNumber": 49
+          },
+          {
+            "text": "use esp_hal::timer::timg::TimerGroup;",
+            "lineNumber": 50
+          },
+          {
+            "lineNumber": 51
+          },
+          {
+            "text": "let timg0 = TimerGroup::new(peripherals.TIMG0);",
+            "lineNumber": 52
+          },
+          {
+            "text": "let sw_interrupt =",
+            "lineNumber": 53
+          },
+          {
+            "text": "    esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);",
+            "lineNumber": 54
+          },
+          {
+            "lineNumber": 55
+          },
+          {
+            "text": "esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);",
+            "lineNumber": 56
+          },
+          {
+            "text": "&#96;&#96;&#96;",
+            "lineNumber": 57
+          },
+          {
+            "lineNumber": 58
+          },
+          {
+            "text": "## Complete API inventory",
+            "lineNumber": 59
+          },
+          {
+            "lineNumber": 60
+          },
+          {
+            "text": "Full API index: See local docs at &#96;target/riscv32imc-unknown-none-elf/doc/esp_rtos/all.html&#96;",
+            "lineNumber": 61
+          },
+          {
+            "lineNumber": 62
+          },
+          {
+            "text": "### Structs",
+            "lineNumber": 63
+          },
+          {
+            "text": "- **&#96;CurrentThreadHandle&#96;**: Handle to the current thread.",
+            "lineNumber": 64
+          },
+          {
+            "text": "- **&#96;embassy::Executor&#96;**: Embassy executor integration.",
+            "lineNumber": 65
+          },
+          {
+            "text": "- **&#96;embassy::InterruptExecutor&#96;**: Embassy interrupt executor integration.",
+            "lineNumber": 66
+          },
+          {
+            "text": "- **&#96;semaphore::Semaphore&#96;**: Semaphore for synchronization.",
+            "lineNumber": 67
+          },
+          {
+            "lineNumber": 68
+          },
+          {
+            "text": "### Traits",
+            "lineNumber": 69
+          }
+        ]
+      },
+      "score": 0.2940267324447632
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+
+Restructuring the document for development use: organizing by implementation tasks, adding quick reference sections, and correcting code examples to match the project's `esp-hal` patterns.
+
+
+---
+
+An unknown error occurred
+
+---
+
+
+Restructuring the document for development use: organizing by implementation tasks, adding quick reference sections, and fixing code examples.
+
 
 ---
 

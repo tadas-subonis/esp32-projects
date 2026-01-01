@@ -1,854 +1,344 @@
 # Waveshare ESP32-S3-Touch-AMOLED-1.8 & LILYGO T-Circle-S3
-## Comprehensive Technical Specification (for Rust embedded development)
+## Hardware Reference for Rust Embedded Development
 
-**Scope / status**
-
-- This document is a **hardware reference** (pinout, buses, chips, addresses, peripherals) for:
-  - **Waveshare ESP32-S3-Touch-AMOLED-1.8**
-  - **LILYGO T-Circle-S3**
-- This repository currently documents/builds an **ESP32-C3 `no_std` + Embassy + `esp-hal`** stack. Several code snippets below mention **ESP-IDF / `esp-idf-hal`** patterns; treat those as **illustrative/pseudo-code** unless the project is explicitly switched to an ESP-IDF (std) stack.
-- When implementing anything hardware-specific in this repo, **prefer the pin/I²C address tables** and validate against the actual schematic/board revision.
+> **⚠️ Important**: This document describes **ESP32-S3 (Xtensa)** boards. This repository currently targets **ESP32-C3 (RISC-V)** with `esp-hal` + Embassy. Use this as a hardware reference when porting to ESP32-S3 or implementing similar features.
 
 ---
 
-## TABLE OF CONTENTS
+## Quick Reference (Most Used)
 
-1. Device Overview & Specifications
-2. GPIO Pinout & Hardware Interfaces
-3. Display Systems & Controllers
-4. Sensor & Peripheral Architecture
-5. Power Management System
-6. Communication Interfaces
-7. Rust Development Environment Setup
-8. Code Configuration & Settings
-9. Memory Layout & Storage
-10. Development Resources & Tips
+### I2C Address Map (Primary Bus: GPIO11/SDA, GPIO12/SCL)
 
----
+| Device | Address | Function |
+|--------|---------|----------|
+| **FT3168** Touch | `0x38` | Capacitive touch (AMOLED board) |
+| **CST816D** Touch | `0x15` | Capacitive touch (T-Circle-S3) |
+| **QMI8658** IMU | `0x6B` | 6-axis accelerometer + gyroscope |
+| **PCF85063** RTC | `0x51` | Real-time clock with backup battery |
+| **ES8311** Audio | `0x18` | Audio codec (I2S + I2C control) |
+| **AXP2101** PMIC | `0x34` | Power management IC |
+| **TCA9554** GPIO Expander | `0x20` | 8-bit I/O expander |
 
-## 1. DEVICE OVERVIEW & SPECIFICATIONS
+### Pin Mapping Quick Reference
 
-### 1.1 Waveshare ESP32-S3-Touch-AMOLED-1.8
+#### Waveshare ESP32-S3-Touch-AMOLED-1.8
 
-**Processor:**
-- **MCU:** ESP32-S3R8 (Xtensa LX7 Dual-Core @ up to 240 MHz)
-- **Architecture:** Xtensa (requires ESP-specific Rust toolchain)
-- **Cores:** 2 cores @ 240 MHz
+| Function | GPIO Pins | Notes |
+|----------|-----------|-------|
+| **Display (SH8601 QSPI)** | GPIO6,7,11,13,14,38 | QSPI interface, ~330 KB frame buffer |
+| **I2C Primary Bus** | GPIO11 (SDA), GPIO12 (SCL) | Shared by 6 devices (see I2C table) |
+| **Touch (FT3168)** | GPIO11/12 (I2C) + INT/RST pins | I2C address: 0x38 |
+| **IMU (QMI8658)** | GPIO11/12 (I2C) | Interrupt via TCA9554 EXIO6 |
+| **RTC (PCF85063)** | GPIO11/12 (I2C) | Interrupt via TCA9554 EXIO5 |
+| **Audio (ES8311)** | GPIO8,9,16,45,46 (I2S) + I2C | I2S + I2C control |
+| **SD Card** | GPIO1,2,3 (SPI) + EXIO7 (CS) | CS via GPIO expander |
+| **UART Debug** | GPIO43 (TX), GPIO44 (RX) | 115200 baud standard |
+| **GPIO Expander** | GPIO11/12 (I2C) | Controls EXIO0-7 |
+| **Power Button** | EXIO4 (via expander) | Read via TCA9554 |
+| **Boot Button** | GPIO0 | Download mode / GPIO |
 
-**Memory:**
-- **SRAM:** 512 KB (onboard) + 8 MB PSRAM
-- **ROM:** 384 KB
-- **Flash:** 16 MB (external SPI NOR)
+#### LILYGO T-Circle-S3
 
-**Wireless:**
-- **WiFi:** 802.11 b/g/n @ 2.4 GHz
-- **Bluetooth:** BLE 5.0 (onboard antenna)
+| Function | GPIO Pins | Notes |
+|----------|-----------|-------|
+| **Display (GC9D01N)** | Standard SPI pins | 160×160 circular, ~51 KB frame buffer |
+| **Touch (CST816D)** | Standard I2C | I2C address: 0x15 |
+| **Audio I2S** | Standard I2S pins | MAX98357A amp + MSM261 mic |
+| **RGB LED** | GPIO (varies) | APA102 SPI LED |
+| **Expansion** | 6× GPIO headers | 2× 4-pin headers + Qwiic I2C |
 
-**Display:**
-- **Panel:** 1.8-inch AMOLED
-- **Resolution:** 368 × 448 pixels
-- **Colors:** 16.7M (8-bit RGB)
-- **Driver IC:** SH8601 (QSPI interface)
-- **Brightness:** 350 cd/㎡
-- **Contrast Ratio:** 100,000:1
-- **Response Time:** Fast (AMOLED advantage)
+### Memory Requirements
 
-**Touch Controller:**
-- **IC:** FT3168 capacitive touch
-- **Interface:** I2C
-- **Communication Speed:** 10 kHz - 400 kHz (configurable)
-
-**Onboard Sensors & Peripherals:**
-- **IMU:** QMI8658 6-axis (3-axis accel + 3-axis gyro) via I2C
-- **RTC:** PCF85063 with backup battery support
-- **Audio Codec:** ES8311 (I2S interface)
-- **Microphone:** Built-in MEMS microphone
-- **Speaker:** 3.7V MX1.25 lithium battery connector + amplifier
-- **GPIO Expander:** TCA9554 (8-pin I/O expansion via I2C)
-- **Power Manager:** AXP2101 (battery charging, power regulation)
-- **Storage:** TF/SD card slot (SPI)
-
-**Physical:**
-- **Compact form factor** optimized for wearables
-- **Side buttons:** PWR and BOOT buttons
-- **Exposed GPIOs:** 7× GPIO pads, 1× I2C, 1× UART, 1× USB
+| Component | Memory Needed |
+|-----------|---------------|
+| **AMOLED Frame Buffer** | ~330 KB (368×448×2 bytes) |
+| **T-Circle Frame Buffer** | ~51 KB (160×160×2 bytes) |
+| **Graphics Buffers** | ~500 KB (recommended) |
+| **Audio Buffers** | ~64 KB |
 
 ---
 
-### 1.2 LILYGO T-Circle-S3
+## Device Specifications
 
-**Processor:**
-- **MCU:** ESP32-S3R8 (identical to AMOLED variant)
-- **Cores:** 2 @ 240 MHz Xtensa LX7
+### Waveshare ESP32-S3-Touch-AMOLED-1.8
 
-**Memory:**
-- **SRAM:** 512 KB
-- **PSRAM:** 8 MB
-- **ROM:** 384 KB
-- **Flash:** 16 MB
+**MCU:** ESP32-S3R8 (Xtensa LX7 Dual-Core @ 240 MHz)  
+**Memory:** 512 KB SRAM + 8 MB PSRAM + 16 MB Flash  
+**Display:** 1.8" AMOLED, 368×448, SH8601 QSPI driver  
+**Touch:** FT3168 capacitive (I2C @ 0x38)  
+**Sensors:** QMI8658 IMU (I2C @ 0x6B), PCF85063 RTC (I2C @ 0x51)  
+**Audio:** ES8311 codec (I2S + I2C @ 0x18)  
+**Power:** AXP2101 PMIC (I2C @ 0x34), 3.7V Li-ion battery  
+**Expansion:** TCA9554 GPIO expander (I2C @ 0x20), SD card slot
 
-**Display:**
-- **Panel:** 0.75-inch circular TFT LCD
-- **Resolution:** 160 × 160 pixels (circular)
-- **Colors:** 262K (16-bit RGB)
-- **Driver IC:** GC9D01N (SPI interface)
-- **Bus:** Standard SPI
+### LILYGO T-Circle-S3
 
-**Touch Controller:**
-- **IC:** CST816D capacitive touch
-- **Interface:** I2C
-
-**Audio:**
-- **Amplifier:** Maxim MAX98357A Class-D (I²S, 3W output)
-- **Microphone:** Goertek MSM261 I²S MEMS microphone
-
-**Expansion:**
-- **GPIO Headers:** 6× GPIOs on back (2× 4-pin female headers)
-- **Qwiic:** I²C connector
-- **LED:** APA102 RGB LED
-
-**Power & Physical:**
-- **USB:** Type-C (5V 500mA charging)
-- **Reset Button:** Yes
-- **Size:** 32 mm (base) × 28 mm (top) × 17 mm height
+**MCU:** ESP32-S3R8 (Xtensa LX7 Dual-Core @ 240 MHz)  
+**Memory:** 512 KB SRAM + 8 MB PSRAM + 16 MB Flash  
+**Display:** 0.75" circular TFT, 160×160, GC9D01N SPI driver  
+**Touch:** CST816D capacitive (I2C @ 0x15)  
+**Audio:** MAX98357A amp + MSM261 mic (I2S)  
+**Expansion:** 6× GPIO headers, Qwiic I2C connector, APA102 RGB LED
 
 ---
 
-## 2. GPIO PINOUT & HARDWARE INTERFACES
+## Implementation Guides
 
-### 2.1 ESP32-S3-Touch-AMOLED-1.8 - Pin Assignments
+### 1. Implementing I2C Bus (Primary)
 
-#### Display Interface (QSPI - Primary)
+**Hardware:** GPIO11 (SDA), GPIO12 (SCL)  
+**Speed:** 100-400 kHz (configurable)  
+**Devices:** 6 devices on shared bus (see I2C address table)
 
-```
-Display (SH8601 QSPI):
-├─ LCD_CS      → GPIO chip select
-├─ LCD_SCLK    → SPI clock
-├─ LCD_SDIO0   → Serial data I/O 0
-├─ LCD_SDIO1   → Serial data I/O 1
-├─ LCD_SDIO2   → Serial data I/O 2
-├─ LCD_SDIO3   → Serial data I/O 3
-├─ LCD_RESET   → Display reset
-└─ LCD_TE      → Tearing effect signal
-
-Recommended GPIO mapping (from schematic):
-GPIO38  → LCD_CS
-GPIO7   → LCD_SCLK (part of QSPI)
-GPIO6,11,13,14 → QSPI data lines
-```
-
-#### Touch Interface (I2C)
-
-```
-Touch (FT3168):
-├─ TP_SDA      → I2C Data (GPIO11 or SDA)
-├─ TP_SCL      → I2C Clock (GPIO12 or SCL)
-├─ TP_INT      → Touch interrupt pin
-├─ TP_RESET    → Touch controller reset
-└─ I2C Address: 0x38 (standard FT3168)
-```
-
-#### Sensor Interface (I2C - Same Bus)
-
-```
-Shared I2C Bus (Primary):
-├─ SDA (GPIO11)  ┐
-└─ SCL (GPIO12)  ├─ Connects to:
-                 │  • FT3168 Touch (0x38)
-                 │  • QMI8658 IMU (0x6B)
-                 │  • PCF85063 RTC
-                 │  • ES8311 Audio Codec
-                 │  • AXP2101 Power Manager
-                 │  • TCA9554 GPIO Expander
-                 └─ Max devices: 6
-```
-
-#### UART Interface
-
-```
-Serial Debug UART:
-├─ GPIO43 (U0TXD) → Serial TX
-├─ GPIO44 (U0RXD) → Serial RX
-└─ Baud: 115200 (standard)
-```
-
-#### SD/TF Card Interface (SPI)
-
-```
-SD Card (SPI Mode):
-├─ GPIO1  (GPIO1)  → MOSI (DI)
-├─ GPIO2  (GPIO2)  → SCLK
-├─ GPIO3  (GPIO3)  → MISO (DO)
-├─ EXIO7           → CS (chip select)
-└─ Voltage: 3.3V
-```
-
-#### Audio Codec (I2S)
-
-```
-I2S Audio (ES8311):
-├─ GPIO8   → I2S_SCLK (serial clock)
-├─ GPIO9   → I2S_LRCK (left/right clock)
-├─ GPIO16  → I2S_DSDIN (data in)
-├─ GPIO45  → I2S_ASDOUT (data out)
-├─ GPIO46  → I2S_MCLK (master clock)
-└─ I2C Control on main I2C bus (SDA/SCL)
-```
-
-#### GPIO Expansion (TCA9554 via I2C)
-
-```
-Expander Outputs:
-├─ EXIO0 → GPIO expander pin 0
-├─ EXIO1 → GPIO expander pin 1
-├─ EXIO2 → GPIO expander pin 2
-├─ EXIO3 → GPIO expander pin 3
-├─ EXIO4 → POWER button logic
-├─ EXIO5 → RTC interrupt
-├─ EXIO6 → IMU interrupt
-└─ EXIO7 → SD card CS (as above)
-```
-
-#### Power Button & Boot
-
-```
-Physical Buttons:
-├─ PWR (EXIO4)  → Power management
-├─ BOOT (GPIO0) → Download mode / GPIO
-└─ Note: Requires I2C expander read for PWR state
-```
-
-#### External Pin Headers
-
-```
-Reserved GPIO Pads (100mil pitch):
-├─ GPIO17, GPIO18
-├─ GPIO21
-├─ GPIO40, GPIO39
-├─ GPIO45, GPIO46
-├─ GPIO42, GPIO41
-├─ Voltage: 3.3V (pull-ups/downs configured)
-└─ Available for custom peripherals
-```
-
----
-
-### 2.2 LILYGO T-Circle-S3 - Pin Assignments
-
-#### Display Interface (SPI)
-
-```
-Display (GC9D01N SPI):
-├─ CS   → Chip select
-├─ CLK  → SPI clock
-├─ MOSI → Serial data out
-├─ MISO → Serial data in
-└─ RST  → Display reset
-
-Note: Pinout varies - check board documentation
-Typical Arduino_GFX configuration available
-```
-
-#### Touch Interface (I2C)
-
-```
-Touch (CST816D):
-├─ SDA → I2C Data
-├─ SCL → I2C Clock
-├─ INT → Touch interrupt
-└─ I2C Address: 0x15
-```
-
-#### Audio System (I2S + I2C)
-
-```
-Microphone (I2S):
-├─ SCL → I2S serial clock
-├─ LRC → I2S left/right clock
-├─ DATA → I2S data in
-
-Speaker Amplifier (I2S):
-├─ SCL → I2S serial clock
-├─ LRC → I2S left/right clock
-├─ DATA → I2S data out
-
-Both share I2C control bus
-```
-
-#### Expansion Pins (6× GPIO)
-
-```
-Rear Headers:
-├─ Header 1 (4-pin): 4 GPIO connections
-├─ Header 2 (4-pin): 4 GPIO connections + GND/3.3V
-└─ Qwiic I2C connector on side
-```
-
----
-
-## 3. DISPLAY SYSTEMS & CONTROLLERS
-
-### 3.1 ESP32-S3-Touch-AMOLED-1.8 (SH8601 QSPI)
-
-**SH8601 Driver Specifications:**
-
-```
-Interface: QSPI (Quad SPI - 4-line data)
-Data Width: 16-bit RGB565 per pixel
-Max Speed: ~100 MHz QSPI clock
-Memory Required: ~330 KB for full frame buffer (368×448×2 bytes)
-```
-
-**Rust HAL Initialization Pattern:**
+**With `esp-hal` (ESP32-S3):**
 
 ```rust
-// Enable QSPI peripheral
-let qspi = io.pins.gpio6.into();  // Data 0
-let qspi1 = io.pins.gpio11.into(); // Data 1
-let qspi2 = io.pins.gpio13.into(); // Data 2
-let qspi3 = io.pins.gpio14.into(); // Data 3
-let sclk = io.pins.gpio7.into();   // Clock
-let cs = io.pins.gpio38.into();    // Chip select
+use esp_hal::i2c::{I2c, I2cConfig, ClockSpeed};
+use esp_hal::gpio::{Io, InputOutput};
 
-// Configuration
-let qspi_config = QspiConfig::default()
-    .frequency(40.MHz())  // Conservative start
-    .max_transfer_size(MaxTransferSize::Bytes32);
-```
-
-**Key Controller Features:**
-- Supports 16-bit RGB565 color depth
-- MIPI DSI interface alternative (not used in QSPI mode)
-- Built-in gamma correction
-- Hardware support for rotation
-- Partial display updates
-
----
-
-### 3.2 LILYGO T-Circle-S3 (GC9D01N SPI)
-
-**GC9D01N Driver Specifications:**
-
-```
-Interface: Standard 4-wire SPI
-Data Width: 16-bit (RGB565)
-Max Speed: ~40 MHz SPI clock
-Memory Required: ~51 KB for full frame buffer (160×160×2 bytes)
-Built-in: Circular display optimization
-
-Rust Configuration:
-- Use Arduino_GFX library or direct SPI control
-- CST816D touch controller on separate I2C bus
-```
-
-**Key Advantages:**
-- Circular display automatically handled by IC
-- Simpler SPI interface vs QSPI
-- Excellent for wearable interfaces
-- Lower power consumption than AMOLED
-
----
-
-## 4. SENSOR & PERIPHERAL ARCHITECTURE
-
-### 4.1 IMU Sensor (QMI8658)
-
-**Specifications:**
-
-```
-Type: 6-axis IMU (3-axis accelerometer + 3-axis gyroscope)
-I2C Address: 0x6B (standard configuration)
-I2C Bus: Shared primary I2C (GPIO11/SDA, GPIO12/SCL)
-Interrupt Pin: GPIO10 (through TCA9554 as EXIO6)
-```
-
-**Rust Configuration:**
-
-```rust
-// I2C address and initialization
-const QMI8658_ADDRESS: u8 = 0x6B;
+// Initialize GPIO
+let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+let sda = InputOutput::new(io.pins.gpio11, esp_hal::gpio::OutputDrive::Standard);
+let scl = InputOutput::new(io.pins.gpio12, esp_hal::gpio::OutputDrive::Standard);
 
 // Create I2C driver
-let i2c = I2cDriver::new(
-    peripherals.i2c0,
-    io.pins.gpio11,  // SDA
-    io.pins.gpio12,  // SCL
-    &Default::default(),
-)?;
-
-// Accelerometer range: ±8G typical
-// Gyroscope range: ±2000°/s typical
-```
-
-**Data Output Format:**
-- Acceleration: X, Y, Z (3 × 16-bit signed)
-- Gyroscope: X, Y, Z (3 × 16-bit signed)
-- Data ready interrupt available
-
----
-
-### 4.2 RTC Module (PCF85063)
-
-**Specifications:**
-
-```
-Type: Real-time clock with backup battery
-I2C Address: 0x51 (standard)
-Bus: Primary I2C
-Backup Power: 3.7V MX1.25 lithium battery connector
-Features:
-  - Alarm functions
-  - Interrupt output
-  - Temperature compensation
-```
-
-**Rust Usage:**
-
-```rust
-const RTC_ADDRESS: u8 = 0x51;
-// Time stored as BCD (Binary Coded Decimal)
-// Registers: Seconds, Minutes, Hours, Day, Month, Year
-```
-
----
-
-### 4.3 Audio Codec (ES8311)
-
-**Specifications:**
-
-```
-Type: Low-power audio codec
-Interface: I2S + I2C control
-I2S Pins: GPIO8 (SCLK), GPIO9 (LRCK), GPIO16/45 (data)
-I2C Control Address: 0x18
-Sampling Rates: 8 kHz - 192 kHz
-Bit Depth: Up to 32-bit
-Microphone Input: Direct connection
-Speaker Output: Through MAX98357A amplifier
-```
-
-**Rust I2S Configuration:**
-
-```rust
-const ES8311_I2C_ADDR: u8 = 0x18;
-
-// I2S configuration
-let i2s_config = i2s::I2sConfig::default()
-    .sample_rate(16000.Hz())  // Typical voice
-    .bits_per_sample(i2s::BitsPerSample::Bits16)
-    .tx_frame_sync()
-    .rx_frame_sync();
-```
-
----
-
-### 4.4 Power Management (AXP2101)
-
-**Specifications:**
-
-```
-Type: Integrated Power Management Unit (PMIC)
-I2C Address: 0x34
-Bus: Primary I2C
-Features:
-  - Multiple DC-DC converters
-  - LDO outputs
-  - Battery charging circuit
-  - Power path management
-  - ADC for voltage/current monitoring
-  - Sleep mode control
-
-Output Rails:
-├─ DCDC1: Fixed 3.3V (system power)
-├─ DCDC2: 0.9V (core)
-├─ DCDC3: 1.2V (SRAM/ROM)
-├─ DCDC4: 1.8V (peripherals)
-├─ ALDO1-4: 3.3V analog rails
-├─ BLDO1-2: 2.8V backup power
-└─ RTCLDO: RTC supply
-```
-
----
-
-### 4.5 GPIO Expander (TCA9554)
-
-**Specifications:**
-
-```
-Type: 8-bit I/O expander
-I2C Address: 0x20 (configurable via pins)
-Bus: Primary I2C
-Features:
-  - 8 independent I/O pins
-  - Programmable polarity
-  - Input/output direction per pin
-  - Interrupt support
-  - 100 kHz - 400 kHz I2C speed
-
-Pin Mapping (EXIO0-7):
-├─ EXIO0-3: General GPIO
-├─ EXIO4: Power button logic
-├─ EXIO5: RTC interrupt signal
-├─ EXIO6: IMU interrupt signal
-└─ EXIO7: SD card chip select
-```
-
-**Rust Initialization:**
-
-```rust
-const TCA9554_ADDRESS: u8 = 0x20;
-// Register: 0x03 = Output port register
-// Register: 0x01 = Input port register
-// Register: 0x00 = Input/Output selection
-```
-
----
-
-## 5. POWER MANAGEMENT SYSTEM
-
-### 5.1 Battery & Charging
-
-**Specifications:**
-
-```
-Battery Type: 3.7V MX1.25 lithium ion
-Charging Method: USB Type-C 5V input
-Charging Circuit: AXP2101 PMIC
-Max Charge Current: 500mA (USB Type-C limited)
-```
-
-**Rust Power API Pattern:**
-
-```rust
-// Read battery voltage
-let battery_voltage = read_axp_adc(0x26);  // Battery ADC
-
-// Set charging current limit
-let charge_config = 0x80;  // 500mA typical
-
-// Enable sleep modes for battery conservation
-peripherals.RTC.CNTL.modify(|_, w| w.sleep_en().set_bit());
-```
-
----
-
-### 5.2 Power Domains & Isolation
-
-**Active Power Draw:**
-- Display: 50-150 mA (AMOLED) / 10-50 mA (LCD)
-- CPU @ 240 MHz: 80-150 mA
-- Wireless: 40-200 mA (WiFi/BLE)
-- Sensors: 2-10 mA combined
-- Total active: ~200-400 mA
-
-**Sleep Modes:**
-- Light Sleep: ~10 mA
-- Deep Sleep: ~0.1 mA
-- Sensor Wake-up possible
-
----
-
-## 6. COMMUNICATION INTERFACES
-
-### 6.1 WiFi (802.11 b/g/n)
-
-**Specifications:**
-
-```
-Frequency: 2.4 GHz
-Standards: 802.11 b (1 Mbps), g (11 Mbps), n (65 Mbps)
-Antenna: Onboard SMD antenna
-Typical Range: 50-100m (open space)
-Current Draw: 40-200 mA depending on state
-```
-
-### 6.2 Bluetooth Low Energy (BLE 5.0)
-
-**Specifications:**
-
-```
-Version: BLE 5.0
-Frequency: 2.4 GHz (same as WiFi)
-TX Power: +3 dBm to +20 dBm (software configurable)
-Range: 50-100m (line of sight)
-Profiles: GAP, GATT, HFP (if enabled)
-```
-
-### 6.3 I2C Bus Architecture
-
-**Primary I2C (GPIO11/SDA, GPIO12/SCL):**
-
-```
-Speed: 100 kHz - 400 kHz (configurable)
-Devices:
-├─ FT3168 Touch (0x38)
-├─ QMI8658 IMU (0x6B)
-├─ PCF85063 RTC (0x51)
-├─ ES8311 Audio (0x18)
-├─ AXP2101 Power (0x34)
-└─ TCA9554 Expander (0x20)
-
-Total: 6 devices maximum on standard I2C
-```
-
-Rust Configuration:
-
-```rust
-const I2C_FREQUENCY: u32 = 100_000;  // 100 kHz standard
-let i2c = I2cDriver::new(
-    peripherals.i2c0,
-    sda_pin,
-    scl_pin,
-    &I2cConfig {
-        baudrate: I2C_FREQUENCY.Hz(),
-        ..Default::default()
-    },
-)?;
-```
-
-### 6.4 SPI Interfaces
-
-**Primary SPI (Display QSPI - AMOLED):**
-
-```
-Clock: 40 MHz standard
-Mode: QSPI (4 data lines)
-CS: GPIO38
-Data pins: GPIO6, 11, 13, 14
-CLK: GPIO7
-Transaction size: Up to 4096 bytes
-```
-
-**Secondary SPI (SD Card):**
-
-```
-Clock: 20-40 MHz
-Mode: Standard 4-wire SPI
-CS: EXIO7 (through TCA9554 expander)
-Data pins: GPIO1 (MOSI), GPIO3 (MISO)
-CLK: GPIO2
-```
-
-**T-Circle-S3 SPI (Display):**
-
-```
-Clock: 40 MHz standard
-Mode: Standard 4-wire SPI
-Interface: Arduino_GFX library compatible
-```
-
----
-
-## 7. RUST DEVELOPMENT ENVIRONMENT SETUP
-
-### 7.1 Prerequisites & Installation
-
-**Step 1: Install Rust ESP Toolchain**
-
-```bash
-# Download and run installer
-curl -LO https://raw.githubusercontent.com/esp-rs/rust-build/main/install-rust-toolchain.sh
-chmod +x install-rust-toolchain.sh
-./install-rust-toolchain.sh
-
-# Source environment (add to ~/.bashrc or ~/.zshrc)
-source export-esp.sh
-```
-
-**Step 2: Install Development Tools**
-
-```bash
-cargo install espflash cargo-espflash espmonitor ldproxy
-```
-
-**Step 3: Create Project from Template**
-
-```bash
-cargo install cargo-generate
-cargo generate --git https://github.com/esp-rs/esp-idf-template.git
-# Select: esp32s3 (Xtensa architecture)
-# Select features: heap, logging, Wi-Fi/BLE as needed
-```
-
----
-
-### 7.2 Cargo.toml Configuration
-
-**For ESP32-S3 with ESP-IDF:**
-
-```toml
-[package]
-name = "esp32-amoled-project"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-esp-idf-sys = { version = "0.33", features = ["esp32s3"] }
-esp-idf-hal = { version = "0.42", features = ["esp32s3"] }
-esp-idf-svc = { version = "0.47" }
-
-# Display & Graphics
-esp-idf-drv-st7789 = "0.1"  # For other displays
-ili9341 = "0.5"
-
-# Sensors
-mpu6050 = "0.6"  # For IMU-like sensors
-ds18b20 = "0.1"  # For temperature
-
-# Audio
-i2s-hal = "0.1"
-
-# Serial/Logging
-esp-println = "0.5"
-log = "0.4"
-
-# Async runtime (optional)
-embassy-executor = { version = "0.5", features = ["executor-thread"] }
-embassy-time = { version = "0.3", features = ["esp-hal-timer"] }
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-
-[profile.dev]
-opt-level = 0
-```
-
----
-
-### 7.3 Target Triple Configuration
-
-**Create `.cargo/config.toml`:**
-
-```toml
-[build]
-target = "xtensa-esp32s3-espidf"
-
-[target.xtensa-esp32s3-espidf]
-linker = "ldproxy"
-runner = "espflash flash --monitor"
-
-[target.xtensa-esp32s3-espidf.env]
-ESP_IDF_VERSION = "release/v5.0"
-```
-
----
-
-## 8. CODE CONFIGURATION & SETTINGS
-
-### 8.1 Basic "Hello World" Rust Code
-
-```rust
-use esp_idf_sys as _;
-use esp_idf_hal::{
-    clock::ClockControl,
-    delay::Delay,
-    gpio::IO,
-    peripherals::Peripherals,
-    prelude::*,
-    system::SystemControl,
-};
-use esp_println::println;
-
-fn main() {
-    // Get peripherals
-    let peripherals = Peripherals::take().unwrap();
-    let system = SystemControl::new(peripherals.system);
-    
-    // Configure clocks (80 MHz for battery life, up to 240 MHz available)
-    let clocks = ClockControl::max(system.clock_control).freeze();
-    let delay = Delay::new(&clocks);
-    
-    // Initialize logging
-    esp_println::logger::init_logger_from_env();
-    
-    println!("System initialized at {} MHz", clocks.cpu_freq().mhz());
-    
-    loop {
-        println!("Hello from ESP32-S3!");
-        delay.delay_ms(1000u32);
+let config = I2cConfig::new()
+    .clock_speed(ClockSpeed::KHz100);  // Start conservative
+
+let mut i2c = I2c::new(
+    peripherals.I2C0,
+    sda,
+    scl,
+    config,
+    &clocks,
+);
+
+// Scan bus (optional)
+for addr in 0x08..=0x77 {
+    if i2c.write(addr, &[], &mut []).is_ok() {
+        info!("Device found at 0x{:02X}", addr);
     }
 }
 ```
 
----
-
-### 8.2 Display Driver Configuration
-
-**AMOLED (SH8601 QSPI) - Pseudo-code:**
+**Common I2C Operations:**
 
 ```rust
-use esp_idf_hal::spi::{SpiDriver, SpiConfig};
-use esp_idf_hal::gpio::Level;
+// Read from device
+let mut buffer = [0u8; 6];
+i2c.write_read(0x6B, &[0x00], &mut buffer)?;  // Read from QMI8658
 
-// Initialize QSPI pins
-let cs = io.pins.gpio38.into();
+// Write to device
+i2c.write(0x51, &[0x03, 0x12])?;  // Write to RTC
+```
+
+---
+
+### 2. Implementing Display (AMOLED - SH8601 QSPI)
+
+**Hardware:** GPIO6,7,11,13,14 (QSPI data), GPIO38 (CS)  
+**Interface:** QSPI (4-line data)  
+**Frame Buffer:** ~330 KB (368×448×2 bytes RGB565)
+
+**Key Specifications:**
+- 16-bit RGB565 color depth
+- Max QSPI clock: ~100 MHz (start at 40 MHz)
+- Supports partial updates
+- Hardware rotation support
+
+**With `esp-hal` (ESP32-S3):**
+
+```rust
+use esp_hal::spi::{Spi, SpiConfig, SpiMode};
+use esp_hal::gpio::{Io, Output, Level};
+
+let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+
+// QSPI pins
+let cs = Output::new(io.pins.gpio38, Level::High);
 let sclk = io.pins.gpio7.into();
 let d0 = io.pins.gpio6.into();
 let d1 = io.pins.gpio11.into();
 let d2 = io.pins.gpio13.into();
 let d3 = io.pins.gpio14.into();
 
-// SPI configuration
-let spi_config = SpiConfig::new()
-    .baudrate(40.MHz())
-    .data_mode(spi::SpiMode::Mode0)
-    .cs_active_high(false);
+// SPI configuration for QSPI mode
+let config = SpiConfig::new()
+    .baudrate(40.MHz())  // Conservative start
+    .mode(SpiMode::Mode0);
 
-let mut spi = SpiDriver::new(
-    peripherals.spi3,
+// Note: QSPI support in esp-hal may require specific peripheral selection
+// Check esp-hal docs for QSPI/Quad SPI support on ESP32-S3
+let mut spi = Spi::new_qspi(
+    peripherals.SPI2,  // Check which SPI peripheral supports QSPI
     sclk,
-    d0,  // MOSI for QSPI mode
+    d0,
     Some(d1),
-    &SpiDriverConfig::new().dma(Dma::Auto(128)),
+    Some(d2),
+    Some(d3),
+    cs,
+    config,
+    &clocks,
 )?;
 
-// Send display initialization commands
-send_init_commands(&mut spi);
+// Display initialization sequence (SH8601 specific)
+// Send init commands via SPI
+let init_cmds = [
+    0x01, 0x00,  // Reset command
+    // ... more init commands per SH8601 datasheet
+];
+spi.write(&init_cmds)?;
+```
 
-// Clear display
-send_display_data(&mut spi, &[0x00u8; 329_984]); // 368*448*2 bytes
+**Frame Buffer Management:**
+
+```rust
+// Allocate frame buffer in PSRAM if available
+// For 368×448 RGB565: 368 * 448 * 2 = 329,984 bytes
+let frame_buffer: &mut [u16] = // Allocate in PSRAM or static
+
+// Update display (full screen)
+spi.write_transaction(&frame_buffer)?;
+
+// Partial update (more efficient)
+// Set window coordinates, then send pixel data
+```
+
+**Performance Tips:**
+- Use QSPI QUAD mode (4 data lines = 4× speed)
+- Enable double buffering in PSRAM
+- Limit refresh to 30 FPS for battery apps
+- Use partial updates when possible
+
+---
+
+### 3. Implementing Display (T-Circle-S3 - GC9D01N SPI)
+
+**Hardware:** Standard SPI pins (varies by board)  
+**Interface:** Standard 4-wire SPI  
+**Frame Buffer:** ~51 KB (160×160×2 bytes RGB565)
+
+**Key Specifications:**
+- 16-bit RGB565 color depth
+- Max SPI clock: ~40 MHz
+- Circular display (handled by IC)
+- Lower power than AMOLED
+
+**With `esp-hal` (ESP32-S3):**
+
+```rust
+use esp_hal::spi::{Spi, SpiConfig, SpiMode};
+use esp_hal::gpio::{Io, Output, Level};
+
+let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+
+// SPI pins (check board docs for exact pins)
+let cs = Output::new(io.pins.gpioX, Level::High);  // Replace X
+let sclk = io.pins.gpioY.into();  // Replace Y
+let mosi = io.pins.gpioZ.into();  // Replace Z
+let rst = Output::new(io.pins.gpioW, Level::High);  // Replace W
+
+let config = SpiConfig::new()
+    .baudrate(40.MHz())
+    .mode(SpiMode::Mode0);
+
+let mut spi = Spi::new(
+    peripherals.SPI2,
+    sclk,
+    mosi,
+    None,  // MISO not needed for display
+    cs,
+    config,
+    &clocks,
+)?;
+
+// GC9D01N initialization
+// Send init commands per GC9D01N datasheet
 ```
 
 ---
 
-### 8.3 Touch Controller Configuration
+### 4. Implementing Touch Controller
+
+#### FT3168 (AMOLED Board)
+
+**I2C Address:** `0x38`  
+**Bus:** Primary I2C (GPIO11/12)  
+**Interrupt Pin:** Check schematic (may be via GPIO expander)
+
+**With `esp-hal`:**
 
 ```rust
-use esp_idf_hal::i2c::{I2cDriver, I2cConfig};
-
-// I2C for touch (same bus as other sensors)
-let i2c = I2cDriver::new(
-    peripherals.i2c0,
-    io.pins.gpio11,  // SDA
-    io.pins.gpio12,  // SCL
-    &I2cConfig::new().baudrate(400.kHz()),
-)?;
-
-// Touch controller address
 const FT3168_ADDR: u8 = 0x38;
 
 // Read touch point
-let mut data = [0u8; 5];
-i2c.read(FT3168_ADDR, &mut data, Duration::from_millis(100))?;
+fn read_touch(i2c: &mut I2c) -> Result<(u16, u16, bool)> {
+    let mut data = [0u8; 5];
+    
+    // Read touch status register (check FT3168 datasheet for exact register)
+    i2c.write_read(FT3168_ADDR, &[0x02], &mut data)?;
+    
+    let touch_detected = (data[0] & 0x80) != 0;
+    if !touch_detected {
+        return Ok((0, 0, false));
+    }
+    
+    // Parse coordinates (format depends on FT3168 configuration)
+    let x = ((data[2] as u16) << 8) | (data[3] as u16);
+    let y = ((data[4] as u16)) | ((data[1] as u16 & 0x0F) << 8);
+    
+    Ok((x, y, true))
+}
+```
 
-// Parse coordinates (format depends on FT3168 configuration)
-let x = ((data[2] as u16) << 8) | (data[3] as u16);
-let y = ((data[4] as u16)) | ((data[1] as u16 & 0x0F) << 8);
+#### CST816D (T-Circle-S3)
+
+**I2C Address:** `0x15`  
+**Bus:** Standard I2C
+
+```rust
+const CST816D_ADDR: u8 = 0x15;
+
+// Read touch (similar pattern, check CST816D datasheet for register map)
+fn read_touch(i2c: &mut I2c) -> Result<(u16, u16, bool)> {
+    // Implementation per CST816D datasheet
+    // ...
+}
 ```
 
 ---
 
-### 8.4 IMU Sensor Configuration
+### 5. Implementing IMU (QMI8658)
+
+**I2C Address:** `0x6B`  
+**Bus:** Primary I2C (GPIO11/12)  
+**Interrupt:** Via TCA9554 EXIO6
+
+**Specifications:**
+- 6-axis: 3-axis accelerometer + 3-axis gyroscope
+- Accelerometer range: ±8G typical
+- Gyroscope range: ±2000°/s typical
+- Data format: 16-bit signed integers
+
+**With `esp-hal`:**
 
 ```rust
 const QMI8658_ADDR: u8 = 0x6B;
 
-// Accelerometer raw read
-fn read_accel(i2c: &mut I2cDriver) -> Result<(i16, i16, i16)> {
+// Initialize IMU
+fn init_imu(i2c: &mut I2c) -> Result<()> {
+    // Write configuration registers per QMI8658 datasheet
+    // Enable accelerometer and gyroscope
+    i2c.write(QMI8658_ADDR, &[0x02, 0x60])?;  // Example: enable accel
+    i2c.write(QMI8658_ADDR, &[0x03, 0x60])?;  // Example: enable gyro
+    Ok(())
+}
+
+// Read accelerometer
+fn read_accel(i2c: &mut I2c) -> Result<(i16, i16, i16)> {
     let mut buf = [0u8; 6];
-    i2c.read(QMI8658_ADDR, &mut buf, Duration::from_millis(10))?;
+    // Read from accelerometer data registers (check datasheet)
+    i2c.write_read(QMI8658_ADDR, &[0x35], &mut buf)?;
     
     let x = i16::from_le_bytes([buf[0], buf[1]]);
     let y = i16::from_le_bytes([buf[2], buf[3]]);
@@ -857,27 +347,46 @@ fn read_accel(i2c: &mut I2cDriver) -> Result<(i16, i16, i16)> {
     Ok((x, y, z))
 }
 
-// Typical sensitivity: ±8G = 4096 LSB/G
-// x_g = x_raw / 4096
+// Read gyroscope
+fn read_gyro(i2c: &mut I2c) -> Result<(i16, i16, i16)> {
+    let mut buf = [0u8; 6];
+    // Read from gyroscope data registers
+    i2c.write_read(QMI8658_ADDR, &[0x3B], &mut buf)?;
+    
+    let x = i16::from_le_bytes([buf[0], buf[1]]);
+    let y = i16::from_le_bytes([buf[2], buf[3]]);
+    let z = i16::from_le_bytes([buf[4], buf[5]]);
+    
+    Ok((x, y, z))
+}
+
+// Convert to physical units
+// For ±8G range: sensitivity typically 4096 LSB/G
+fn accel_to_g(raw: i16) -> f32 {
+    raw as f32 / 4096.0
+}
 ```
 
 ---
 
-### 8.5 RTC Configuration
+### 6. Implementing RTC (PCF85063)
+
+**I2C Address:** `0x51`  
+**Bus:** Primary I2C (GPIO11/12)  
+**Interrupt:** Via TCA9554 EXIO5
+
+**Features:**
+- Real-time clock with backup battery
+- Alarm functions
+- Temperature compensation
+- BCD (Binary Coded Decimal) time format
+
+**With `esp-hal`:**
 
 ```rust
 const RTC_ADDR: u8 = 0x51;
 
-fn set_time(i2c: &mut I2cDriver, seconds: u8, minutes: u8, hours: u8) -> Result<()> {
-    let data = [
-        0x03,  // Start register (seconds)
-        to_bcd(seconds),
-        to_bcd(minutes),
-        to_bcd(hours),
-    ];
-    i2c.write(RTC_ADDR, &data, Duration::from_millis(10))
-}
-
+// BCD conversion helpers
 fn to_bcd(value: u8) -> u8 {
     ((value / 10) << 4) | (value % 10)
 }
@@ -885,332 +394,351 @@ fn to_bcd(value: u8) -> u8 {
 fn from_bcd(value: u8) -> u8 {
     ((value >> 4) * 10) + (value & 0x0F)
 }
-```
 
----
+// Set time
+fn set_time(i2c: &mut I2c, seconds: u8, minutes: u8, hours: u8, 
+            day: u8, month: u8, year: u8) -> Result<()> {
+    let data = [
+        0x04,  // Start at seconds register
+        to_bcd(seconds),
+        to_bcd(minutes),
+        to_bcd(hours),
+        to_bcd(day),
+        to_bcd(month),
+        to_bcd(year % 100),  // Year as 2-digit
+    ];
+    i2c.write(RTC_ADDR, &data)
+}
 
-### 8.6 I2S Audio Configuration
-
-```rust
-use esp_idf_hal::i2s::{I2sDriver, I2sConfig, I2sStandardConfig};
-
-let i2s_config = I2sConfig::new()
-    .channel_type(I2sChannelType::Stereo)
-    .auto_clear(true);
-
-let mut i2s = I2sDriver::new(
-    peripherals.i2s0,
-    io.pins.gpio46,  // MCLK
-    io.pins.gpio8,   // SCLK
-    io.pins.gpio9,   // LRCK
-    io.pins.gpio45,  // DOUT (to speaker)
-    io.pins.gpio16,  // DIN (from microphone)
-    &i2s_config,
-)?;
-
-// Write audio data (16-bit stereo samples)
-let audio_data: &[u8] = &[/* PCM data */];
-i2s.write(audio_data, Duration::from_millis(100))?;
-```
-
----
-
-### 8.7 SD/TF Card Access
-
-```rust
-use esp_idf_hal::spi::{SpiDriver, SpiDeviceDriver};
-use esp_idf_hal::sd::{SdMmcDriver, SdMmcConfig};
-
-// Mount SD card via SDMMC interface (simpler than pure SPI)
-let sdmmc_config = SdMmcConfig::new();
-let mut sd = SdMmcDriver::new(
-    peripherals.sdspi,
-    Some(io.pins.gpio2),   // CLK
-    Some(io.pins.gpio1),   // MOSI
-    Some(io.pins.gpio3),   // MISO
-    None,                  // DAT1
-    None,                  // DAT2
-    Some(io.pins.gpio10),  // DAT3/CS
-    &sdmmc_config,
-)?;
-
-// List files (example using embedded VFS)
-match sd.card() {
-    Some(card) => println!("Card size: {} MB", card.size_mb()),
-    None => println!("No card detected"),
+// Read time
+fn read_time(i2c: &mut I2c) -> Result<(u8, u8, u8, u8, u8, u8)> {
+    let mut data = [0u8; 7];
+    i2c.write_read(RTC_ADDR, &[0x04], &mut data)?;
+    
+    Ok((
+        from_bcd(data[0] & 0x7F),  // Seconds
+        from_bcd(data[1] & 0x7F),  // Minutes
+        from_bcd(data[2] & 0x3F),  // Hours
+        from_bcd(data[3] & 0x3F),  // Day
+        from_bcd(data[4] & 0x1F),  // Month
+        from_bcd(data[5]),          // Year
+    ))
 }
 ```
 
 ---
 
-## 9. MEMORY LAYOUT & STORAGE
+### 7. Implementing GPIO Expander (TCA9554)
 
-### 9.1 Memory Allocation
+**I2C Address:** `0x20`  
+**Bus:** Primary I2C (GPIO11/12)  
+**Function:** 8-bit I/O expansion
 
-**Flash Partition Layout (16 MB total):**
+**Pin Mapping:**
+- EXIO0-3: General GPIO
+- EXIO4: Power button logic
+- EXIO5: RTC interrupt
+- EXIO6: IMU interrupt
+- EXIO7: SD card CS
+
+**With `esp-hal`:**
+
+```rust
+const TCA9554_ADDR: u8 = 0x20;
+
+// Register addresses (check TCA9554 datasheet)
+const REG_INPUT: u8 = 0x00;
+const REG_OUTPUT: u8 = 0x01;
+const REG_POLARITY: u8 = 0x02;
+const REG_CONFIG: u8 = 0x03;
+
+// Configure pin as input or output
+fn set_pin_direction(i2c: &mut I2c, pin: u8, is_output: bool) -> Result<()> {
+    let mut config = [0u8];
+    i2c.write_read(TCA9554_ADDR, &[REG_CONFIG], &mut config)?;
+    
+    if is_output {
+        config[0] &= !(1 << pin);  // Clear bit = output
+    } else {
+        config[0] |= 1 << pin;     // Set bit = input
+    }
+    
+    i2c.write(TCA9554_ADDR, &[REG_CONFIG, config[0]])
+}
+
+// Read input pin
+fn read_pin(i2c: &mut I2c, pin: u8) -> Result<bool> {
+    let mut data = [0u8];
+    i2c.write_read(TCA9554_ADDR, &[REG_INPUT], &mut data)?;
+    Ok((data[0] & (1 << pin)) != 0)
+}
+
+// Write output pin
+fn write_pin(i2c: &mut I2c, pin: u8, high: bool) -> Result<()> {
+    let mut output = [0u8];
+    i2c.write_read(TCA9554_ADDR, &[REG_OUTPUT], &mut output)?;
+    
+    if high {
+        output[0] |= 1 << pin;
+    } else {
+        output[0] &= !(1 << pin);
+    }
+    
+    i2c.write(TCA9554_ADDR, &[REG_OUTPUT, output[0]])
+}
+
+// Read power button (EXIO4)
+fn read_power_button(i2c: &mut I2c) -> Result<bool> {
+    read_pin(i2c, 4)
+}
+```
+
+---
+
+### 8. Implementing Power Management (AXP2101)
+
+**I2C Address:** `0x34`  
+**Bus:** Primary I2C (GPIO11/12)
+
+**Features:**
+- Battery charging
+- Multiple DC-DC converters
+- Voltage/current monitoring via ADC
+- Sleep mode control
+
+**With `esp-hal`:**
+
+```rust
+const AXP2101_ADDR: u8 = 0x34;
+
+// Read battery voltage (example register - check AXP2101 datasheet)
+fn read_battery_voltage(i2c: &mut I2c) -> Result<f32> {
+    let mut data = [0u8; 2];
+    // Read from battery voltage ADC register (check datasheet)
+    i2c.write_read(AXP2101_ADDR, &[0x26], &mut data)?;
+    
+    // Convert to voltage (formula per AXP2101 datasheet)
+    let voltage_mv = ((data[0] as u16) << 4) | (data[1] as u16 & 0x0F);
+    Ok(voltage_mv as f32 / 1000.0)  // Convert mV to V
+}
+
+// Set charging current
+fn set_charge_current(i2c: &mut I2c, current_ma: u16) -> Result<()> {
+    // Map current to register value (check datasheet)
+    let reg_value = match current_ma {
+        100 => 0x00,
+        190 => 0x01,
+        280 => 0x02,
+        360 => 0x03,
+        450 => 0x04,
+        550 => 0x05,
+        630 => 0x06,
+        700 => 0x07,
+        _ => return Err(/* invalid */),
+    };
+    
+    i2c.write(AXP2101_ADDR, &[0x33, reg_value])  // Example register
+}
+```
+
+---
+
+### 9. Implementing Audio (ES8311)
+
+**I2C Address:** `0x18` (control)  
+**I2S Pins:** GPIO8 (SCLK), GPIO9 (LRCK), GPIO16 (DIN), GPIO45 (DOUT), GPIO46 (MCLK)  
+**Bus:** Primary I2C for control
+
+**Features:**
+- Low-power audio codec
+- Sampling rates: 8 kHz - 192 kHz
+- Bit depth: up to 32-bit
+- Microphone input + speaker output
+
+**With `esp-hal`:**
+
+```rust
+const ES8311_I2C_ADDR: u8 = 0x18;
+
+// Initialize codec via I2C
+fn init_audio_codec(i2c: &mut I2c) -> Result<()> {
+    // Write configuration registers per ES8311 datasheet
+    // Enable ADC, DAC, set sample rate, etc.
+    i2c.write(ES8311_I2C_ADDR, &[0x00, 0x80])?;  // Example: reset
+    // ... more init commands
+    Ok(())
+}
+
+// I2S configuration (separate from I2C control)
+use esp_hal::i2s::{I2s, I2sConfig};
+
+let i2s_config = I2sConfig::new()
+    .sample_rate(16000.Hz())  // 16 kHz typical for voice
+    .bits_per_sample(16)
+    .channels(2);  // Stereo
+
+let mut i2s = I2s::new(
+    peripherals.I2S0,
+    io.pins.gpio46,  // MCLK
+    io.pins.gpio8,   // SCLK
+    io.pins.gpio9,   // LRCK
+    io.pins.gpio16,  // DIN (microphone)
+    io.pins.gpio45,  // DOUT (speaker)
+    i2s_config,
+    &clocks,
+)?;
+
+// Write audio data
+let audio_samples: &[i16] = &[/* PCM data */];
+i2s.write(&audio_samples)?;
+```
+
+---
+
+### 10. Implementing SD Card
+
+**SPI Pins:** GPIO1 (MOSI), GPIO2 (SCLK), GPIO3 (MISO)  
+**CS Pin:** EXIO7 (via TCA9554 GPIO expander)
+
+**With `esp-hal`:**
+
+```rust
+use esp_hal::spi::{Spi, SpiConfig, SpiMode};
+
+let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+
+// SPI pins
+let mosi = io.pins.gpio1.into();
+let sclk = io.pins.gpio2.into();
+let miso = io.pins.gpio3.into();
+
+// CS via GPIO expander (set EXIO7 as output, drive low for CS)
+let mut expander = // ... TCA9554 instance
+expander.set_pin_direction(7, true)?;  // EXIO7 as output
+
+let config = SpiConfig::new()
+    .baudrate(20.MHz())  // SD card typically 20-40 MHz
+    .mode(SpiMode::Mode0);
+
+let mut spi = Spi::new(
+    peripherals.SPI2,
+    sclk,
+    mosi,
+    Some(miso),
+    // CS handled via GPIO expander
+    config,
+    &clocks,
+)?;
+
+// SD card initialization sequence
+// 1. Set CS high, send 80+ clock cycles
+// 2. Send CMD0 (GO_IDLE_STATE)
+// 3. Send CMD8 (check voltage)
+// 4. Send ACMD41 (initialize)
+// ... per SD card specification
+```
+
+---
+
+## Power Management
+
+### Battery & Charging
+
+**Battery:** 3.7V MX1.25 lithium ion  
+**Charging:** USB Type-C 5V input, max 500mA  
+**PMIC:** AXP2101 handles charging and power regulation
+
+### Power Consumption Estimates
+
+| Component | Current Draw |
+|-----------|--------------|
+| **AMOLED Display** | 50-150 mA |
+| **TFT Display** | 10-50 mA |
+| **CPU @ 240 MHz** | 80-150 mA |
+| **CPU @ 80 MHz** | 30-50 mA |
+| **WiFi Active** | 40-200 mA |
+| **BLE Active** | 20-50 mA |
+| **Sensors (I2C)** | 2-10 mA |
+| **Total Active** | ~200-400 mA |
+
+**Sleep Modes:**
+- Light Sleep: ~10 mA
+- Deep Sleep: ~0.1 mA
+- Sensor wake-up possible
+
+---
+
+## Memory Layout
+
+### Flash Partition (16 MB)
 
 ```
 0x000000 - 0x007FFF    (32 KB)   Bootloader
 0x008000 - 0x00FFFF    (32 KB)   Partition table
 0x010000 - 0x1FFFFF    (1.95 MB) Application (OTA partition 1)
 0x200000 - 0x3FFFFF    (2 MB)    Application (OTA partition 2)
-0x400000 - 0xFFFFFF    (~12 MB)  FATFS/SPIFFS file system
+0x400000 - 0xFFFFFF    (~12 MB)  File system (FATFS/SPIFFS)
 ```
 
-**SRAM Layout:**
+### SRAM & PSRAM
 
-```
-512 KB onboard SRAM:
-├─ ISR stack, WiFi/BLE buffers: ~150 KB
-├─ Heap for malloc: ~200 KB
-├─ Display frame buffer: ~330 KB (external PSRAM)
-└─ Remaining: Free
+**512 KB SRAM:**
+- ISR stack, WiFi/BLE buffers: ~150 KB
+- Heap: ~200 KB
+- Remaining: free
 
-8 MB PSRAM:
-├─ Display frame buffer (368×448×2): 330 KB
-├─ Graphics library buffers: 500 KB
-├─ Audio buffers: 64 KB
-└─ Available for user: ~7 MB
-```
+**8 MB PSRAM:**
+- Display frame buffer: 330 KB (AMOLED) / 51 KB (T-Circle)
+- Graphics buffers: ~500 KB
+- Audio buffers: ~64 KB
+- Available: ~7 MB
 
 ---
 
-### 9.2 Build Size Optimization
-
-**Cargo.toml Release Settings:**
-
-```toml
-[profile.release]
-opt-level = 3          # Maximum optimization
-lto = true             # Link-time optimization
-codegen-units = 1      # Better optimization
-strip = true           # Strip symbols
-panic = "abort"        # Minimal panic handling
-```
-
-**Typical Binary Sizes:**
-- Minimal app (Hello World): ~500 KB
-- With display driver: ~1.2 MB
-- Full featured (WiFi + display + sensors): ~1.8 MB
-
----
-
-## 10. DEVELOPMENT RESOURCES & TIPS
-
-### 10.1 Essential Repositories & Documentation
-
-**Official Resources:**
-
-```
-ESP-IDF (C/C++ reference):
-https://github.com/espressif/esp-idf
-
-Rust ESP Resources:
-https://github.com/esp-rs/esp-idf-hal
-https://github.com/esp-rs/esp-idf-template
-https://github.com/esp-rs/espflash
-
-"The Rust on ESP" Book:
-https://esp-rs.github.io/book/
-```
-
-**Community Rust Projects:**
-
-```
-LVGL Rust bindings:
-https://github.com/lvgl/lvgl-rs
-
-Embassy (async runtime):
-https://github.com/embassy-rs/embassy
-
-ESP32-S3 peripherals (PAC):
-https://github.com/esp-rs/esp-pacs
-```
-
----
-
-### 10.2 Debugging & Monitoring
-
-**Serial Monitor:**
-
-```bash
-# Simple monitor
-espmonitor /dev/ttyUSB0 115200
-
-# With filtering
-cargo espflash monitor --release 2>&1 | grep -i "error\\|warn"
-```
-
-**Logging Setup:**
-
-```rust
-use log::*;
-
-fn main() {
-    esp_println::logger::init_logger_from_env();
-    
-    info!("Starting application");
-    debug!("Debug level messages");
-    warn!("Warning level messages");
-    error!("Error level messages");
-}
-
-// Run with: RUST_LOG=debug cargo run --release
-```
-
----
-
-### 10.3 Common Troubleshooting
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| **Build fails: "target not found"** | Run `rustup target add xtensa-esp32s3-espidf` |
-| **Upload timeout** | Press BOOT button + RST button to force download mode |
-| **I2C communication fails** | Verify pull-ups on SDA/SCL (typical: 4.7kΩ already onboard) |
-| **Display shows garbage** | Check QSPI clock frequency (40 MHz recommended) |
-| **Memory exhaustion** | Enable PSRAM and use `_MALLOC_PSRAM` environment variable |
-| **WiFi drops randomly** | Reduce CPU frequency or improve antenna placement |
+| **I2C communication fails** | Verify pull-ups (4.7kΩ typically onboard), check speed (start at 100 kHz) |
+| **Display shows garbage** | Check QSPI/SPI clock frequency (start conservative: 40 MHz), verify init sequence |
+| **Touch not responding** | Check I2C address (0x38 for FT3168, 0x15 for CST816D), verify interrupt pin |
+| **IMU readings wrong** | Check register map, verify data format (endianness), check sensitivity settings |
+| **RTC loses time** | Verify backup battery connection, check I2C communication |
+| **Audio distortion** | Check sample rate configuration, verify I2S clock settings |
+| **SD card not detected** | Verify CS pin (EXIO7 via expander), check SPI speed, verify card initialization sequence |
+| **Power button not working** | Read via TCA9554 expander (EXIO4), not direct GPIO |
 
 ---
 
-### 10.4 Performance Tips
+## Development Notes
 
-**CPU Clock Optimization:**
+### Code Examples Disclaimer
 
-```rust
-// For maximum performance (more power draw)
-let clocks = ClockControl::max(system.clock_control).freeze();
-// 240 MHz
+The code examples above use `esp-hal` patterns. When implementing:
 
-// For balanced performance
-let clocks = ClockControl::new(system.clock_control)
-    .cpu_frequency(160.MHz())
-    .freeze();
-// 160 MHz
+1. **Check exact API**: `esp-hal` APIs may differ between ESP32-C3 and ESP32-S3
+2. **Verify pin assignments**: Always cross-reference with board schematic
+3. **Register maps**: Consult device datasheets for exact register addresses and formats
+4. **QSPI support**: Verify QSPI peripheral availability and API on ESP32-S3
+5. **I2S support**: Check I2S peripheral configuration options
 
-// For power savings
-let clocks = ClockControl::new(system.clock_control)
-    .cpu_frequency(80.MHz())
-    .freeze();
-// 80 MHz (still supports WiFi)
-```
+### Recommended Development Flow
 
-**Display Rendering Optimization:**
+1. **Start with I2C bus**: Get basic I2C communication working first
+2. **Test each device individually**: Verify each I2C device before combining
+3. **Use conservative speeds**: Start with 100 kHz I2C, 40 MHz SPI/QSPI
+4. **Enable logging**: Use `esp-println` to debug communication issues
+5. **Check datasheets**: Each IC has specific initialization sequences
 
-```
-1. Use partial updates instead of full screen refresh
-2. Enable double buffering for animations (PSRAM available)
-3. Limit refresh rate to 30 FPS for battery apps
-4. Use QSPI in QUAD mode (4 data lines = 4× speed)
-5. Cache frequently used assets in PSRAM
-```
+### Useful Resources
+
+- **ESP-HAL Docs**: https://docs.rs/esp-hal/
+- **ESP-HAL Examples**: https://github.com/esp-rs/esp-hal/tree/main/examples
+- **Rust on ESP Book**: https://esp-rs.github.io/book/
+- **Device Datasheets**: Check manufacturer websites for FT3168, QMI8658, PCF85063, ES8311, AXP2101, TCA9554, SH8601, GC9D01N
 
 ---
 
-### 10.5 Useful Crates for ESP32-S3 Development
-
-```toml
-[dependencies]
-# Async runtime
-embassy-executor = "0.5"
-embassy-time = "0.3"
-
-# Display & Graphics
-esp-idf-drv-st7789 = "0.1"
-embedded-graphics = "0.8"
-tinybmp = "0.6"
-
-# Sensor libraries
-bmp280 = "0.4"
-dht-sensor = "0.1"
-ads1x1x = "0.2"
-
-# Networking
-reqwest = { version = "0.11", features = ["blocking"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-# Debugging
-defmt = "0.3"
-defmt-rtt = "0.4"
-
-# Math & utilities
-libm = "0.2"
-heapless = "0.8"
-```
-
----
-
-## APPENDIX A: Quick Reference Pinout Table
-
-### ESP32-S3-Touch-AMOLED-1.8
-
-| Function | Pin(s) | Interface |
-|----------|--------|-----------|
-| Display QSPI | GPIO 6,7,11,13,14,38 | QSPI |
-| Touch I2C | GPIO 11/12 (SDA/SCL) | I2C + GPIO for INT/RST |
-| IMU I2C | GPIO 11/12 (SDA/SCL) | I2C @ 0x6B |
-| RTC I2C | GPIO 11/12 (SDA/SCL) | I2C @ 0x51 |
-| Audio I2S | GPIO 8,9,16,45,46 | I2S + I2C for codec |
-| SD Card SPI | GPIO 1,2,3 + EXIO7 | SPI |
-| Serial UART | GPIO 43/44 | UART0 |
-| GPIO Expander | GPIO 11/12 (SDA/SCL) | I2C @ 0x20 |
-| Power Manager | GPIO 11/12 (SDA/SCL) | I2C @ 0x34 |
-
-### T-Circle-S3
-
-| Function | Pin(s) | Interface |
-|----------|--------|-----------|
-| Display SPI | Standard SPI pins | SPI |
-| Touch I2C | Standard I2C | I2C @ 0x15 |
-| Audio I2S | Standard I2S pins | I2S |
-| RGB LED | GPIO (varies) | SPI (APA102) |
-| Rear GPIO | Header pads | GPIO |
-| Qwiic | Standard I2C | I2C (via connector) |
-
----
-
-## APPENDIX B: Essential I2C Address Reference
-
-```
-0x15 - CST816D Touch (T-Circle-S3)
-0x18 - ES8311 Audio Codec
-0x20 - TCA9554 GPIO Expander
-0x34 - AXP2101 Power Manager
-0x38 - FT3168 Touch (AMOLED)
-0x51 - PCF85063 RTC
-0x6B - QMI8658 IMU
-```
-
----
-
-## APPENDIX C: Rust Build & Flash Commands
-
-```bash
-# Generate ESP-IDF project
-cargo generate --git https://github.com/esp-rs/esp-idf-template.git
-cd your_project
-
-# Build project
-cargo build --release
-
-# Flash to device
-cargo espflash flash --release
-
-# Flash + monitor
-cargo espflash flash --release --monitor
-
-# Monitor only (if already flashed)
-cargo espmonitor /dev/ttyUSB0
-
-# Full: build + flash + monitor (one command)
-cargo espflash flash --release --monitor
-```
-
----
-
-**Report Generated:** January 2026  
+**Last Updated:** January 2026  
 **Target Devices:** Waveshare ESP32-S3-Touch-AMOLED-1.8 & LILYGO T-Circle-S3  
-**Development Language:** Rust (esp-idf-hal, no_std embedded)  
-**Architecture:** Xtensa LX7 (ESP32-S3R8)
-
+**Architecture:** ESP32-S3 (Xtensa LX7)
