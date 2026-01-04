@@ -199,6 +199,62 @@ loop {
 
 **When to use:** When you need precise timing control or more complex debounce logic.
 
+## Input Responsiveness
+
+Button responsiveness depends on two factors: **polling frequency** and **debounce duration**. Total latency = poll interval + (debounce frames × poll interval).
+
+### Frame-Based vs Time-Based Debouncing
+
+When input polling is tied to your main loop frame rate, debounce timing becomes dependent on frame rate:
+
+| Frame Rate | Poll Interval | 3-Frame Debounce | Total Latency |
+|------------|---------------|------------------|---------------|
+| 30 FPS | 33ms | 100ms | ~133ms (sluggish) |
+| 60 FPS | 16ms | 48ms | ~64ms (responsive) |
+| 100 FPS | 10ms | 30ms | ~40ms (snappy) |
+
+**Key insight:** At 30 FPS with 3-frame debounce, button response can feel sluggish (~100ms+ latency). Increasing frame rate or reducing debounce frames improves responsiveness.
+
+### Recommendations for Responsive Input
+
+1. **Target 60+ FPS for input polling** even if rendering at lower rates
+2. **Use 1-frame debounce** (or time-based ~10-20ms) for responsive feel
+3. **Separate input polling from rendering** if rendering is slow
+4. **Use edge detection** (trigger on press, not while held) to prevent accidental multiple inputs
+
+```rust
+// Responsive input pattern: 1-frame debounce with edge detection
+let raw_pressed = btn.is_low();
+
+// Minimal debounce (1 frame)
+let is_pressed = if raw_pressed {
+    debounce_count = debounce_count.saturating_add(1);
+    debounce_count >= 1  // Single frame confirmation
+} else {
+    debounce_count = 0;
+    false
+};
+
+// Edge detection: only trigger once per press
+let just_pressed = is_pressed && !was_pressed;
+was_pressed = is_pressed;
+
+if just_pressed {
+    handle_button_press();  // Triggers once per press
+}
+```
+
+### I2C Button Latency (PMU Power Keys)
+
+Buttons accessed via I2C (like AXP2101 power key) have additional latency:
+- I2C transaction: ~1-5ms per read at 400kHz
+- Polling overhead adds up if reading every frame
+
+**Mitigation:**
+- Use interrupt-driven detection if available (GPIO40 for AXP2101 IRQ)
+- Accept the latency trade-off for secondary inputs
+- Don't poll I2C buttons more frequently than necessary
+
 ## Long Press Detection
 
 Detect when a button is held for a specific duration (e.g., 2 seconds for sleep mode).
@@ -413,6 +469,90 @@ let button_pressed = (input[0] & EXIO4_MASK) == 0;
 - Baseline calibration issues (button always reads as pressed)
 
 **When to avoid:** If you only need 1-2 buttons, prefer direct GPIO for simplicity.
+
+## Waveshare ESP32-S3 Touch AMOLED 1.8" Button Guide
+
+This board has **limited physical button options**. Here's the definitive guide:
+
+### Available Inputs
+
+| Input | Type | GPIO/Access | Use Case |
+|-------|------|-------------|----------|
+| **BOOT Button** | Physical tactile | GPIO0 (direct) | Primary user input |
+| **AXP2101 Power Key** | Physical tactile | I2C (0x34) | Secondary input |
+| **FT3168 Touch** | Capacitive | I2C (0x38) | Full touch input |
+
+### NOT User Buttons (Common Mistakes)
+
+| Pin | Actual Function | Why It Won't Work |
+|-----|-----------------|-------------------|
+| GPIO21 (PWRON) | PMU power enable | Not readable as GPIO; drives AXP2101 |
+| EXIO4 | LCD backlight control | Output pin, not connected to button |
+| EXIO5 | PMU IRQ line | Input, but for PMU status signals |
+
+### Two-Button Implementation Example
+
+```rust
+use esp_hal::gpio::{Input, InputConfig, Pull};
+use core::cell::RefCell;
+use alloc::rc::Rc;
+
+// Constants for AXP2101 PMU
+const AXP2101_ADDR: u8 = 0x34;
+const AXP2101_INTSTS2: u8 = 0x49;
+const PKEY_SHORT_IRQ_BIT: u8 = 1 << 3;
+
+// Setup BOOT button (GPIO0)
+let boot_btn = Input::new(
+    peripherals.GPIO0,
+    InputConfig::default().with_pull(Pull::Up)
+);
+
+// Setup shared I2C bus for PMU access
+let i2c_bus: Rc<RefCell<I2c<'static, Blocking>>> = Rc::new(RefCell::new(i2c));
+
+// In your input loop:
+fn read_buttons(
+    boot_btn: &Input<'_>,
+    i2c_bus: &Rc<RefCell<I2c<'_, Blocking>>>,
+) -> (bool, bool) {
+    // BOOT button: direct GPIO read (active-low)
+    let boot_pressed = boot_btn.is_low();
+    
+    // Power key: read from PMU IRQ status
+    let pkey_pressed = {
+        let mut i2c = i2c_bus.borrow_mut();
+        let mut status = [0u8; 1];
+        if i2c.write_read(AXP2101_ADDR, &[AXP2101_INTSTS2], &mut status).is_ok() {
+            let pressed = (status[0] & PKEY_SHORT_IRQ_BIT) != 0;
+            if pressed {
+                // Clear the IRQ by writing 0xFF
+                let _ = i2c.write(AXP2101_ADDR, &[AXP2101_INTSTS2, 0xFF]);
+            }
+            pressed
+        } else {
+            false
+        }
+    };
+    
+    (boot_pressed, pkey_pressed)
+}
+```
+
+### Enabling AXP2101 Power Key Interrupts
+
+Before reading power key presses, enable the interrupt in the PMU:
+
+```rust
+const AXP2101_INTEN2: u8 = 0x41;  // Interrupt enable register 2
+const PKEY_SHORT_IRQ_EN: u8 = 1 << 3;
+
+// Enable power key short press interrupt
+i2c.write(AXP2101_ADDR, &[AXP2101_INTEN2, PKEY_SHORT_IRQ_EN])?;
+
+// Clear any pending interrupts
+i2c.write(AXP2101_ADDR, &[AXP2101_INTSTS2, 0xFF])?;
+```
 
 ## Common Mistakes
 

@@ -7,15 +7,25 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use embassy_executor::Spawner;
-use embassy_time::{Duration, Instant, Timer};
-use embedded_hal_bus::i2c::RefCellDevice;
+extern crate alloc;
+
+use alloc::boxed::Box;
+use alloc::rc::Rc;
+use bevy_ecs::prelude::*;
+use core::fmt::Write;
 use embedded_graphics::{
+    Drawable,
     mono_font::{MonoTextStyle, ascii::FONT_10X20},
     pixelcolor::Rgb888,
     prelude::*,
+    primitives::{PrimitiveStyle, Rectangle},
     text::Text,
 };
+use embedded_graphics_framebuf::FrameBuf;
+use embedded_graphics_framebuf::backends::FrameBufferBackend;
+use heapless::String;
+use embassy_executor::Spawner;
+use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::{
     clock::CpuClock,
@@ -30,157 +40,991 @@ use esp_hal::{
     },
     time::Rate,
     timer::timg::TimerGroup,
+    rng::Rng,
 };
 use sh8601_rs::{
     ColorMode, DisplaySize, ResetInterface, Sh8601Driver, Ws18AmoledDriver, framebuffer_size,
     DMA_CHUNK_SIZE,
 };
 
-// Waveshare ESP32-S3 Touch AMOLED 1.8" uses a TCA9554 I/O expander (EXIO0..7) on the shared I2C
-// bus to control critical reset/power signals.
-//
-// See: docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md
-// TCA9554 base address is 0x20; many boards strap it to 0x20, some to 0x24.
-// We'll probe both to avoid "works on my board" failures.
-const TCA9554_ADDR_PRIMARY: u8 = 0x24;
-const TCA9554_ADDR_FALLBACK: u8 = 0x20;
-const TCA9554_INPUT: u8 = 0x00;
+// This creates a default app-descriptor required by the esp-idf bootloader.
+esp_bootloader_esp_idf::esp_app_desc!();
+
+// --- TCA9554 I/O Expander Support (used for display reset) ---
+// Address is 0x20 per official Arduino examples (pin_config.h)
+const TCA9554_ADDR_PRIMARY: u8 = 0x20;
+const TCA9554_ADDR_FALLBACK: u8 = 0x24;
 const TCA9554_OUTPUT: u8 = 0x01;
 const TCA9554_POLARITY: u8 = 0x02;
-const TCA9554_CONFIG: u8 = 0x03; // 0 = output, 1 = input
-const TCA9554_PWR_MASK: u8 = (1 << 4) | (1 << 5);
+const TCA9554_CONFIG: u8 = 0x03;
 
-/// Minimal ResetInterface implementation for the Waveshare board:
-/// - EXIO0: LCD_RESET (output)
-/// - EXIO1: DSI_PWR_EN (output, display power enable)
-/// - EXIO2: TP_RESET (output, keep high so touch isn't held in reset)
-/// - EXIO3: QMI_INT2 (input)
-/// - EXIO6: TP_INT (input)
-/// - EXIO7: SDCS (output, keep high to deselect SD card)
-struct WsTca9554Reset<I2C> {
-    i2c: I2C,
-    addr: u8,
-}
+// --- AXP2101 PMU Support (for power button) ---
+const AXP2101_ADDR: u8 = 0x34;
+// Interrupt Enable registers
+const AXP2101_INTEN1: u8 = 0x40;
+const AXP2101_INTEN2: u8 = 0x41;
+#[allow(dead_code)]
+const AXP2101_INTEN3: u8 = 0x42;
+// Interrupt Status registers
+#[allow(dead_code)]
+const AXP2101_INTSTS1: u8 = 0x48;
+const AXP2101_INTSTS2: u8 = 0x49;
+#[allow(dead_code)]
+const AXP2101_INTSTS3: u8 = 0x4A;
+// INTEN2 / INTSTS2 bit masks for power key
+const AXP2101_PKEY_SHORT_IRQ_BIT: u8 = 0x08;  // Bit 3: POWERON Short Press IRQ
+#[allow(dead_code)]
+const AXP2101_PKEY_LONG_IRQ_BIT: u8 = 0x04;   // Bit 2: POWERON Long Press IRQ
 
-impl<I2C> WsTca9554Reset<I2C> {
-    fn new(mut i2c: I2C) -> Self
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        // Probe the expander address. With I2C timeouts enabled (see I2C config),
-        // this will return quickly even if the bus is stuck or the address doesn't ACK.
-        let primary_res = i2c.write(TCA9554_ADDR_PRIMARY, &[TCA9554_POLARITY, 0x00]);
-        esp_println::println!("TCA9554 probe 0x{:02X}: {:?}", TCA9554_ADDR_PRIMARY, primary_res);
+// --- Framebuffer Support ---
+const LCD_H_RES: usize = 368;
+const LCD_V_RES: usize = 448;
+const LCD_BUFFER_SIZE: usize = LCD_H_RES * LCD_V_RES;
 
-        let fallback_res = i2c.write(TCA9554_ADDR_FALLBACK, &[TCA9554_POLARITY, 0x00]);
-        esp_println::println!(
-            "TCA9554 probe 0x{:02X}: {:?}",
-            TCA9554_ADDR_FALLBACK, fallback_res
-        );
+pub struct HeapBuffer<C: PixelColor, const N: usize>(Box<[C; N]>);
 
-        let addr = if primary_res.is_ok() {
-            TCA9554_ADDR_PRIMARY
-        } else if fallback_res.is_ok() {
-            TCA9554_ADDR_FALLBACK
-        } else {
-            // Neither ACKed; keep using the primary address so later operations
-            // fail consistently, and we have logs explaining why.
-            TCA9554_ADDR_PRIMARY
-        };
-
-        esp_println::println!("TCA9554: using I2C addr 0x{:02X}", addr);
-        Self { i2c, addr }
+impl<C: PixelColor, const N: usize> HeapBuffer<C, N> {
+    pub fn new(data: Box<[C; N]>) -> Self {
+        Self(data)
     }
 }
 
-impl<I2C> ResetInterface for WsTca9554Reset<I2C>
-where
-    I2C: embedded_hal::i2c::I2c,
-{
-    type Error = I2C::Error;
+impl<C: PixelColor, const N: usize> core::ops::Deref for HeapBuffer<C, N> {
+    type Target = [C; N];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
+impl<C: PixelColor, const N: usize> core::ops::DerefMut for HeapBuffer<C, N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<C: PixelColor, const N: usize> FrameBufferBackend for HeapBuffer<C, N> {
+    type Color = C;
+    fn set(&mut self, index: usize, color: Self::Color) {
+        self.0[index] = color;
+    }
+    fn get(&self, index: usize) -> Self::Color {
+        self.0[index]
+    }
+    fn nr_elements(&self) -> usize {
+        N
+    }
+}
+
+type FbBuffer = HeapBuffer<Rgb888, LCD_BUFFER_SIZE>;
+type MyFrameBuf = FrameBuf<Rgb888, FbBuffer>;
+
+// --- Snake Game Components ---
+
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+struct Position {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Component, Clone, Copy)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    fn turn_left(self) -> Self {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Left => Direction::Down,
+            Direction::Down => Direction::Right,
+            Direction::Right => Direction::Up,
+        }
+    }
+
+    fn turn_right(self) -> Self {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+        }
+    }
+}
+
+#[derive(Component)]
+struct SnakeHead;
+
+#[derive(Component)]
+struct SnakeSegment {
+    index: usize,
+}
+
+#[derive(Component)]
+struct Food;
+
+// --- Game Resources ---
+
+#[derive(Resource)]
+struct FrameBufferResource {
+    frame_buf: MyFrameBuf,
+}
+
+impl FrameBufferResource {
+    fn new() -> Self {
+        let fb_data: Box<[Rgb888; LCD_BUFFER_SIZE]> = Box::new([Rgb888::BLACK; LCD_BUFFER_SIZE]);
+        let heap_buffer = HeapBuffer::new(fb_data);
+        let frame_buf = MyFrameBuf::new(heap_buffer, LCD_H_RES, LCD_V_RES);
+        Self { frame_buf }
+    }
+}
+
+#[derive(Resource)]
+struct GameState {
+    score: u32,
+    game_over: bool,
+    move_timer: u32,
+    move_interval: u32, // frames between moves
+    frames_elapsed: u32, // Track total frames to prevent immediate collision
+    needs_redraw: bool, // Track if we need to redraw
+}
+
+impl Default for GameState {
+    fn default() -> Self {
+        Self {
+            score: 0,
+            game_over: false,
+            move_timer: 0,
+            move_interval: 10, // Movement speed (frames between moves) - tuned for ~60fps target
+            frames_elapsed: 0,
+            needs_redraw: true, // Initial render needed
+        }
+    }
+}
+
+#[derive(Resource)]
+struct RngResource(Rng);
+
+#[derive(Resource, Default)]
+struct InputState {
+    turn_left: bool,
+    turn_right: bool,
+    restart: bool,
+}
+
+#[derive(Resource)]
+struct PerformanceMetrics {
+    frame_count: u32,
+    total_frame_time_us: u64,
+    max_frame_time_us: u64,
+    min_frame_time_us: u64,
+    last_log_frame: u32,
+    #[allow(dead_code)] // For future on-screen FPS display
+    show_on_screen: bool,
+}
+
+impl Default for PerformanceMetrics {
+    fn default() -> Self {
+        Self {
+            frame_count: 0,
+            total_frame_time_us: 0,
+            max_frame_time_us: 0,
+            min_frame_time_us: u64::MAX,
+            last_log_frame: 0,
+            show_on_screen: true, // Show FPS on screen by default
+        }
+    }
+}
+
+impl PerformanceMetrics {
+    fn record_frame(&mut self, frame_time_us: u64) {
+        self.frame_count += 1;
+        self.total_frame_time_us += frame_time_us;
+        if frame_time_us > self.max_frame_time_us {
+            self.max_frame_time_us = frame_time_us;
+        }
+        if frame_time_us < self.min_frame_time_us {
+            self.min_frame_time_us = frame_time_us;
+        }
+    }
+    
+    fn log_performance(&mut self) {
+        if self.frame_count == 0 {
+            return;
+        }
+        
+        let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
+        let avg_fps = if avg_frame_time_us > 0 {
+            1_000_000 / avg_frame_time_us
+        } else {
+            0
+        };
+        
+        esp_println::println!("=== Performance ({} frames) ===", self.frame_count);
+        esp_println::println!("  Avg: {} us ({} FPS)", avg_frame_time_us, avg_fps);
+        esp_println::println!("  Min: {} us", self.min_frame_time_us);
+        esp_println::println!("  Max: {} us", self.max_frame_time_us);
+        
+        // Reset for next measurement period
+        self.frame_count = 0;
+        self.total_frame_time_us = 0;
+        self.max_frame_time_us = 0;
+        self.min_frame_time_us = u64::MAX;
+    }
+    
+    #[allow(dead_code)] // For future on-screen FPS display
+    fn get_current_fps(&self) -> u32 {
+        if self.frame_count == 0 {
+            return 0;
+        }
+        let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
+        if avg_frame_time_us > 0 {
+            (1_000_000 / avg_frame_time_us) as u32
+        } else {
+            0
+        }
+    }
+}
+
+
+#[derive(Resource, Default)]
+struct ButtonState {
+    /// Was BOOT button pressed last frame (for edge detection)
+    boot_was_pressed: bool,
+    /// BOOT button debounce counter
+    boot_debounce: u32,
+    /// Was power key pressed last frame (for edge detection)  
+    pkey_was_pressed: bool,
+    /// Frame counter for hold-to-restart
+    hold_start_frame: Option<u32>,
+    /// Current frame number
+    frame: u32,
+}
+
+const HOLD_TO_RESTART_FRAMES: u32 = 90; // ~1.5 seconds at 60fps to restart
+
+// AXP2101 PMU resource for reading power button
+struct Axp2101Resource {
+    i2c: Rc<core::cell::RefCell<I2c<'static, esp_hal::Blocking>>>,
+}
+
+// Shared TCA9554 reset interface that uses Rc to share I2C bus
+struct SharedTca9554Reset {
+    i2c: Rc<core::cell::RefCell<I2c<'static, esp_hal::Blocking>>>,
+    addr: u8,
+}
+
+impl ResetInterface for SharedTca9554Reset {
+    type Error = <I2c<'static, esp_hal::Blocking> as embedded_hal::i2c::ErrorType>::Error;
+    
     fn reset(&mut self) -> Result<(), Self::Error> {
         let delay = Delay::new();
-
-        // Configure directions:
-        // - Inputs: EXIO3 (QMI_INT2), EXIO4/EXIO5 (board/system button wiring varies by revision),
-        //           EXIO6 (TP_INT)
-        // - Outputs: EXIO0 (LCD_RESET), EXIO1 (DSI_PWR_EN), EXIO2 (TP_RESET), EXIO7 (SDCS)
-        self.i2c
-            .write(self.addr, &[TCA9554_CONFIG, 0b0111_1000])?;
-        // No polarity inversion.
-        self.i2c.write(self.addr, &[TCA9554_POLARITY, 0x00])?;
-
-        // Assert display reset low while keeping display power enabled and SD deselected.
-        // Bits: EXIO7 SDCS=1, EXIO2 TP_RESET=1, EXIO1 DSI_PWR_EN=1, EXIO0 LCD_RESET=0
-        self.i2c
-            .write(self.addr, &[TCA9554_OUTPUT, 0b1000_0110])?;
+        let mut i2c = self.i2c.borrow_mut();
+        i2c.write(self.addr, &[TCA9554_CONFIG, 0b0111_1000])?;
+        i2c.write(self.addr, &[TCA9554_POLARITY, 0x00])?;
+        i2c.write(self.addr, &[TCA9554_OUTPUT, 0b1000_0110])?;
         delay.delay_millis(20);
-
-        // De-assert reset (high). Keep power enabled.
-        self.i2c
-            .write(self.addr, &[TCA9554_OUTPUT, 0b1000_0111])?;
+        i2c.write(self.addr, &[TCA9554_OUTPUT, 0b1000_0111])?;
         delay.delay_millis(150);
-
         Ok(())
     }
 }
 
-fn tca9554_read_input<I2C>(i2c: &mut I2C, addr: u8) -> Result<u8, I2C::Error>
-where
-    I2C: embedded_hal::i2c::I2c,
-{
-    let mut buf = [0u8; 1];
-    i2c.write_read(addr, &[TCA9554_INPUT], &mut buf)?;
-    Ok(buf[0])
+// Type alias for the display driver to simplify the type
+type DisplayDriver = Sh8601Driver<
+    Ws18AmoledDriver,
+    SharedTca9554Reset,
+>;
+
+// Display resource - NonSend because it contains non-thread-safe components
+struct DisplayResource {
+    display: DisplayDriver,
 }
 
-fn ws_power_button_active_from_tca9554(input: u8, baseline_masked: u8) -> bool {
-    // Some boards appear to idle LOW on EXIO4/5, so "LOW means pressed" is not reliable.
-    // Instead, we auto-calibrate a baseline and treat a change as "button active".
-    (input & TCA9554_PWR_MASK) != baseline_masked
+// Button resources - NonSend because GPIO pins are not Send
+struct ButtonLeftResource {
+    button: Input<'static>,
 }
 
-// Enter light sleep mode: turn off display and reduce power consumption
-// Device can be woken by pressing the BOOT button
-async fn enter_light_sleep<D>(
-    display: &mut D,
-    btn_boot: &Input<'_>,
-) where
-    D: embedded_graphics::prelude::DrawTarget<Color = Rgb888>,
-{
-    esp_println::println!("SLEEP: entering light sleep mode");
-    esp_println::println!("SLEEP: display off, monitoring button for wake");
+// --- Game Systems ---
+
+/// Two-button input system:
+/// - GPIO0 (BOOT button) = turn left
+/// - AXP2101 Power Key (via PMU IRQ) = turn right
+/// - Hold either when game over = restart
+/// 
+/// Uses EDGE DETECTION: only triggers on button press, not while held
+fn input_system(
+    left_btn: NonSendMut<ButtonLeftResource>,
+    axp2101: NonSendMut<Axp2101Resource>,
+    mut input_state: ResMut<InputState>,
+    mut button_state: ResMut<ButtonState>,
+    game_state: Res<GameState>,
+) {
+    button_state.frame += 1;
     
-    // Sleep mode: poll button less frequently to save power
-    const SLEEP_POLL: Duration = Duration::from_millis(100);
+    // === BOOT BUTTON (GPIO0) - active-low ===
+    let boot_raw = left_btn.button.is_low();
     
-    loop {
-        let boot_low = btn_boot.is_low();
+    // Minimal debounce: just 1 frame to avoid electrical noise
+    // (Reduced from 3 frames for faster response)
+    let boot_pressed = if boot_raw {
+        button_state.boot_debounce = button_state.boot_debounce.saturating_add(1);
+        button_state.boot_debounce >= 1
+    } else {
+        button_state.boot_debounce = 0;
+        false
+    };
+    
+    // Edge detection for BOOT button
+    let boot_just_pressed = boot_pressed && !button_state.boot_was_pressed;
+    button_state.boot_was_pressed = boot_pressed;
+    
+    // === POWER KEY (AXP2101 PMU) - read from IRQ status register ===
+    // The power key press is detected via the PMU's interrupt status register.
+    // We read INTSTS2, check the PKEY_SHORT bit, then clear it by writing 0xFF.
+    let pkey_pressed = {
+        let mut i2c = axp2101.i2c.borrow_mut();
+        let mut status = [0u8; 1];
         
-        // Wake on button press
-        if boot_low {
-            esp_println::println!("SLEEP: wake detected (boot pressed)");
-            // Wait a bit to debounce
-            Timer::after(Duration::from_millis(50)).await;
-            // Check again to confirm
-            if btn_boot.is_low() {
+        // Read interrupt status register 2 (0x49)
+        if i2c.write_read(AXP2101_ADDR, &[AXP2101_INTSTS2], &mut status).is_ok() {
+            let short_press = (status[0] & AXP2101_PKEY_SHORT_IRQ_BIT) != 0;
+            
+            // Clear the interrupt by writing 0xFF to the status register
+            if short_press {
+                let _ = i2c.write(AXP2101_ADDR, &[AXP2101_INTSTS2, 0xFF]);
+            }
+            
+            short_press
+        } else {
+            false
+        }
+    };
+    
+    // Power key is edge-triggered by design (IRQ fires once per press)
+    let pkey_just_pressed = pkey_pressed && !button_state.pkey_was_pressed;
+    button_state.pkey_was_pressed = pkey_pressed;
+    
+    // === Combined input handling ===
+    let any_pressed = boot_pressed || pkey_pressed;
+    let _any_just_pressed = boot_just_pressed || pkey_just_pressed;
+    
+    // Handle game-over state: hold to restart
+    if game_state.game_over {
+        if any_pressed {
+            if button_state.hold_start_frame.is_none() {
+                button_state.hold_start_frame = Some(button_state.frame);
+            } else if let Some(start) = button_state.hold_start_frame {
+                let hold_duration = button_state.frame.saturating_sub(start);
+                if hold_duration >= HOLD_TO_RESTART_FRAMES && !input_state.restart {
+                    input_state.restart = true;
+                    esp_println::println!("BTN: held long enough - restart!");
+                }
+            }
+        } else {
+            button_state.hold_start_frame = None;
+        }
+    } else {
+        // During gameplay: BOOT = left, Power Key = right
+        button_state.hold_start_frame = None;
+        
+        if boot_just_pressed {
+            input_state.turn_left = true;
+            esp_println::println!("BTN: BOOT press -> turn left");
+        }
+        if pkey_just_pressed {
+            input_state.turn_right = true;
+            esp_println::println!("BTN: Power key press -> turn right");
+        }
+    }
+}
+
+fn process_input_system(
+    mut input_state: ResMut<InputState>,
+    mut game_state: ResMut<GameState>,
+    mut head_query: Query<&mut Direction, With<SnakeHead>>,
+) {
+    // Handle restart first (works even when game is over)
+    if input_state.restart {
+        return;
+    }
+    
+    // Only process turn inputs if game is not over
+    if game_state.game_over {
+        input_state.turn_left = false;
+        input_state.turn_right = false;
+        return;
+    }
+    
+    // Process turn inputs (edge-triggered in input_system, so this fires at most once per press)
+    // Left takes priority if both pressed simultaneously
+    if input_state.turn_left {
+        if let Ok(mut dir) = head_query.single_mut() {
+            *dir = dir.turn_left();
+            game_state.needs_redraw = true;
+        }
+        input_state.turn_left = false;
+    } else if input_state.turn_right {
+        if let Ok(mut dir) = head_query.single_mut() {
+            *dir = dir.turn_right();
+            game_state.needs_redraw = true;
+        }
+        input_state.turn_right = false;
+    }
+}
+
+fn move_snake_system(
+    mut game_state: ResMut<GameState>,
+    mut head_query: Query<(&mut Position, &Direction), With<SnakeHead>>,
+    mut segment_query: Query<(&mut Position, &SnakeSegment), (With<SnakeSegment>, Without<SnakeHead>)>,
+) {
+    if game_state.game_over {
+        return;
+    }
+
+    game_state.frames_elapsed += 1;
+    game_state.move_timer += 1;
+    if game_state.move_timer < game_state.move_interval {
+        return;
+    }
+    game_state.move_timer = 0;
+    game_state.needs_redraw = true; // Mark that we need to redraw after movement
+
+    let (mut head_pos, direction) = match head_query.single_mut() {
+        Ok(h) => h,
+        Err(_) => return,
+    };
+
+    // Calculate new head position
+    let new_head_pos = match *direction {
+        Direction::Up => Position {
+            x: head_pos.x,
+            y: head_pos.y - 1,
+        },
+        Direction::Down => Position {
+            x: head_pos.x,
+            y: head_pos.y + 1,
+        },
+        Direction::Left => Position {
+            x: head_pos.x - 1,
+            y: head_pos.y,
+        },
+        Direction::Right => Position {
+            x: head_pos.x + 1,
+            y: head_pos.y,
+        },
+    };
+
+    // Store old head position
+    let old_head_pos = *head_pos;
+    
+    // Update head to new position
+    *head_pos = new_head_pos;
+
+    // Correct implementation of snake movement using indices
+    
+    // 1. Collect all segment data (index, old_position) BEFORE any updates
+    let mut segment_data: heapless::Vec<(usize, Position), 256> = heapless::Vec::new();
+    for (pos, seg) in segment_query.iter() {
+        segment_data.push((seg.index, *pos)).ok();
+    }
+    
+    // 2. Sort by index (ascending: 0, 1, 2...)
+    segment_data.sort_unstable_by_key(|(idx, _)| *idx);
+    
+    // Validate segment_data: check for duplicate indices or missing indices
+    let mut prev_idx = None;
+    for (idx, _) in segment_data.iter() {
+        if let Some(prev) = prev_idx {
+            if *idx == prev {
+                esp_println::println!("MOVE: ERROR - duplicate segment index {}", idx);
+            } else if *idx != prev + 1 {
+                esp_println::println!("MOVE: WARNING - non-contiguous indices: {} -> {}", prev, idx);
+            }
+        }
+        prev_idx = Some(*idx);
+    }
+    
+    // Debug: log collected segment data occasionally (kept lightweight)
+    if segment_data.len() > 0 && game_state.frames_elapsed % 200 == 0 {
+        esp_println::println!(
+            "MOVE: head old=({}, {}) new=({}, {}) segs={}",
+            old_head_pos.x,
+            old_head_pos.y,
+            new_head_pos.x,
+            new_head_pos.y,
+            segment_data.len()
+        );
+    }
+    
+    // 3. Update segments in index order (0, 1, 2...) to ensure correctness
+    // We iterate through indices sequentially and find each segment by its index
+    let max_index = segment_data.iter().map(|(idx, _)| *idx).max().unwrap_or(0);
+    
+    for target_idx in 0..=max_index {
+        // Find the segment with this index and update it
+        for (mut pos, seg) in segment_query.iter_mut() {
+            if seg.index == target_idx {
+                if target_idx == 0 {
+                    // Segment 0 gets the old head position
+                    *pos = old_head_pos;
+                } else {
+                    // Segment i gets the old position of segment i-1
+                    // Find the old position of segment (target_idx - 1) in segment_data
+                    if let Some((prev_idx, prev_pos)) = segment_data.iter().find(|(idx, _)| *idx == target_idx - 1) {
+                        // Critical check: if the previous segment's old position is the new head position,
+                        // this indicates a serious bug in the movement logic
+                        if *prev_pos == new_head_pos {
+                            esp_println::println!("MOVE: CRITICAL ERROR - segment {} prev_seg[{}] old_pos=({}, {}) == new_head=({}, {})", 
+                                target_idx, prev_idx, prev_pos.x, prev_pos.y, new_head_pos.x, new_head_pos.y);
+                            esp_println::println!("MOVE: This should never happen! segment_data may be corrupted.");
+                            // Don't update - leave segment at current position to avoid crash
+                            // Break out of inner loop to move to next target_idx
+                        } else {
+                            *pos = *prev_pos;
+                            
+                            // Debug: log segment updates occasionally
+                            if target_idx <= 2 && game_state.frames_elapsed % 50 == 0 {
+                                esp_println::println!("MOVE: updated segment {} to ({}, {})", target_idx, pos.x, pos.y);
+                            }
+                        }
+                    } else {
+                        esp_println::println!("MOVE: ERROR - segment {} could not find previous segment {} in segment_data", target_idx, target_idx - 1);
+                    }
+                }
+                
+                // Found this segment (whether updated or not), move to next index
                 break;
             }
         }
-        
-        Timer::after(SLEEP_POLL).await;
     }
-    
-    esp_println::println!("SLEEP: waking up, restoring display");
-    // Display will be restored when we return to main loop
 }
 
-extern crate alloc;
 
-// This creates a default app-descriptor required by the esp-idf bootloader.
-// For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
-esp_bootloader_esp_idf::esp_app_desc!();
+fn dump_game_state(
+    reason: &str,
+    head_pos: &Position,
+    head_dir: &Direction,
+    game_state: &GameState,
+    segment_query: &Query<(&Position, &SnakeSegment), (With<SnakeSegment>, Without<SnakeHead>)>,
+    food_query: &Query<(Entity, &Position), With<Food>>,
+) {
+    const GRID_WIDTH: i32 = 46;
+    const GRID_HEIGHT: i32 = 56;
+    
+    let dir_str = match head_dir {
+        Direction::Up => "Up",
+        Direction::Down => "Down",
+        Direction::Left => "Left",
+        Direction::Right => "Right",
+    };
+    
+    esp_println::println!("=== GAME OVER: {} ===", reason);
+    esp_println::println!("  Head: ({}, {}) facing {}", head_pos.x, head_pos.y, dir_str);
+    esp_println::println!("  Grid: {}x{} (valid: 0..{}, 0..{})", GRID_WIDTH, GRID_HEIGHT, GRID_WIDTH-1, GRID_HEIGHT-1);
+    esp_println::println!("  Score: {}, Frames: {}, Speed: {}", game_state.score, game_state.frames_elapsed, game_state.move_interval);
+    
+    // Collect and sort segments by index
+    let mut segments: heapless::Vec<(usize, i32, i32), 64> = heapless::Vec::new();
+    for (pos, seg) in segment_query.iter() {
+        segments.push((seg.index, pos.x, pos.y)).ok();
+    }
+    segments.sort_unstable_by_key(|(idx, _, _)| *idx);
+    
+    esp_println::println!("  Segments ({}):", segments.len());
+    for (idx, x, y) in segments.iter() {
+        esp_println::println!("    [{}]: ({}, {})", idx, x, y);
+    }
+    
+    // Food positions
+    let mut food_count = 0;
+    for (_, food_pos) in food_query.iter() {
+        esp_println::println!("  Food: ({}, {})", food_pos.x, food_pos.y);
+        food_count += 1;
+    }
+    if food_count == 0 {
+        esp_println::println!("  Food: none");
+    }
+    esp_println::println!("=== END STATE DUMP ===");
+}
+
+fn collision_system(
+    mut game_state: ResMut<GameState>,
+    head_query: Query<(&Position, &Direction), With<SnakeHead>>,
+    segment_query: Query<(&Position, &SnakeSegment), (With<SnakeSegment>, Without<SnakeHead>)>,
+    food_query: Query<(Entity, &Position), With<Food>>,
+    mut commands: Commands,
+) {
+    if game_state.game_over {
+        return;
+    }
+
+    // Don't check collisions until snake has moved at least once
+    // This prevents false collisions on the first frame
+    if game_state.frames_elapsed < game_state.move_interval {
+        return;
+    }
+
+    let (head_pos, head_dir) = match head_query.single() {
+        Ok((p, d)) => (*p, *d),
+        Err(_) => return,
+    };
+
+    // Check wall collision
+    const GRID_WIDTH: i32 = 46; // 368 / 8
+    const GRID_HEIGHT: i32 = 56; // 448 / 8
+    
+    if head_pos.x < 0
+        || head_pos.x >= GRID_WIDTH
+        || head_pos.y < 0
+        || head_pos.y >= GRID_HEIGHT
+    {
+        game_state.game_over = true;
+        game_state.needs_redraw = true;
+        dump_game_state("Wall collision", &head_pos, &head_dir, &game_state, &segment_query, &food_query);
+        return;
+    }
+
+    // Check self collision
+    // Skip segment 0 (index 0) because it's always at the old head position right after movement
+    // This prevents false collisions. Only check segments 1 and beyond.
+    for (seg_pos, seg) in segment_query.iter() {
+        if seg.index > 0 && *seg_pos == head_pos {
+            game_state.game_over = true;
+            game_state.needs_redraw = true;
+            esp_println::println!("=== GAME OVER: Self collision with segment {} ===", seg.index);
+            dump_game_state("Self collision", &head_pos, &head_dir, &game_state, &segment_query, &food_query);
+            return;
+        }
+    }
+
+    // Check food collision
+    for (food_entity, food_pos) in food_query.iter() {
+        if *food_pos == head_pos {
+            // Eat food
+            commands.entity(food_entity).despawn();
+            game_state.score += 10;
+            
+            // Add new segment to snake
+            // Find the last segment (highest index)
+            // Use index to find tail, not position order which can be misleading if coiled
+            let max_index_seg = segment_query
+                .iter()
+                .max_by_key(|(_, s)| s.index);
+                
+            let (last_pos, next_index) = if let Some((pos, s)) = max_index_seg {
+                (*pos, s.index + 1)
+            } else {
+                (head_pos, 0)
+            };
+            
+            commands.spawn((
+                SnakeSegment { index: next_index },
+                Position {
+                    x: last_pos.x,
+                    y: last_pos.y,
+                },
+            ));
+
+            // Speed up slightly
+            if game_state.move_interval > 2 {
+                game_state.move_interval -= 1;
+            }
+            game_state.needs_redraw = true;
+
+            esp_println::println!("Score: {}", game_state.score);
+        }
+    }
+}
+
+fn restart_system(
+    mut input_state: ResMut<InputState>,
+    mut game_state: ResMut<GameState>,
+    mut head_query: Query<&mut Position, With<SnakeHead>>,
+    mut head_dir_query: Query<&mut Direction, With<SnakeHead>>,
+    segment_query: Query<Entity, With<SnakeSegment>>,
+    food_query: Query<Entity, With<Food>>,
+    mut commands: Commands,
+) {
+    if !input_state.restart {
+        return;
+    }
+    
+    esp_println::println!("=== RESTART SYSTEM TRIGGERED ===");
+    esp_println::println!("  game_over was: {}", game_state.game_over);
+    
+    // Clear restart flag immediately to prevent multiple restarts
+    input_state.restart = false;
+    
+    // Reset game state
+    *game_state = GameState::default();
+    
+    // Remove all segments
+    for entity in segment_query.iter() {
+        commands.entity(entity).despawn();
+    }
+    
+    // Remove all food
+    for entity in food_query.iter() {
+        commands.entity(entity).despawn();
+    }
+    
+    // Reset head position and direction
+    if let Ok(mut head_pos) = head_query.single_mut() {
+        *head_pos = Position { x: 23, y: 28 }; // Center of grid
+    }
+    if let Ok(mut dir) = head_dir_query.single_mut() {
+        *dir = Direction::Right;
+    }
+    
+    // Spawn initial segments
+    commands.spawn((
+        SnakeSegment { index: 0 },
+        Position { x: 22, y: 28 },
+    ));
+    commands.spawn((
+        SnakeSegment { index: 1 },
+        Position { x: 21, y: 28 },
+    ));
+    
+    game_state.needs_redraw = true;
+    esp_println::println!("Game restarted!");
+}
+
+fn food_spawn_system(
+    mut commands: Commands,
+    food_query: Query<Entity, With<Food>>,
+    all_positions: Query<&Position>,
+    rng: ResMut<RngResource>,
+    game_state: Res<GameState>,
+) {
+    if game_state.game_over {
+        return;
+    }
+
+    // Only spawn food if none exists
+    if food_query.iter().next().is_some() {
+        return;
+    }
+
+    const GRID_WIDTH: i32 = 46;
+    const GRID_HEIGHT: i32 = 56;
+
+    // Try to find a free position
+    let mut attempts = 0;
+    loop {
+        let mut buf = [0u8; 4];
+        rng.0.read(&mut buf);
+        let x = ((buf[0] as u32 | ((buf[1] as u32) << 8)) % GRID_WIDTH as u32) as i32;
+        rng.0.read(&mut buf);
+        let y = ((buf[0] as u32 | ((buf[1] as u32) << 8)) % GRID_HEIGHT as u32) as i32;
+
+        let pos = Position { x, y };
+        let occupied = all_positions.iter().any(|&p| p == pos);
+
+        if !occupied {
+            commands.spawn((Food, pos));
+            break;
+        }
+
+        attempts += 1;
+        if attempts > 100 {
+            // Give up if we can't find a spot
+            break;
+        }
+    }
+}
+
+fn render_system(
+    mut display_res: NonSendMut<DisplayResource>,
+    mut game_state: ResMut<GameState>,
+    mut fb_res: ResMut<FrameBufferResource>,
+    head_query: Query<&Position, With<SnakeHead>>,
+    segment_query: Query<&Position, With<SnakeSegment>>,
+    food_query: Query<&Position, With<Food>>,
+    _perf_metrics: Option<Res<PerformanceMetrics>>,
+) {
+    // Only render when needed (after movement or state change)
+    // For game over, only render once when it first happens
+    if !game_state.needs_redraw {
+        return;
+    }
+    game_state.needs_redraw = false;
+    // Clear framebuffer
+    fb_res.frame_buf.clear(Rgb888::BLACK).unwrap();
+
+    const CELL_SIZE: i32 = 8;
+    const GRID_OFFSET_X: i32 = 0;
+    const GRID_OFFSET_Y: i32 = 0;
+    
+    // Direct framebuffer writes for game objects (much faster than embedded-graphics primitives)
+    // Access the underlying array slice from HeapBuffer
+    let fb_data: &mut [Rgb888] = &mut *fb_res.frame_buf.data;
+    
+    // Helper function to fill a cell in the framebuffer
+    #[inline(always)]
+    fn fill_cell(fb_data: &mut [Rgb888], x: usize, y: usize, color: Rgb888, cell_size: usize) {
+        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
+            for dy in 0..cell_size {
+                let row_start = (y + dy) * LCD_H_RES + x;
+                for dx in 0..cell_size {
+                    fb_data[row_start + dx] = color;
+                }
+            }
+        }
+    }
+
+    // Draw food (red)
+    for food_pos in food_query.iter() {
+        let screen_x = GRID_OFFSET_X + food_pos.x * CELL_SIZE;
+        let screen_y = GRID_OFFSET_Y + food_pos.y * CELL_SIZE;
+        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
+        if screen_x >= 0 && screen_y >= 0 
+            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES 
+            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES {
+            let x = screen_x as usize;
+            let y = screen_y as usize;
+            fill_cell(fb_data, x, y, Rgb888::new(255, 0, 0), CELL_SIZE as usize);
+        }
+    }
+
+    // Draw snake segments (green)
+    for seg_pos in segment_query.iter() {
+        let screen_x = GRID_OFFSET_X + seg_pos.x * CELL_SIZE;
+        let screen_y = GRID_OFFSET_Y + seg_pos.y * CELL_SIZE;
+        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
+        if screen_x >= 0 && screen_y >= 0 
+            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES 
+            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES {
+            let x = screen_x as usize;
+            let y = screen_y as usize;
+            fill_cell(fb_data, x, y, Rgb888::new(0, 255, 0), CELL_SIZE as usize);
+        }
+    }
+
+    // Draw head (darker green)
+    if let Ok(head_pos) = head_query.single() {
+        let screen_x = GRID_OFFSET_X + head_pos.x * CELL_SIZE;
+        let screen_y = GRID_OFFSET_Y + head_pos.y * CELL_SIZE;
+        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
+        if screen_x >= 0 && screen_y >= 0 
+            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES 
+            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES {
+            let x = screen_x as usize;
+            let y = screen_y as usize;
+            fill_cell(fb_data, x, y, Rgb888::new(0, 200, 0), CELL_SIZE as usize);
+        }
+    }
+
+    if game_state.game_over {
+        // Draw game over screen centered
+        let game_over_text = "GAME OVER";
+        let mut score_text = String::<20>::new();
+        write!(score_text, "Score: {}", game_state.score).ok();
+        let restart_text = "Hold button to restart";
+        
+        // Calculate text widths for centering (FONT_10X20 is 10 pixels wide per character)
+        let game_over_width = game_over_text.len() as i32 * 10;
+        let score_width = score_text.len() as i32 * 10;
+        let restart_width = restart_text.len() as i32 * 10;
+        
+        let center_x = (LCD_H_RES as i32 - game_over_width) / 2;
+        let center_y = LCD_V_RES as i32 / 2;
+        
+        // Draw "GAME OVER" centered
+        Text::new(
+            game_over_text,
+            Point::new(center_x, center_y - 40),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 0, 0)),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+        
+        // Draw score centered below
+        let score_center_x = (LCD_H_RES as i32 - score_width) / 2;
+        Text::new(
+            score_text.as_str(),
+            Point::new(score_center_x, center_y - 10),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+        
+        // Draw restart instructions centered below score
+        let _restart_center_x = (LCD_H_RES as i32 - restart_width) / 2;
+        Text::new(
+            "Hold both to restart",
+            Point::new((LCD_H_RES as i32 - "Hold both to restart".len() as i32 * 10) / 2, center_y + 20),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::new(128, 128, 128)),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+    } else {
+        // Draw score during gameplay
+        let mut score_str = String::<20>::new();
+        write!(score_str, "Score: {}", game_state.score).ok();
+        Text::new(
+            score_str.as_str(),
+            Point::new(8, LCD_V_RES as i32 - 20),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+
+        // Draw instructions
+        Text::new(
+            "Boot=Left Pwr=Right",
+            Point::new(8, 8),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::new(128, 128, 128)),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+    }
+
+    // Copy framebuffer to display - OPTIMIZED VERSION
+    // Use direct framebuffer transfer: draw entire framebuffer efficiently
+    // Removed redundant display.clear() - framebuffer is already cleared
+    
+    // Access the underlying array slice from HeapBuffer
+    let fb_data: &[Rgb888] = &*fb_res.frame_buf.data;
+    
+    // Strategy: Draw row-by-row with run-length encoding
+    // IMPORTANT: We MUST draw black pixels too because we removed display.clear()!
+    // If we skip black pixels, the old snake position will remain on screen (artifacts).
+    
+    for y in 0..LCD_V_RES {
+        let row_start = y * LCD_H_RES;
+        let mut x = 0;
+        while x < LCD_H_RES {
+            let pixel = fb_data[row_start + x];
+            
+            // Find run of identical pixels (works for Black and Colors)
+            let start_x = x;
+            let mut end_x = x + 1;
+            while end_x < LCD_H_RES && fb_data[row_start + end_x] == pixel {
+                end_x += 1;
+            }
+            
+            // Draw rectangle for this run
+            // Drawing black rectangles effectively "clears" that part of the screen
+            let width = end_x - start_x;
+            Rectangle::new(
+                Point::new(start_x as i32, y as i32),
+                Size::new(width as u32, 1),
+            )
+            .into_styled(PrimitiveStyle::with_fill(pixel))
+            .draw(&mut display_res.display)
+            .ok();
+            
+            x = end_x;
+        }
+    }
+    
+    display_res.display.flush().ok();
+}
 
 #[allow(
     clippy::large_stack_frames,
@@ -188,22 +1032,16 @@ esp_bootloader_esp_idf::esp_app_desc!();
 )]
 #[esp_rtos::main]
 async fn main(spawner: Spawner) -> ! {
-    // generator version: 1.1.0
-
     esp_println::logger::init_logger_from_env();
-    esp_println::println!("BOOT: starting");
+    esp_println::println!("BOOT: starting snake game");
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
-    // Waveshare ESP32-S3 Touch AMOLED has PSRAM; put the framebuffer there.
     esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram);
     esp_println::println!("BOOT: after psram_allocator");
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
-    esp_println::println!("BOOT: TimerGroup ready, starting esp-rtos");
-    // `esp-rtos` needs a software interrupt only on RISC-V (ESP32-C3/C6/etc).
-    // On Xtensa (ESP32-S3), `start` only takes the timer source.
     #[cfg(target_arch = "riscv32")]
     {
         let sw_interrupt =
@@ -224,19 +1062,12 @@ async fn main(spawner: Spawner) -> ! {
     let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
     let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
 
-    // --- QSPI wiring (from schematic / sh8601-rs Waveshare example) ---
-    // QSPI bus:
-    //   SIO0..3: GPIO4..7
-    //
-    // NOTE: A known-working public repo for this board uses CS=GPIO12 and SCK=GPIO11.
-    // We'll match that here (if your board revision differs, we can make this configurable).
-    //   CS:      GPIO12
-    //   SCK:     GPIO11
+    // --- QSPI wiring ---
     esp_println::println!("BOOT: init QSPI");
     let lcd_spi = Spi::new(
         peripherals.SPI2,
         SpiConfig::default()
-            .with_frequency(Rate::from_mhz(40))
+            .with_frequency(Rate::from_mhz(60)) // Increased from 40MHz for better performance
             .with_mode(Mode::_0),
     )
     .unwrap()
@@ -250,14 +1081,10 @@ async fn main(spawner: Spawner) -> ! {
     .with_buffers(dma_rx_buf, dma_tx_buf);
     esp_println::println!("BOOT: QSPI ready");
 
-    // I2C GPIO expander (TCA9554 @ 0x24 typical) controls LCD_RESET/DSI_PWR_EN/TP_RESET:
-    //   SDA: GPIO15
-    //   SCL: GPIO14
+    // --- I2C ---
     esp_println::println!("BOOT: init I2C");
     let i2c = I2c::new(
         peripherals.I2C0,
-        // IMPORTANT: enable timeouts so a missing/stuck I2C device doesn't hang the whole boot.
-        // Default on some chips is "bus timeout disabled".
         I2cConfig::default()
             .with_frequency(Rate::from_khz(400))
             .with_timeout(BusTimeout::BusCycles(50))
@@ -268,11 +1095,67 @@ async fn main(spawner: Spawner) -> ! {
     .with_scl(peripherals.GPIO14);
     esp_println::println!("BOOT: I2C ready");
 
-    let i2c_bus = core::cell::RefCell::new(i2c);
-
+    // Use StaticCell to make i2c_bus live for 'static
+    // Use Rc to share the I2C bus between reset interface and button reading
+    static I2C_BUS: static_cell::StaticCell<Rc<core::cell::RefCell<I2c<'static, esp_hal::Blocking>>>> = static_cell::StaticCell::new();
+    let i2c_bus = I2C_BUS.init(Rc::new(core::cell::RefCell::new(i2c)));
     esp_println::println!("BOOT: probing TCA9554");
-    let reset = WsTca9554Reset::new(RefCellDevice::new(&i2c_bus));
-    let tca_addr = reset.addr;
+    
+    // Probe TCA9554 to find the correct address
+    let tca9554_addr = {
+        let mut i2c_ref = i2c_bus.borrow_mut();
+        let primary_res = i2c_ref.write(TCA9554_ADDR_PRIMARY, &[TCA9554_POLARITY, 0x00]);
+        esp_println::println!("TCA9554 probe 0x{:02X}: {:?}", TCA9554_ADDR_PRIMARY, primary_res);
+        
+        let fallback_res = i2c_ref.write(TCA9554_ADDR_FALLBACK, &[TCA9554_POLARITY, 0x00]);
+        esp_println::println!("TCA9554 probe 0x{:02X}: {:?}", TCA9554_ADDR_FALLBACK, fallback_res);
+        
+        if primary_res.is_ok() {
+            TCA9554_ADDR_PRIMARY
+        } else if fallback_res.is_ok() {
+            TCA9554_ADDR_FALLBACK
+        } else {
+            TCA9554_ADDR_PRIMARY // Default fallback
+        }
+    };
+    esp_println::println!("TCA9554: using I2C addr 0x{:02X}", tca9554_addr);
+    
+    // --- Initialize AXP2101 PMU for power button ---
+    esp_println::println!("BOOT: init AXP2101 PMU");
+    {
+        let mut i2c_ref = i2c_bus.borrow_mut();
+        
+        // Probe AXP2101
+        let mut chip_id = [0u8; 1];
+        if i2c_ref.write_read(AXP2101_ADDR, &[0x03], &mut chip_id).is_ok() {
+            esp_println::println!("AXP2101: chip ID = 0x{:02X}", chip_id[0]);
+        } else {
+            esp_println::println!("AXP2101: probe failed (will continue anyway)");
+        }
+        
+        // Disable all IRQs first
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTEN1, 0x00]);
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTEN2, 0x00]);
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTEN3, 0x00]);
+        
+        // Clear any pending interrupts
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTSTS1, 0xFF]);
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTSTS2, 0xFF]);
+        let _ = i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTSTS3, 0xFF]);
+        
+        // Enable PKEY short press IRQ (bit 3 of INTEN2)
+        if i2c_ref.write(AXP2101_ADDR, &[AXP2101_INTEN2, AXP2101_PKEY_SHORT_IRQ_BIT]).is_ok() {
+            esp_println::println!("AXP2101: power key IRQ enabled");
+        } else {
+            esp_println::println!("AXP2101: failed to enable power key IRQ");
+        }
+    }
+    
+    // Create reset interface using shared I2C bus (for display reset only)
+    let reset = SharedTca9554Reset {
+        i2c: Rc::clone(&i2c_bus),
+        addr: tca9554_addr,
+    };
     esp_println::println!("BOOT: TCA9554 ready");
     let ws_driver = Ws18AmoledDriver::new(lcd_spi);
 
@@ -288,8 +1171,11 @@ async fn main(spawner: Spawner) -> ! {
         DISPLAY_SIZE,
         delay,
     );
-    let mut display = match display_res {
-        Ok(d) => d,
+    let display = match display_res {
+        Ok(d) => {
+            esp_println::println!("Display initialized successfully");
+            d
+        }
         Err(e) => {
             esp_println::println!("Display init failed: {:?}", e);
             loop {
@@ -298,123 +1184,108 @@ async fn main(spawner: Spawner) -> ! {
         }
     };
 
-    display.clear(Rgb888::BLACK).unwrap();
-    let style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
-    Text::new("Hello World", Point::new(20, 40), style)
-        .draw(&mut display)
-        .unwrap();
-    display.flush().unwrap();
-
-    esp_println::println!("BOOT: ok (hello world drawn)");
-
-    // --- Buttons: enter sleep mode on long press of BOOT button ---
-    //
-    // On this board:
-    // - GPIO0 is the BOOT / PWR button (active-low, strapping pin).
-    //
-    // Simple approach: hold BOOT button for 2 seconds to enter sleep mode.
-    // Sleep mode turns off the display and reduces power consumption.
-    // Device can be woken by pressing the BOOT button again.
+    // --- Buttons ---
+    // GPIO0 (BOOT) = turn left
+    // AXP2101 Power Key = turn right (via PMU IRQ)
     let btn_cfg = InputConfig::default().with_pull(Pull::Up);
-    let btn_boot = Input::new(peripherals.GPIO0, btn_cfg);
+    let btn_left = Input::new(peripherals.GPIO0, btn_cfg);
+    
+    esp_println::println!("BTN: initialized GPIO0 (BOOT = left) and AXP2101 power key (right)");
+    esp_println::println!("BTN: BOOT initial state = {}", if btn_left.is_low() { "pressed" } else { "released" });
 
-    esp_println::println!("BTN: initialized GPIO0 (boot) with pull-up");
+    // --- Initialize RNG ---
+    let rng = Rng::new();
 
-    const LONG_PRESS_HOLD: Duration = Duration::from_millis(2000); // 2 seconds
-    const POLL: Duration = Duration::from_millis(20);
-    const LOG_INTERVAL: Duration = Duration::from_millis(1000);
-    const PROGRESS_LOG_INTERVAL: Duration = Duration::from_millis(200);
-    let mut button_held_since: Option<Instant> = None;
-    let mut consecutive_low = 0u32;
-    let mut last_log = Instant::now();
-    let mut last_progress_log = Instant::now();
-    let mut last_boot_state = btn_boot.is_low();
+    // --- Initialize Bevy ECS World ---
+    let mut world = World::default();
+    
+    // Insert resources
+    world.insert_resource(GameState::default());
+    world.insert_resource(InputState::default());
+    world.insert_resource(ButtonState::default());
+    world.insert_resource(PerformanceMetrics::default());
+    world.insert_resource(RngResource(rng));
+    world.insert_resource(FrameBufferResource::new());
+    world.insert_non_send_resource(DisplayResource { display });
+    world.insert_non_send_resource(ButtonLeftResource { button: btn_left });
+    world.insert_non_send_resource(Axp2101Resource { 
+        i2c: Rc::clone(&i2c_bus),
+    });
 
-    // Log initial button state
-    esp_println::println!("BTN: initial state - boot={}", 
-        if last_boot_state { "LOW" } else { "HIGH" });
+    // Spawn initial snake
+    world.spawn((
+        SnakeHead,
+        Position { x: 23, y: 28 }, // Center of grid
+        Direction::Right,
+    ));
+
+    // Add initial segments
+    world.spawn((
+        SnakeSegment { index: 0 },
+        Position { x: 22, y: 28 },
+    ));
+    world.spawn((
+        SnakeSegment { index: 1 },
+        Position { x: 21, y: 28 },
+    ));
+
+    // Create schedule
+    let mut schedule = Schedule::default();
+    schedule.add_systems(
+        (
+            input_system,
+            restart_system, // Check restart before processing other inputs
+            process_input_system,
+            move_snake_system,
+            collision_system,
+            food_spawn_system,
+            render_system,
+        )
+            .chain(),
+    );
+
+    esp_println::println!("Entering Bevy ECS main loop...");
+    
+    // Performance measurement (variables kept for future use)
+    let _frame_start_us = 0u64;
+    let _last_perf_log = 0u32;
 
     loop {
-        let boot_low = btn_boot.is_low();
-
-        // Track state changes
-        if boot_low != last_boot_state {
-            last_boot_state = boot_low;
-        }
-
-        // Log button state periodically
-        if Instant::now().duration_since(last_log) >= LOG_INTERVAL {
-            if boot_low || button_held_since.is_some() {
-                esp_println::println!(
-                    "BTN: boot={} held_for={:?}",
-                    if boot_low { "LOW" } else { "HIGH" },
-                    button_held_since.map(|s| Instant::now().duration_since(s))
-                );
-            }
-            last_log = Instant::now();
-        }
-
-        // Simple debouncing: require button to be low for a few consecutive polls
-        if boot_low {
-            consecutive_low += 1;
+        // Measure frame time using system timer
+        // Note: SystemTimer counts in microseconds at 80MHz, so we need to read it
+        // For simplicity, we'll use a frame counter and estimate based on loop timing
+        let loop_start = embassy_time::Instant::now();
+        
+        schedule.run(&mut world);
+        
+        let loop_end = embassy_time::Instant::now();
+        let frame_time = loop_end.saturating_duration_since(loop_start);
+        let frame_time_us = frame_time.as_micros() as u64;
+        
+        // Record performance metrics
+        if let Some(mut perf) = world.get_resource_mut::<PerformanceMetrics>() {
+            perf.record_frame(frame_time_us);
+            perf.last_log_frame += 1;
             
-            // Only start the timer after we've seen button pressed for a few polls (debounce)
-            if consecutive_low >= 3 {
-                let since = button_held_since.get_or_insert_with(|| {
-                    esp_println::println!("BTN: button pressed, starting hold timer");
-                    Instant::now()
-                });
-                let held_duration = Instant::now().duration_since(*since);
-                
-                // Log progress every 200ms
-                if Instant::now().duration_since(last_progress_log) >= PROGRESS_LOG_INTERVAL {
-                    esp_println::println!("BTN: holding... {:?} / {:?}", held_duration, LONG_PRESS_HOLD);
-                    last_progress_log = Instant::now();
-                }
-                
-                if held_duration >= LONG_PRESS_HOLD {
-                    esp_println::println!("PWR: button held for {:?} -> waiting for release", held_duration);
-                    
-                    // Wait for button to be released before entering sleep
-                    // This prevents immediate wake-up when sleep mode starts
-                    while btn_boot.is_low() {
-                        Timer::after(POLL).await;
-                    }
-                    esp_println::println!("PWR: button released, entering sleep mode");
-                    
-                    // Small delay to ensure button state is stable
-                    Timer::after(Duration::from_millis(100)).await;
-                    
-                    // Clear and flush display before entering sleep (so screen goes black)
-                    display.clear(Rgb888::BLACK).unwrap();
-                    display.flush().unwrap();
-                    
-                    // Enter light sleep mode (can be woken by button press)
-                    enter_light_sleep(&mut display, &btn_boot).await;
-                    
-                    // After waking from sleep, restore display and continue
-                    display.clear(Rgb888::BLACK).unwrap();
-                    let style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
-                    Text::new("Hello World", Point::new(20, 40), style)
-                        .draw(&mut display)
-                        .unwrap();
-                    display.flush().unwrap();
-                    esp_println::println!("SLEEP: display restored, resuming normal operation");
-                    
-                    // Reset button state tracking after wake
-                    consecutive_low = 0;
-                    button_held_since = None;
-                    last_boot_state = btn_boot.is_low();
-                }
+            // Log performance every 300 frames (~6 seconds at 50 FPS)
+            if perf.last_log_frame >= 300 {
+                perf.log_performance();
+                perf.last_log_frame = 0;
             }
-        } else {
-            // Reset counters if button isn't pressed
-            consecutive_low = 0;
-            button_held_since = None;
         }
-
-        Timer::after(POLL).await;
+        
+        // Minimal delay for cooperative multitasking - let other tasks run
+        // Don't artificially limit frame rate; instead, run input polling as fast as possible.
+        // The render_system already uses needs_redraw optimization to avoid unnecessary work.
+        // With ~16ms target, we get ~60 FPS for responsive input, but rendering only happens when needed.
+        let target_frame_time_ms = 16; // ~60 FPS target for responsive input
+        let frame_time_ms = frame_time_us / 1000;
+        if frame_time_ms < target_frame_time_ms {
+            let delay_ms = target_frame_time_ms - frame_time_ms;
+            Timer::after(Duration::from_millis(delay_ms as u64)).await;
+        } else {
+            // Frame took too long - minimal yield for cooperative multitasking
+            Timer::after(Duration::from_micros(100)).await;
+        }
     }
-
-    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v~1.0/examples
 }

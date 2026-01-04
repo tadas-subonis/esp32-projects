@@ -14,6 +14,76 @@
 
 ---
 
+## Official Arduino Examples Reference
+
+The pin mappings and initialization sequences in this document are verified against the official Waveshare Arduino examples (`ESP32-S3-Touch-AMOLED-1.8-Demo/Arduino-v3.3.5`).
+
+### Key Pin Definitions (from `pin_config.h`)
+
+```c
+// Display QSPI
+#define LCD_SDIO0  4
+#define LCD_SDIO1  5
+#define LCD_SDIO2  6
+#define LCD_SDIO3  7
+#define LCD_SCLK   11
+#define LCD_CS     12
+#define LCD_WIDTH  368
+#define LCD_HEIGHT 448
+
+// I2C (shared bus)
+#define IIC_SDA    15
+#define IIC_SCL    14
+
+// Touch interrupt
+#define TP_INT     21
+
+// I2S Audio
+#define I2S_MCK_IO 16
+#define I2S_BCK_IO 9
+#define I2S_DI_IO  10
+#define I2S_WS_IO  45
+#define I2S_DO_IO  8
+#define PA         46
+
+// SD Card
+const int SDMMC_CLK  = 2;
+const int SDMMC_CMD  = 1;
+const int SDMMC_DATA = 3;
+```
+
+### Standard Initialization Pattern
+
+From the Arduino examples, the standard initialization order is:
+
+1. **Initialize I2C bus**
+2. **Initialize TCA9554 GPIO expander** at address `0x20`
+3. **Reset sequence** (EXIO0, EXIO1, EXIO2 LOW → delay → HIGH)
+4. **Initialize touch controller** (FT3168)
+5. **Initialize display** (SH8601 via QSPI)
+6. **Initialize other I2C devices** (IMU, RTC, PMU)
+
+```c
+// Example from Arduino (Drawing_board.ino)
+Wire.begin(IIC_SDA, IIC_SCL);
+if (!expander.begin(0x20)) {  // TCA9554 at 0x20
+    Serial.println("Failed to find XCA9554 chip");
+    while (1);
+}
+expander.pinMode(0, OUTPUT);  // LCD_RESET
+expander.pinMode(1, OUTPUT);  // DSI_PWR_EN
+expander.pinMode(2, OUTPUT);  // TP_RESET
+expander.digitalWrite(0, LOW);
+expander.digitalWrite(1, LOW);
+expander.digitalWrite(2, LOW);
+delay(20);
+expander.digitalWrite(0, HIGH);
+expander.digitalWrite(1, HIGH);
+expander.digitalWrite(2, HIGH);
+```
+
+---
+
 ## Quick reference
 
 ### I2C bus (shared)
@@ -24,25 +94,27 @@
 | Device | 7-bit addr | Notes |
 |--------|------------|------|
 | FT3168 touch | `0x38` | Capacitive touch controller |
-| QMI8658C IMU | `0x6B` | Alt address `0x6A` depending on SA0 strap |
+| QMI8658C IMU | `0x6A` | QMI8658_L_SLAVE_ADDRESS (low address) |
 | PCF85063A RTC | `0x51` | Fixed |
-| AXP2101 PMU | `0x34` | Common on this board |
-| TCA9554 expander | `0x24` | Verify A0/A1/A2 strap if it differs |
+| AXP2101 PMU | `0x34` | Fixed |
+| TCA9554 expander | `0x20` | **Verified from Arduino examples** |
 | ES8311 codec | `0x18` | I2C control interface |
 
 ### Display (SH8601) – QSPI signals
 
 | Function | GPIO | Notes |
 |----------|------|------|
-| LCD_CS | `GPIO11` | Chip select |
-| QSPI_SCL | `GPIO12` | Clock |
-| QSPI_SIO0 | `GPIO4` | IO0 |
-| QSPI_SIO1 | `GPIO5` | IO1 |
-| QSPI_SIO2 | `GPIO6` | IO2 |
-| QSPI_SIO3 | `GPIO7` | IO3 |
-| LCD_TE | `GPIO13` | Tearing effect |
+| LCD_SCLK | `GPIO11` | Clock |
+| LCD_CS | `GPIO12` | Chip select |
+| LCD_SDIO0 | `GPIO4` | Data IO0 |
+| LCD_SDIO1 | `GPIO5` | Data IO1 |
+| LCD_SDIO2 | `GPIO6` | Data IO2 |
+| LCD_SDIO3 | `GPIO7` | Data IO3 |
+| LCD_TE | `GPIO13` | Tearing effect (optional) |
 | LCD_RESET | `EXIO0` | Via TCA9554 |
 | DSI_PWR_EN | `EXIO1` | Via TCA9554 (display power enable) |
+
+**Display resolution:** 368 × 448 pixels
 
 ### Touch (FT3168)
 
@@ -51,7 +123,7 @@
 | TP_SCL | `GPIO14` | Shared I2C |
 | TP_SDA | `GPIO15` | Shared I2C |
 | TP_RESET | `EXIO2` | Via TCA9554 |
-| TP_INT | `EXIO6` | Via TCA9554 (interrupt) |
+| TP_INT | `GPIO21` | **Direct GPIO** (interrupt, active low) |
 
 ### IMU (QMI8658C)
 
@@ -82,13 +154,14 @@
 
 | Function | GPIO | Notes |
 |----------|------|------|
-| I2S_MCLK | `GPIO16` | Master clock |
-| I2S_SCLK (BCLK) | `GPIO9` | Bit clock |
-| I2S_LRCK (WS) | `GPIO8` | Word select |
-| I2S_DSDIN | `GPIO18` | Data into codec |
-| I2S_ASDOUT | `GPIO17` | Data out of codec |
-| PA_CTRL | `GPIO46` | Amplifier enable |
-| Codec_CE | `GPIO45` | Codec chip enable |
+| I2S_MCK | `GPIO16` | Master clock |
+| I2S_BCK | `GPIO9` | Bit clock (SCLK) |
+| I2S_WS | `GPIO45` | Word select (LRCK) |
+| I2S_DI | `GPIO10` | Data input (mic → ESP) |
+| I2S_DO | `GPIO8` | Data output (ESP → speaker) |
+| PA | `GPIO46` | Amplifier enable (HIGH = on) |
+
+> **Note:** Pin names from official Arduino examples (`pin_config.h`)
 
 ### SD card (SDMMC-style wiring)
 
@@ -112,20 +185,38 @@
 
 ## TCA9554 expander (`EXIO0..7`)
 
+**I2C Address:** `0x20` (verified from official Arduino examples)
+
 The expander gates critical reset/power signals; **bring it up early**.
 
-Suggested mapping (verify against schematic/board revision):
+| EXIO | Signal | Direction | Notes |
+|------|--------|-----------|-------|
+| EXIO0 | LCD_RESET | Output | Display reset (active low) |
+| EXIO1 | DSI_PWR_EN | Output | Display power enable |
+| EXIO2 | TP_RESET | Output | Touch panel reset |
+| EXIO3 | QMI_INT2 | Input | IMU interrupt 2 (optional) |
+| EXIO4 | Backlight button | Input | Read for backlight control |
+| EXIO5 | PMU_IRQ | Input | AXP2101 interrupt line |
+| EXIO6 | QMI_RST (optional) | Output | IMU reset (some boards) |
+| EXIO7 | SD_PWR | Output | SD card power enable |
 
-| EXIO | Signal |
-|------|--------|
-| EXIO0 | LCD_RESET |
-| EXIO1 | DSI_PWR_EN |
-| EXIO2 | TP_RESET |
-| EXIO3 | QMI_INT2 |
-| EXIO6 | TP_INT |
-| EXIO7 | SDCS |
+### Initialization sequence (from Arduino examples)
 
-> Note: the exact TCA9554 address (often `0x24`) depends on A0/A1/A2 straps; confirm by I2C scan.
+```c
+// Reset sequence for LCD and touch
+expander.pinMode(0, OUTPUT);  // LCD_RESET
+expander.pinMode(1, OUTPUT);  // DSI_PWR_EN
+expander.pinMode(2, OUTPUT);  // TP_RESET
+expander.digitalWrite(0, LOW);
+expander.digitalWrite(1, LOW);
+expander.digitalWrite(2, LOW);
+delay(20);
+expander.digitalWrite(0, HIGH);
+expander.digitalWrite(1, HIGH);
+expander.digitalWrite(2, HIGH);
+```
+
+> **Critical:** The Arduino examples consistently use address `0x20`, not `0x24`.
 
 ---
 
@@ -243,15 +334,17 @@ Based on schematic analysis, here are the key pin assignments:
 
 | Function | GPIO | Description |
 |----------|------|-------------|
-| LCD_CS | GPIO11 | Chip Select for display |
-| QSPI_SCL | GPIO12 | QSPI Clock |
-| QSPI_SIO0 (MOSI) | GPIO4 | Data line 0 |
-| QSPI_SI1 | GPIO5 | Data line 1 |
-| QSPI_SI2 | GPIO6 | Data line 2 |
-| QSPI_SI3 | GPIO7 | Data line 3 |
-| LCD_RESET | EXIO0 (via TCA9554) | Display reset |
-| LCD_TE | GPIO13 | Tearing effect signal |
+| LCD_SCLK | GPIO11 | QSPI Clock |
+| LCD_CS | GPIO12 | Chip Select for display |
+| LCD_SDIO0 | GPIO4 | Data line 0 |
+| LCD_SDIO1 | GPIO5 | Data line 1 |
+| LCD_SDIO2 | GPIO6 | Data line 2 |
+| LCD_SDIO3 | GPIO7 | Data line 3 |
+| LCD_RESET | EXIO0 (via TCA9554) | Display reset (active low) |
+| LCD_TE | GPIO13 | Tearing effect signal (optional) |
 | DSI_PWR_EN | EXIO1 (via TCA9554) | Display power enable |
+
+> **Important:** `LCD_CS = GPIO12` and `LCD_SCLK = GPIO11`. These are often confused!
 
 #### Touch Controller (FT3168 - I2C)
 
@@ -259,10 +352,10 @@ Based on schematic analysis, here are the key pin assignments:
 |----------|------|-------------|-------------|
 | TP_SDA | GPIO15 | 0x38 | Touch I2C Data |
 | TP_SCL | GPIO14 | 0x38 | Touch I2C Clock |
-| TP_INT | EXIO6 (via TCA9554) | - | Touch interrupt |
+| TP_INT | GPIO21 | - | Touch interrupt (direct GPIO, active low) |
 | TP_RESET | EXIO2 (via TCA9554) | - | Touch reset |
 
-**Note:** FT3168 I2C slave address is 0x38 (7-bit addressing)
+**Note:** FT3168 I2C slave address is 0x38 (7-bit). Touch interrupt is on **GPIO21 directly**, not via expander.
 
 #### I2C Bus (Shared Components)
 
@@ -276,19 +369,19 @@ Based on schematic analysis, here are the key pin assignments:
 - QMI8658C IMU (0x6B)
 - PCF85063A RTC (0x51)
 - AXP2101 PMU (0x34)
-- TCA9554 GPIO Expander (0x24 - address may vary)
+- TCA9554 GPIO Expander (0x20)
 - ES8311 Audio Codec (0x18)
 
 #### 6-Axis IMU (QMI8658C - I2C)
 
 | Function | GPIO | I2C Address | Description |
 |----------|------|-------------|-------------|
-| QMI_SDA | GPIO15 (shared) | 0x6B | IMU I2C Data |
-| QMI_SCL | GPIO14 (shared) | 0x6B | IMU I2C Clock |
+| QMI_SDA | GPIO15 (shared) | 0x6A | IMU I2C Data |
+| QMI_SCL | GPIO14 (shared) | 0x6A | IMU I2C Clock |
 | QMI_INT1 | GPIO10 | - | Interrupt 1 output |
 | QMI_INT2 | EXIO3 (via TCA9554) | - | Interrupt 2 output |
 
-**Note:** QMI8658C I2C address is 0x6B when SA0 is high (default on this board)
+**Note:** QMI8658C I2C address is `0x6A` (QMI8658_L_SLAVE_ADDRESS) on this board
 
 #### RTC (PCF85063A - I2C)
 
@@ -306,28 +399,40 @@ Based on schematic analysis, here are the key pin assignments:
 |----------|------|-------------|-------------|
 | AXP_SDA | GPIO15 (shared) | 0x34 | PMU I2C Data |
 | AXP_SCL | GPIO14 (shared) | 0x34 | PMU I2C Clock |
-| AXP_IRQ | GPIO40 | - | PMU interrupt |
-| PWRON | GPIO21 (chip enable) | - | Power button input |
+| AXP_IRQ | GPIO40 | - | PMU interrupt output |
+| PWRON | GPIO21 | - | PMU power enable (NOT a user button) |
+| Power Key | Physical button | - | Detected via PMU IRQ registers |
 
 **Note:** AXP2101 I2C address is 0x34 (can be 0x68/0x69 depending on config, but schematic shows 0x34)
+
+**Power Key as User Input:**
+The AXP2101 has a dedicated power key that can be used as a secondary user input. The key press is detected via interrupt status registers, not GPIO:
+
+| Register | Address | Bit | Description |
+|----------|---------|-----|-------------|
+| INTEN2 | 0x41 | 3 | Enable power key short press IRQ |
+| INTSTS2 | 0x49 | 3 | Power key short press status (write 0xFF to clear) |
+
+See `docs/button-handling.md` for implementation details.
 
 #### GPIO Expander (TCA9554 - I2C)
 
 | Function | GPIO | I2C Address | Description |
 |----------|------|-------------|-------------|
-| TCA_SDA | GPIO15 (shared) | 0x24 (typical) | Expander I2C Data |
-| TCA_SCL | GPIO14 (shared) | 0x24 (typical) | Expander I2C Clock |
-| TCA_INT | GPIO16 (likely) | - | Expander interrupt |
+| TCA_SDA | GPIO15 (shared) | **0x20** | Expander I2C Data |
+| TCA_SCL | GPIO14 (shared) | **0x20** | Expander I2C Clock |
 
-**TCA9554 Extended I/O Pins:**
-- EXIO0: LCD_RESET
-- EXIO1: DSI_PWR_EN  
-- EXIO2: TP_RESET
-- EXIO3: QMI_INT2
-- EXIO4: System control
-- EXIO5: PWRON (connected)
-- EXIO6: TP_INT
-- EXIO7: SD Card CS (SDCS)
+**TCA9554 Extended I/O Pins (from Arduino examples):**
+- EXIO0: LCD_RESET (output, active-low display reset)
+- EXIO1: DSI_PWR_EN (output, display power enable)
+- EXIO2: TP_RESET (output, touch panel reset)
+- EXIO3: QMI_INT2 (input, IMU interrupt 2)
+- EXIO4: Backlight button (input, for brightness control)
+- EXIO5: PMU_IRQ (input, AXP2101 interrupt line)
+- EXIO6: QMI_RST (output, IMU reset - optional usage)
+- EXIO7: SD_PWR (output, SD card power enable)
+
+> **Important:** Address is `0x20`, verified from official Arduino examples. Touch interrupt (TP_INT) is on GPIO21 directly, NOT via expander.
 
 #### Audio Codec (ES8311 - I2C + I2S)
 
@@ -338,21 +443,20 @@ Based on schematic analysis, here are the key pin assignments:
 | ES_SDA | GPIO15 (shared) | 0x18 | Codec I2C Data |
 | ES_SCL | GPIO14 (shared) | 0x18 | Codec I2C Clock |
 
-**I2S Interface:**
+**I2S Interface (from Arduino `pin_config.h`):**
 
 | Function | GPIO | Description |
 |----------|------|-------------|
-| I2S_MCLK | GPIO16 | Master clock input |
-| I2S_SCLK | GPIO9 | Serial clock (bit clock) |
-| I2S_LRCK | GPIO8 | Left/Right clock (word select) |
-| I2S_DSDIN | GPIO18 | Data input (to codec) |
-| I2S_ASDOUT | GPIO17 | Data output (from codec) |
-| PA_CTRL | GPIO46 | Power amplifier enable |
-| Codec_CE | GPIO45 | Codec chip enable |
+| I2S_MCK | GPIO16 | Master clock |
+| I2S_BCK | GPIO9 | Bit clock (SCLK) |
+| I2S_WS | GPIO45 | Word select (LRCK) |
+| I2S_DI | GPIO10 | Data input (microphone → ESP) |
+| I2S_DO | GPIO8 | Data output (ESP → speaker) |
+| PA | GPIO46 | Power amplifier enable (HIGH = on) |
 
 **Audio Peripherals:**
 - Microphone: Connected to ES8311 analog inputs (MIC1P/MIC1N)
-- Speaker: Connected via NS4150B amplifier (GPIO46 controls PA)
+- Speaker: Connected via amplifier (GPIO46 controls PA)
 
 #### SD Card (SDMMC Interface)
 
@@ -399,11 +503,42 @@ Based on schematic analysis, here are the key pin assignments:
 | Function | GPIO | Description |
 |----------|------|-------------|
 | CHIP_PU (EN) | External pull-up | Chip enable (reset) |
-| GPIO0 | Strapping + PWR Button | Boot mode + power button |
+| GPIO0 | Strapping + BOOT Button | Boot mode selection + **user button** |
 | GPIO38 | User defined | General purpose |
 | GPIO39 | User defined | General purpose |
 | GPIO41 | User defined | General purpose |
 | GPIO42 | User defined | General purpose |
+
+#### User Input Options
+
+This board has **limited user input options**. Here's what's available:
+
+| Input | Type | Access Method | Notes |
+|-------|------|---------------|-------|
+| **GPIO0 (BOOT)** | Physical button | Direct GPIO read | Active-low, internal pull-up. **Primary user button.** |
+| **AXP2101 Power Key** | Physical button | I2C PMU registers | Requires reading IRQ status from PMU. **Secondary input.** |
+| **FT3168 Touch** | Capacitive touch | I2C + GPIO21 interrupt | Full touchscreen input via touch controller. |
+| **EXIO4 (backlight btn)** | Button via expander | I2C read from TCA9554 | Can be used for backlight control or general input |
+
+**Important notes:**
+- **GPIO21** is the touch interrupt pin (TP_INT), directly wired to ESP32-S3
+- **EXIO4** can be read as a button input for backlight control
+- **EXIO5** is the PMU interrupt line
+
+**Using the AXP2101 Power Key:**
+```rust
+// Read power key press from PMU interrupt status register
+const AXP2101_ADDR: u8 = 0x34;
+const AXP2101_INTSTS2: u8 = 0x49;  // Interrupt status register 2
+const PKEY_SHORT_IRQ_BIT: u8 = 1 << 3;  // Bit 3 = short press IRQ
+
+let mut status = [0u8; 1];
+i2c.write_read(AXP2101_ADDR, &[AXP2101_INTSTS2], &mut status)?;
+let pressed = (status[0] & PKEY_SHORT_IRQ_BIT) != 0;
+if pressed {
+    i2c.write(AXP2101_ADDR, &[AXP2101_INTSTS2, 0xFF])?;  // Clear IRQ
+}
+```
 
 #### Available GPIO Expansion Pads
 
@@ -432,12 +567,14 @@ The board uses a shared I2C bus on GPIO14 (SCL) and GPIO15 (SDA) with the follow
 
 | Device | I2C Address | Description | Interrupt GPIO |
 |--------|-------------|-------------|----------------|
-| FT3168 | 0x38 | Capacitive touch controller | EXIO6 |
-| QMI8658C | 0x6B | 6-axis IMU (accel + gyro) | GPIO10, EXIO3 |
+| FT3168 | 0x38 | Capacitive touch controller | GPIO21 (direct) |
+| QMI8658C | 0x6A | 6-axis IMU (accel + gyro) | GPIO10, EXIO3 |
 | PCF85063A | 0x51 | Real-time clock | GPIO10 |
-| AXP2101 | 0x34 | Power management IC | GPIO40 |
-| TCA9554 | 0x24 | I/O expander (8-bit) | GPIO16 (likely) |
+| AXP2101 | 0x34 | Power management IC | EXIO5 (via TCA9554) |
+| TCA9554 | **0x20** | I/O expander (8-bit) | - |
 | ES8311 | 0x18 | Audio codec | - |
+
+> **Verified from Arduino examples:** TCA9554 is at `0x20`, QMI8658C is at `0x6A`
 
 **I2C Bus Configuration:**
 - Speed: Up to 400 kHz (Fast Mode)
@@ -636,16 +773,18 @@ The board uses a shared I2C bus on GPIO14 (SCL) and GPIO15 (SDA) with the follow
 5. Configure brightness and color mode
 6. Enable display output
 
-**QSPI Pin Configuration:**
+**QSPI Pin Configuration (from Arduino `pin_config.h`):**
 
 ```
-CS:    GPIO11  (Chip Select - active low)
-SCLK:  GPIO12  (Clock - up to 80 MHz)
-IO0:   GPIO4   (Data line 0 / MOSI in SPI mode)
-IO1:   GPIO5   (Data line 1 / MISO in SPI mode)
-IO2:   GPIO6   (Data line 2 / WP in SPI mode)
-IO3:   GPIO7   (Data line 3 / HOLD in SPI mode)
+LCD_SCLK:  GPIO11  (Clock)
+LCD_CS:    GPIO12  (Chip Select - active low)
+LCD_SDIO0: GPIO4   (Data line 0)
+LCD_SDIO1: GPIO5   (Data line 1)
+LCD_SDIO2: GPIO6   (Data line 2)
+LCD_SDIO3: GPIO7   (Data line 3)
 ```
+
+> **Critical:** Note that CS=GPIO12 and SCLK=GPIO11 (not swapped!)
 
 **Color Formats:**
 - RGB565: 16 bits per pixel (5-6-5 bit distribution)
@@ -1161,7 +1300,7 @@ use esp_hal::i2c::I2c;
 use esp_hal::gpio::Io;
 use esp_hal::peripherals::Peripherals;
 
-const TCA9554_ADDR: u8 = 0x24;  // Verify actual address
+const TCA9554_ADDR: u8 = 0x20;  // Verified from Arduino examples
 
 // TCA9554 Registers
 const TCA9554_INPUT: u8 = 0x00;
@@ -1273,7 +1412,7 @@ fn main() {
         &i2c_config,
     ).unwrap();
 
-    let mut expander = TCA9554::new(i2c, 0x24);
+    let mut expander = TCA9554::new(i2c, 0x20);
     expander.init().unwrap();
     
     // Use as above
@@ -1540,7 +1679,7 @@ fn main() -> ! {
     }
 
     // Initialize GPIO expander
-    const TCA9554_ADDR: u8 = 0x24;
+    const TCA9554_ADDR: u8 = 0x20;
     // Configure as outputs (except INT pins)
     i2c.write(TCA9554_ADDR, &[0x03, 0b01001000]).ok();
     // Set initial state (resets high, power enable high)
@@ -1942,7 +2081,7 @@ for addr in 0x08..0x78 {
 
 **Expected Devices:**
 - 0x18: ES8311
-- 0x24: TCA9554 (verify address)
+- 0x20: TCA9554
 - 0x34: AXP2101
 - 0x38: FT3168
 - 0x51: PCF85063A
@@ -2009,20 +2148,20 @@ Monitor battery voltage and current via AXP2101 ADC registers.
 | GPIO5 | QSPI_SI1 | Display | - | QSPI data line 1 |
 | GPIO6 | QSPI_SI2 | Display | - | QSPI data line 2 |
 | GPIO7 | QSPI_SI3 | Display | - | QSPI data line 3 |
-| GPIO8 | I2S_LRCK | Audio | - | Word select |
-| GPIO9 | I2S_SCLK | Audio | - | Bit clock |
-| GPIO10 | INT (QMI/RTC) | IMU/RTC | - | Shared interrupt |
-| GPIO11 | LCD_CS | Display | - | Chip select |
-| GPIO12 | QSPI_SCL | Display | - | QSPI clock |
+| GPIO8 | I2S_DO | Audio | - | Data output (ESP → speaker) |
+| GPIO9 | I2S_BCK | Audio | - | Bit clock |
+| GPIO10 | I2S_DI / INT | Audio/IMU | - | Data input (mic → ESP) / Shared IMU int |
+| GPIO11 | LCD_SCLK | Display | - | QSPI clock |
+| GPIO12 | LCD_CS | Display | - | Chip select |
 | GPIO13 | LCD_TE | Display | - | Tearing effect |
 | GPIO14 | I2C_SCL | I2C Bus | - | Shared SCL for all I2C devices |
 | GPIO15 | I2C_SDA | I2C Bus | - | Shared SDA for all I2C devices |
-| GPIO16 | I2S_MCLK | Audio | - | Master clock |
-| GPIO17 | I2S_ASDOUT | Audio | - | Data out from codec |
-| GPIO18 | I2S_DSDIN | Audio | - | Data in to codec |
+| GPIO16 | I2S_MCK | Audio | - | Master clock |
+| GPIO17 | GPIO | Available | - | General purpose |
+| GPIO18 | GPIO | Available | - | General purpose |
 | GPIO19 | USB_D- | USB | - | Native USB |
 | GPIO20 | USB_D+ | USB | - | Native USB |
-| GPIO21 | PWRON | Power | - | Power button / chip enable |
+| GPIO21 | TP_INT | Touch | - | Touch interrupt (direct) |
 | GPIO38 | GPIO | Available | - | General purpose |
 | GPIO39 | GPIO | Available | - | General purpose |
 | GPIO40 | AXP_IRQ | Power | - | PMU interrupt |
@@ -2030,14 +2169,16 @@ Monitor battery voltage and current via AXP2101 ADC registers.
 | GPIO42 | GPIO | Available | - | General purpose |
 | GPIO43 | U0TXD | UART | - | Debug TX |
 | GPIO44 | U0RXD | UART | - | Debug RX |
-| GPIO45 | Codec_CE | Audio | - | Codec chip enable |
+| GPIO45 | I2S_WS | Audio | - | Word select (LRCK) |
 | GPIO46 | PA_CTRL | Audio | - | Power amplifier control |
-| EXIO0 | LCD_RESET | Display | 0x24 (TCA9554) | Via GPIO expander |
-| EXIO1 | DSI_PWR_EN | Display | 0x24 (TCA9554) | Via GPIO expander |
-| EXIO2 | TP_RESET | Touch | 0x24 (TCA9554) | Via GPIO expander |
-| EXIO3 | QMI_INT2 | IMU | 0x24 (TCA9554) | Via GPIO expander |
-| EXIO6 | TP_INT | Touch | 0x24 (TCA9554) | Via GPIO expander |
-| EXIO7 | SDCS | SD Card | 0x24 (TCA9554) | Via GPIO expander |
+| EXIO0 | LCD_RESET | Display | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO1 | DSI_PWR_EN | Display | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO2 | TP_RESET | Touch | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO3 | QMI_INT2 | IMU | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO4 | Backlight btn | Input | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO5 | PMU_IRQ | Power | 0x20 (TCA9554) | Via GPIO expander |
+| EXIO6 | QMI_RST | IMU | 0x20 (TCA9554) | Via GPIO expander (optional) |
+| EXIO7 | SD_PWR | SD Card | 0x20 (TCA9554) | Via GPIO expander |
 
 ---
 
