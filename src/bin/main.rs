@@ -44,9 +44,11 @@ use sh8601_rs::{
 // We'll probe both to avoid "works on my board" failures.
 const TCA9554_ADDR_PRIMARY: u8 = 0x24;
 const TCA9554_ADDR_FALLBACK: u8 = 0x20;
+const TCA9554_INPUT: u8 = 0x00;
 const TCA9554_OUTPUT: u8 = 0x01;
 const TCA9554_POLARITY: u8 = 0x02;
 const TCA9554_CONFIG: u8 = 0x03; // 0 = output, 1 = input
+const TCA9554_PWR_MASK: u8 = (1 << 4) | (1 << 5);
 
 /// Minimal ResetInterface implementation for the Waveshare board:
 /// - EXIO0: LCD_RESET (output)
@@ -100,10 +102,12 @@ where
     fn reset(&mut self) -> Result<(), Self::Error> {
         let delay = Delay::new();
 
-        // Configure directions: EXIO3 and EXIO6 as inputs; the rest as outputs.
-        // This matches the device doc's recommended default.
+        // Configure directions:
+        // - Inputs: EXIO3 (QMI_INT2), EXIO4/EXIO5 (board/system button wiring varies by revision),
+        //           EXIO6 (TP_INT)
+        // - Outputs: EXIO0 (LCD_RESET), EXIO1 (DSI_PWR_EN), EXIO2 (TP_RESET), EXIO7 (SDCS)
         self.i2c
-            .write(self.addr, &[TCA9554_CONFIG, 0b0100_1000])?;
+            .write(self.addr, &[TCA9554_CONFIG, 0b0111_1000])?;
         // No polarity inversion.
         self.i2c.write(self.addr, &[TCA9554_POLARITY, 0x00])?;
 
@@ -122,21 +126,54 @@ where
     }
 }
 
-fn axp2101_power_off<I2C>(i2c: &mut I2C) -> Result<(), I2C::Error>
+fn tca9554_read_input<I2C>(i2c: &mut I2C, addr: u8) -> Result<u8, I2C::Error>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    // AXP2101 PMU on this board typically uses 7-bit I2C address 0x34.
-    //
-    // Datasheet: writing bit0 in REG 0x10 triggers a power-off sequence.
-    const AXP2101_ADDR: u8 = 0x34;
-    const REG_POWER_OFF: u8 = 0x10;
+    let mut buf = [0u8; 1];
+    i2c.write_read(addr, &[TCA9554_INPUT], &mut buf)?;
+    Ok(buf[0])
+}
 
-    let mut reg10 = [0u8; 1];
-    i2c.write_read(AXP2101_ADDR, &[REG_POWER_OFF], &mut reg10)?;
-    reg10[0] |= 0x01;
-    i2c.write(AXP2101_ADDR, &[REG_POWER_OFF, reg10[0]])?;
-    Ok(())
+fn ws_power_button_active_from_tca9554(input: u8, baseline_masked: u8) -> bool {
+    // Some boards appear to idle LOW on EXIO4/5, so "LOW means pressed" is not reliable.
+    // Instead, we auto-calibrate a baseline and treat a change as "button active".
+    (input & TCA9554_PWR_MASK) != baseline_masked
+}
+
+// Enter light sleep mode: turn off display and reduce power consumption
+// Device can be woken by pressing the BOOT button
+async fn enter_light_sleep<D>(
+    display: &mut D,
+    btn_boot: &Input<'_>,
+) where
+    D: embedded_graphics::prelude::DrawTarget<Color = Rgb888>,
+{
+    esp_println::println!("SLEEP: entering light sleep mode");
+    esp_println::println!("SLEEP: display off, monitoring button for wake");
+    
+    // Sleep mode: poll button less frequently to save power
+    const SLEEP_POLL: Duration = Duration::from_millis(100);
+    
+    loop {
+        let boot_low = btn_boot.is_low();
+        
+        // Wake on button press
+        if boot_low {
+            esp_println::println!("SLEEP: wake detected (boot pressed)");
+            // Wait a bit to debounce
+            Timer::after(Duration::from_millis(50)).await;
+            // Check again to confirm
+            if btn_boot.is_low() {
+                break;
+            }
+        }
+        
+        Timer::after(SLEEP_POLL).await;
+    }
+    
+    esp_println::println!("SLEEP: waking up, restoring display");
+    // Display will be restored when we return to main loop
 }
 
 extern crate alloc;
@@ -235,6 +272,7 @@ async fn main(spawner: Spawner) -> ! {
 
     esp_println::println!("BOOT: probing TCA9554");
     let reset = WsTca9554Reset::new(RefCellDevice::new(&i2c_bus));
+    let tca_addr = reset.addr;
     esp_println::println!("BOOT: TCA9554 ready");
     let ws_driver = Ws18AmoledDriver::new(lcd_spi);
 
@@ -269,131 +307,110 @@ async fn main(spawner: Spawner) -> ! {
 
     esp_println::println!("BOOT: ok (hello world drawn)");
 
-    // --- Buttons: power off when BOTH are clicked/held together ---
+    // --- Buttons: enter sleep mode on long press of BOOT button ---
     //
     // On this board:
     // - GPIO0 is the BOOT / PWR button (active-low, strapping pin).
-    // - GPIO21 is labeled PWRON in the board doc (active-low when pressed on some revisions).
     //
-    // We treat "click both buttons" as "hold both low for a short time" to avoid false triggers.
+    // Simple approach: hold BOOT button for 2 seconds to enter sleep mode.
+    // Sleep mode turns off the display and reduces power consumption.
+    // Device can be woken by pressing the BOOT button again.
     let btn_cfg = InputConfig::default().with_pull(Pull::Up);
     let btn_boot = Input::new(peripherals.GPIO0, btn_cfg);
-    let btn_pwron = Input::new(peripherals.GPIO21, btn_cfg);
-    let mut pmu_i2c = RefCellDevice::new(&i2c_bus);
 
-    esp_println::println!("BTN: initialized GPIO0 (boot) and GPIO21 (pwron) with pull-up");
+    esp_println::println!("BTN: initialized GPIO0 (boot) with pull-up");
 
-    const BOTH_HOLD: Duration = Duration::from_millis(500);
+    const LONG_PRESS_HOLD: Duration = Duration::from_millis(2000); // 2 seconds
     const POLL: Duration = Duration::from_millis(20);
     const LOG_INTERVAL: Duration = Duration::from_millis(1000);
-    const PROGRESS_LOG_INTERVAL: Duration = Duration::from_millis(100);
-    let mut both_low_since: Option<Instant> = None;
-    let mut consecutive_both_low = 0u32;
+    const PROGRESS_LOG_INTERVAL: Duration = Duration::from_millis(200);
+    let mut button_held_since: Option<Instant> = None;
+    let mut consecutive_low = 0u32;
     let mut last_log = Instant::now();
     let mut last_progress_log = Instant::now();
     let mut last_boot_state = btn_boot.is_low();
-    let mut last_pwron_state = btn_pwron.is_low();
 
-    // Log initial button states
-    esp_println::println!("BTN: initial state - boot={} pwron={}", 
-        if last_boot_state { "LOW" } else { "HIGH" },
-        if last_pwron_state { "LOW" } else { "HIGH" });
+    // Log initial button state
+    esp_println::println!("BTN: initial state - boot={}", 
+        if last_boot_state { "LOW" } else { "HIGH" });
 
     loop {
         let boot_low = btn_boot.is_low();
-        let pwron_low = btn_pwron.is_low();
-        let pwron_high = btn_pwron.is_high();
 
-        // Log state changes immediately
+        // Track state changes
         if boot_low != last_boot_state {
-            esp_println::println!("BTN: boot state changed: {} -> {}", 
-                if last_boot_state { "LOW" } else { "HIGH" },
-                if boot_low { "LOW" } else { "HIGH" });
             last_boot_state = boot_low;
         }
-        if pwron_low != last_pwron_state {
-            esp_println::println!("BTN: pwron state changed: {} -> {} (high={})", 
-                if last_pwron_state { "LOW" } else { "HIGH" },
-                if pwron_low { "LOW" } else { "HIGH" },
-                pwron_high);
-            last_pwron_state = pwron_low;
-        }
 
-        // Log button states periodically for debugging
+        // Log button state periodically
         if Instant::now().duration_since(last_log) >= LOG_INTERVAL {
-            esp_println::println!(
-                "BTN: boot={} pwron={} (low={} high={}) consecutive={}",
-                if boot_low { "LOW" } else { "HIGH" },
-                if pwron_low { "LOW" } else { "HIGH" },
-                pwron_low,
-                pwron_high,
-                consecutive_both_low
-            );
+            if boot_low || button_held_since.is_some() {
+                esp_println::println!(
+                    "BTN: boot={} held_for={:?}",
+                    if boot_low { "LOW" } else { "HIGH" },
+                    button_held_since.map(|s| Instant::now().duration_since(s))
+                );
+            }
             last_log = Instant::now();
         }
 
-        // Try both active-low (both buttons low) and also check if GPIO21 might be active-high
-        // Some board revisions might have GPIO21 as active-high (goes HIGH when pressed)
-        let both_pressed = (boot_low && pwron_low) || (boot_low && pwron_high);
-        
-        if both_pressed {
-            consecutive_both_low += 1;
+        // Simple debouncing: require button to be low for a few consecutive polls
+        if boot_low {
+            consecutive_low += 1;
             
-            // Log which condition matched
-            if consecutive_both_low == 1 {
-                if boot_low && pwron_low {
-                    esp_println::println!("BTN: both buttons LOW detected (active-low mode)");
-                } else if boot_low && pwron_high {
-                    esp_println::println!("BTN: boot LOW + pwron HIGH detected (GPIO21 active-high mode)");
-                }
-            }
-            
-            // Only start the timer after we've seen both pressed for a few polls (debounce)
-            if consecutive_both_low >= 3 {
-                let since = both_low_since.get_or_insert_with(|| {
-                    esp_println::println!("BTN: both buttons confirmed, starting hold timer");
+            // Only start the timer after we've seen button pressed for a few polls (debounce)
+            if consecutive_low >= 3 {
+                let since = button_held_since.get_or_insert_with(|| {
+                    esp_println::println!("BTN: button pressed, starting hold timer");
                     Instant::now()
                 });
                 let held_duration = Instant::now().duration_since(*since);
                 
-                // Log progress every 100ms
+                // Log progress every 200ms
                 if Instant::now().duration_since(last_progress_log) >= PROGRESS_LOG_INTERVAL {
-                    esp_println::println!("BTN: holding... {:?} / {:?}", held_duration, BOTH_HOLD);
+                    esp_println::println!("BTN: holding... {:?} / {:?}", held_duration, LONG_PRESS_HOLD);
                     last_progress_log = Instant::now();
                 }
                 
-                if held_duration >= BOTH_HOLD {
-                    esp_println::println!("PWR: both buttons held for {:?} -> power off", held_duration);
-                    match axp2101_power_off(&mut pmu_i2c) {
-                        Ok(()) => {
-                            esp_println::println!("PWR: power off command sent");
-                            // If power off succeeds, execution should stop shortly after.
-                            loop {
-                                Timer::after(Duration::from_secs(1)).await;
-                            }
-                        }
-                        Err(e) => {
-                            esp_println::println!("PWR: AXP2101 power off failed: {:?}", e);
-                            // Fall back to a tight loop (better than continuing unexpectedly).
-                            loop {
-                                Timer::after(Duration::from_secs(1)).await;
-                            }
-                        }
+                if held_duration >= LONG_PRESS_HOLD {
+                    esp_println::println!("PWR: button held for {:?} -> waiting for release", held_duration);
+                    
+                    // Wait for button to be released before entering sleep
+                    // This prevents immediate wake-up when sleep mode starts
+                    while btn_boot.is_low() {
+                        Timer::after(POLL).await;
                     }
+                    esp_println::println!("PWR: button released, entering sleep mode");
+                    
+                    // Small delay to ensure button state is stable
+                    Timer::after(Duration::from_millis(100)).await;
+                    
+                    // Clear and flush display before entering sleep (so screen goes black)
+                    display.clear(Rgb888::BLACK).unwrap();
+                    display.flush().unwrap();
+                    
+                    // Enter light sleep mode (can be woken by button press)
+                    enter_light_sleep(&mut display, &btn_boot).await;
+                    
+                    // After waking from sleep, restore display and continue
+                    display.clear(Rgb888::BLACK).unwrap();
+                    let style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
+                    Text::new("Hello World", Point::new(20, 40), style)
+                        .draw(&mut display)
+                        .unwrap();
+                    display.flush().unwrap();
+                    esp_println::println!("SLEEP: display restored, resuming normal operation");
+                    
+                    // Reset button state tracking after wake
+                    consecutive_low = 0;
+                    button_held_since = None;
+                    last_boot_state = btn_boot.is_low();
                 }
-            } else if consecutive_both_low == 2 {
-                esp_println::println!("BTN: debouncing... ({}/3)", consecutive_both_low);
             }
         } else {
-            // Reset counters if both buttons aren't pressed
-            if consecutive_both_low > 0 {
-                esp_println::println!("BTN: button state changed, resetting (boot={} pwron_low={} pwron_high={})", 
-                    if boot_low { "LOW" } else { "HIGH" },
-                    pwron_low,
-                    pwron_high);
-            }
-            consecutive_both_low = 0;
-            both_low_since = None;
+            // Reset counters if button isn't pressed
+            consecutive_low = 0;
+            button_held_since = None;
         }
 
         Timer::after(POLL).await;

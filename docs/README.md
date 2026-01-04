@@ -7,6 +7,7 @@ https://docs.espressif.com/projects/rust/book/application-development/index.html
 
 ## Contents
 
+- [Getting started](./getting-started.md) - Hello world, LED blink, GPIO basics
 - [Stack & architecture](./stack.md)
 - [Device / board references](./devices/README.md)
 - [Environment setup](./setup.md)
@@ -16,6 +17,9 @@ https://docs.espressif.com/projects/rust/book/application-development/index.html
 - [Memory & heap allocation](./memory-alloc.md)
 - [Wi‑Fi / BLE (high-level)](./wifi-ble.md)
 - [Display and graphics](./display-graphics.md)
+- [Button handling](./button-handling.md)
+- [PWM and LEDC](./pwm-ledc.md) - LED fading, servo control, tone generation
+- [Sensor reading](./sensor-reading.md) - I2C sensors, DHT22, ultrasonic, touch
 - [Configuration (esp-config)](./configuration.md)
 - [Testing](./testing.md)
 - [OTA](./ota.md)

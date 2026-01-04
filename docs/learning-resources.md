@@ -89,6 +89,12 @@ These projects demonstrate real-world patterns and can serve as reference implem
   - https://github.com/esp-rs/esp-examples
   - Official examples covering common use cases
 
+- **Comprehensive ESP32 Rust Examples** - Step-by-step examples with code
+  - https://github.com/Vaishnav-Sabari-Girish/Embedded-Rust/tree/main/microcontrollers/esp32
+  - Includes: Hello world, LED blink, button press, PWM, TFT display, sensor reading
+  - Each example includes complete working code and explanations
+  - Great for: Learning basic patterns and seeing complete implementations
+
 - **Beginner Rust ESP32 development - Snake**
   - Snake game on ESP32 with OLED display and joystick
   - Good for: Learning display and input handling

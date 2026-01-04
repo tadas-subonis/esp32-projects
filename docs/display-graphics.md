@@ -36,12 +36,14 @@ Common pin assignments (adjust for your board):
 ```rust
 let sck = peripherals.GPIO18;   // SPI clock
 let mosi = peripherals.GPIO23;  // SPI data
-let cs = peripherals.GPIO15;    // Chip select
+let cs = peripherals.GPIO15;    // Chip select (or GPIO5 for mipidsi)
 let dc = peripherals.GPIO2;     // Data/command
 let reset = peripherals.GPIO4;  // Reset
 ```
 
-**Note:** Pin numbers vary by board. Check your board's pinout diagram.
+**Note:** 
+- Pin numbers vary by board. Check your board's pinout diagram.
+- For `mipidsi` crate, CS pin is often GPIO5 instead of GPIO15 (check your display driver requirements).
 
 ## Display driver selection
 
@@ -173,11 +175,13 @@ use mipidsi::{
     interface::SpiInterface,
 };
 
+// Note: mipidsi often uses GPIO5 for CS (not GPIO15)
 let cs = Output::new(peripherals.GPIO5, Level::Low, OutputConfig::default());
 let dc = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
 let reset = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());
 
 // Buffer for SPI transfers (size depends on display)
+// Common sizes: 512 bytes (minimum), 2048 bytes (recommended)
 let mut buffer = [0u8; 2048];  // 2048 bytes is common
 
 let spi_dev = ExclusiveDevice::new_no_delay(spi, cs).unwrap();
@@ -189,12 +193,19 @@ let mut display = Builder::new(ILI9341Rgb565, interface)
     .unwrap();
 ```
 
+**Note:** The CS pin for `mipidsi` is often GPIO5 (not GPIO15 like `ili9341`). Check your display driver documentation or examples.
+
 ### Buffer sizing for mipidsi
 
 The buffer size affects performance:
-- **512 bytes**: Minimum, slower updates
-- **2048 bytes**: Good balance (recommended)
+- **512 bytes**: Minimum, slower updates (used in some examples)
+- **2048 bytes**: Good balance (recommended for most applications)
 - **Larger buffers**: Faster but uses more RAM
+
+**Example patterns:**
+- Simple text display: 512 bytes may be sufficient
+- Image display: 2048 bytes recommended for better performance
+- High-speed updates: Consider larger buffers if RAM allows
 
 Choose based on available RAM and performance requirements.
 
@@ -793,5 +804,5 @@ esp-hal = { version = "~1.0", features = ["unstable"] }
 - [embedded-graphics documentation](https://docs.rs/embedded-graphics/)
 - [mipidsi crate](https://crates.io/crates/mipidsi)
 - [ili9341 crate](https://crates.io/crates/ili9341)
-- [Example projects](https://github.com/Vaishnav-Sabari-Girish/Embedded-Rust/tree/main/microcontrollers/esp32)
+- [Example projects](https://github.com/Vaishnav-Sabari-Girish/Embedded-Rust/tree/main/microcontrollers/esp32) - Comprehensive ESP32 Rust examples including TFT display patterns
 - [esp-hal examples](https://github.com/esp-rs/esp-hal/tree/main/examples)

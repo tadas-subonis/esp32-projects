@@ -8,6 +8,7 @@ This document consolidates practical tips, common patterns, gotchas, and best pr
 - [Async and Embassy patterns](#async-and-embassy-patterns)
 - [Memory management](#memory-management)
 - [Driver usage patterns](#driver-usage-patterns)
+- [Button handling](#button-handling)
 - [OTA (Over-The-Air) updates](#ota-over-the-air-updates)
 - [Common gotchas](#common-gotchas)
 - [Performance tips](#performance-tips)
@@ -184,6 +185,18 @@ esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 66320);
 ### One global allocator rule
 
 **Critical:** You can only have **one** global allocator. Don't introduce a second one.
+
+## Button handling
+
+For comprehensive button handling patterns, debouncing strategies, sleep/wake patterns, and common pitfalls, see **[Button Handling Guide](./button-handling.md)**.
+
+**Quick reference:**
+- Always use pull-up for active-low buttons: `InputConfig::default().with_pull(Pull::Up)`
+- Debounce with consecutive polls (3 polls × 20ms = 60ms debounce)
+- Wait for button release before entering sleep mode
+- Always flush display updates before sleep: `display.flush().unwrap()`
+
+**For simple button patterns**, see the [Getting Started Guide](./getting-started.md).
 
 ## Driver usage patterns
 
