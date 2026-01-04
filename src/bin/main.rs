@@ -281,35 +281,118 @@ async fn main(spawner: Spawner) -> ! {
     let btn_pwron = Input::new(peripherals.GPIO21, btn_cfg);
     let mut pmu_i2c = RefCellDevice::new(&i2c_bus);
 
-    const BOTH_HOLD: Duration = Duration::from_millis(120);
-    const POLL: Duration = Duration::from_millis(10);
+    esp_println::println!("BTN: initialized GPIO0 (boot) and GPIO21 (pwron) with pull-up");
+
+    const BOTH_HOLD: Duration = Duration::from_millis(500);
+    const POLL: Duration = Duration::from_millis(20);
+    const LOG_INTERVAL: Duration = Duration::from_millis(1000);
+    const PROGRESS_LOG_INTERVAL: Duration = Duration::from_millis(100);
     let mut both_low_since: Option<Instant> = None;
+    let mut consecutive_both_low = 0u32;
+    let mut last_log = Instant::now();
+    let mut last_progress_log = Instant::now();
+    let mut last_boot_state = btn_boot.is_low();
+    let mut last_pwron_state = btn_pwron.is_low();
+
+    // Log initial button states
+    esp_println::println!("BTN: initial state - boot={} pwron={}", 
+        if last_boot_state { "LOW" } else { "HIGH" },
+        if last_pwron_state { "LOW" } else { "HIGH" });
 
     loop {
         let boot_low = btn_boot.is_low();
         let pwron_low = btn_pwron.is_low();
+        let pwron_high = btn_pwron.is_high();
 
-        if boot_low && pwron_low {
-            let since = both_low_since.get_or_insert_with(Instant::now);
-            if Instant::now().duration_since(*since) >= BOTH_HOLD {
-                esp_println::println!("PWR: both buttons pressed -> power off");
-                match axp2101_power_off(&mut pmu_i2c) {
-                    Ok(()) => {
-                        // If power off succeeds, execution should stop shortly after.
-                        loop {
-                            Timer::after(Duration::from_secs(1)).await;
+        // Log state changes immediately
+        if boot_low != last_boot_state {
+            esp_println::println!("BTN: boot state changed: {} -> {}", 
+                if last_boot_state { "LOW" } else { "HIGH" },
+                if boot_low { "LOW" } else { "HIGH" });
+            last_boot_state = boot_low;
+        }
+        if pwron_low != last_pwron_state {
+            esp_println::println!("BTN: pwron state changed: {} -> {} (high={})", 
+                if last_pwron_state { "LOW" } else { "HIGH" },
+                if pwron_low { "LOW" } else { "HIGH" },
+                pwron_high);
+            last_pwron_state = pwron_low;
+        }
+
+        // Log button states periodically for debugging
+        if Instant::now().duration_since(last_log) >= LOG_INTERVAL {
+            esp_println::println!(
+                "BTN: boot={} pwron={} (low={} high={}) consecutive={}",
+                if boot_low { "LOW" } else { "HIGH" },
+                if pwron_low { "LOW" } else { "HIGH" },
+                pwron_low,
+                pwron_high,
+                consecutive_both_low
+            );
+            last_log = Instant::now();
+        }
+
+        // Try both active-low (both buttons low) and also check if GPIO21 might be active-high
+        // Some board revisions might have GPIO21 as active-high (goes HIGH when pressed)
+        let both_pressed = (boot_low && pwron_low) || (boot_low && pwron_high);
+        
+        if both_pressed {
+            consecutive_both_low += 1;
+            
+            // Log which condition matched
+            if consecutive_both_low == 1 {
+                if boot_low && pwron_low {
+                    esp_println::println!("BTN: both buttons LOW detected (active-low mode)");
+                } else if boot_low && pwron_high {
+                    esp_println::println!("BTN: boot LOW + pwron HIGH detected (GPIO21 active-high mode)");
+                }
+            }
+            
+            // Only start the timer after we've seen both pressed for a few polls (debounce)
+            if consecutive_both_low >= 3 {
+                let since = both_low_since.get_or_insert_with(|| {
+                    esp_println::println!("BTN: both buttons confirmed, starting hold timer");
+                    Instant::now()
+                });
+                let held_duration = Instant::now().duration_since(*since);
+                
+                // Log progress every 100ms
+                if Instant::now().duration_since(last_progress_log) >= PROGRESS_LOG_INTERVAL {
+                    esp_println::println!("BTN: holding... {:?} / {:?}", held_duration, BOTH_HOLD);
+                    last_progress_log = Instant::now();
+                }
+                
+                if held_duration >= BOTH_HOLD {
+                    esp_println::println!("PWR: both buttons held for {:?} -> power off", held_duration);
+                    match axp2101_power_off(&mut pmu_i2c) {
+                        Ok(()) => {
+                            esp_println::println!("PWR: power off command sent");
+                            // If power off succeeds, execution should stop shortly after.
+                            loop {
+                                Timer::after(Duration::from_secs(1)).await;
+                            }
                         }
-                    }
-                    Err(e) => {
-                        esp_println::println!("PWR: AXP2101 power off failed: {:?}", e);
-                        // Fall back to a tight loop (better than continuing unexpectedly).
-                        loop {
-                            Timer::after(Duration::from_secs(1)).await;
+                        Err(e) => {
+                            esp_println::println!("PWR: AXP2101 power off failed: {:?}", e);
+                            // Fall back to a tight loop (better than continuing unexpectedly).
+                            loop {
+                                Timer::after(Duration::from_secs(1)).await;
+                            }
                         }
                     }
                 }
+            } else if consecutive_both_low == 2 {
+                esp_println::println!("BTN: debouncing... ({}/3)", consecutive_both_low);
             }
         } else {
+            // Reset counters if both buttons aren't pressed
+            if consecutive_both_low > 0 {
+                esp_println::println!("BTN: button state changed, resetting (boot={} pwron_low={} pwron_high={})", 
+                    if boot_low { "LOW" } else { "HIGH" },
+                    pwron_low,
+                    pwron_high);
+            }
+            consecutive_both_low = 0;
             both_low_since = None;
         }
 
