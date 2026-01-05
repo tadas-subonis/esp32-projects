@@ -162,8 +162,44 @@ struct SnakeSegment {
     index: usize,
 }
 
+#[derive(Component, Clone, Copy, PartialEq, Eq, Debug)]
+enum FoodType {
+    Regular,  // 10 points
+    Golden,   // 50 points
+    Special,  // 100 points
+}
+
+impl FoodType {
+    fn points(&self) -> u32 {
+        match self {
+            FoodType::Regular => 10,
+            FoodType::Golden => 50,
+            FoodType::Special => 100,
+        }
+    }
+    
+    fn color(&self) -> Rgb888 {
+        match self {
+            FoodType::Regular => Rgb888::new(255, 0, 0),      // Red
+            FoodType::Golden => Rgb888::new(255, 215, 0),     // Gold
+            FoodType::Special => Rgb888::new(255, 0, 255),    // Magenta
+        }
+    }
+    
+    fn spawn_chance(&self) -> u32 {
+        match self {
+            FoodType::Regular => 70,  // 70% chance
+            FoodType::Golden => 25,   // 25% chance
+            FoodType::Special => 5,   // 5% chance
+        }
+    }
+}
+
 #[derive(Component)]
-struct Food;
+struct Food {
+    food_type: FoodType,
+    animation_frame: u8, // For pulsing animation
+}
 
 // --- Game Resources ---
 
@@ -189,6 +225,7 @@ struct GameState {
     move_interval: u32, // frames between moves
     frames_elapsed: u32, // Track total frames to prevent immediate collision
     needs_redraw: bool, // Track if we need to redraw
+    new_high_score: bool, // Track if we just achieved a new high score
 }
 
 impl Default for GameState {
@@ -200,12 +237,40 @@ impl Default for GameState {
             move_interval: 10, // Movement speed (frames between moves) - tuned for ~60fps target
             frames_elapsed: 0,
             needs_redraw: true, // Initial render needed
+            new_high_score: false,
         }
     }
 }
 
 #[derive(Resource)]
 struct RngResource(Rng);
+
+#[derive(Resource)]
+struct HighScore {
+    score: u32,
+    // TODO: Add flash persistence when esp-storage or similar is available
+    // For now, high score resets on reboot
+}
+
+impl HighScore {
+    fn new() -> Self {
+        Self { score: 0 }
+    }
+    
+    fn update(&mut self, new_score: u32) -> bool {
+        if new_score > self.score {
+            self.score = new_score;
+            esp_println::println!("NEW HIGH SCORE: {}!", self.score);
+            true
+        } else {
+            false
+        }
+    }
+    
+    fn get(&self) -> u32 {
+        self.score
+    }
+}
 
 #[derive(Resource, Default)]
 struct InputState {
@@ -518,19 +583,18 @@ fn move_snake_system(
         },
     };
 
-    // Store old head position
+    // Store old head position BEFORE any updates
     let old_head_pos = *head_pos;
     
-    // Update head to new position
-    *head_pos = new_head_pos;
-
-    // Correct implementation of snake movement using indices
-    
-    // 1. Collect all segment data (index, old_position) BEFORE any updates
+    // CRITICAL: Collect all segment data (index, old_position) BEFORE updating head or any segments
+    // This ensures we have a snapshot of all positions before any mutations
     let mut segment_data: heapless::Vec<(usize, Position), 256> = heapless::Vec::new();
     for (pos, seg) in segment_query.iter() {
         segment_data.push((seg.index, *pos)).ok();
     }
+    
+    // Now update head to new position (after collecting segment positions)
+    *head_pos = new_head_pos;
     
     // 2. Sort by index (ascending: 0, 1, 2...)
     segment_data.sort_unstable_by_key(|(idx, _)| *idx);
@@ -560,11 +624,14 @@ fn move_snake_system(
         );
     }
     
-    // 3. Update segments in index order (0, 1, 2...) to ensure correctness
-    // We iterate through indices sequentially and find each segment by its index
+    // 3. Update segments in REVERSE order (tail to head) to avoid overwriting positions we still need
+    // This ensures we never overwrite a position that another segment still needs
+    // By updating from tail to head, each segment gets the position of the segment ahead of it,
+    // and we never overwrite a position we still need to read
     let max_index = segment_data.iter().map(|(idx, _)| *idx).max().unwrap_or(0);
     
-    for target_idx in 0..=max_index {
+    // Update segments in reverse order (highest index first, down to 0)
+    for target_idx in (0..=max_index).rev() {
         // Find the segment with this index and update it
         for (mut pos, seg) in segment_query.iter_mut() {
             if seg.index == target_idx {
@@ -574,17 +641,30 @@ fn move_snake_system(
                 } else {
                     // Segment i gets the old position of segment i-1
                     // Find the old position of segment (target_idx - 1) in segment_data
-                    if let Some((prev_idx, prev_pos)) = segment_data.iter().find(|(idx, _)| *idx == target_idx - 1) {
+                    if let Some((_prev_idx, prev_pos)) = segment_data.iter().find(|(idx, _)| *idx == target_idx - 1) {
                         // Critical check: if the previous segment's old position is the new head position,
                         // this indicates a serious bug in the movement logic
                         if *prev_pos == new_head_pos {
                             esp_println::println!("MOVE: CRITICAL ERROR - segment {} prev_seg[{}] old_pos=({}, {}) == new_head=({}, {})", 
-                                target_idx, prev_idx, prev_pos.x, prev_pos.y, new_head_pos.x, new_head_pos.y);
+                                target_idx, target_idx - 1, prev_pos.x, prev_pos.y, new_head_pos.x, new_head_pos.y);
                             esp_println::println!("MOVE: This should never happen! segment_data may be corrupted.");
                             // Don't update - leave segment at current position to avoid crash
-                            // Break out of inner loop to move to next target_idx
+                        } else if *prev_pos == *pos {
+                            // Another safety check: if we're trying to move a segment to where it already is,
+                            // something is wrong (this can happen if segment_data is stale)
+                            esp_println::println!("MOVE: WARNING - segment {} already at target position ({}, {})", target_idx, prev_pos.x, prev_pos.y);
+                            // Still update to be safe, but log the warning
+                            *pos = *prev_pos;
                         } else {
                             *pos = *prev_pos;
+                            
+                            // Final safety check: ensure no segment ends up at the new head position
+                            if *pos == new_head_pos {
+                                esp_println::println!("MOVE: CRITICAL ERROR - segment {} ended up at new head position ({}, {})!", 
+                                    target_idx, pos.x, pos.y);
+                                // Move it to a safe position (old head position as fallback)
+                                *pos = old_head_pos;
+                            }
                             
                             // Debug: log segment updates occasionally
                             if target_idx <= 2 && game_state.frames_elapsed % 50 == 0 {
@@ -610,7 +690,7 @@ fn dump_game_state(
     head_dir: &Direction,
     game_state: &GameState,
     segment_query: &Query<(&Position, &SnakeSegment), (With<SnakeSegment>, Without<SnakeHead>)>,
-    food_query: &Query<(Entity, &Position), With<Food>>,
+    food_query: &Query<(Entity, &Position, &Food), With<Food>>,
 ) {
     const GRID_WIDTH: i32 = 46;
     const GRID_HEIGHT: i32 = 56;
@@ -641,8 +721,8 @@ fn dump_game_state(
     
     // Food positions
     let mut food_count = 0;
-    for (_, food_pos) in food_query.iter() {
-        esp_println::println!("  Food: ({}, {})", food_pos.x, food_pos.y);
+    for (_, food_pos, food) in food_query.iter() {
+        esp_println::println!("  Food: ({}, {}) type={:?}", food_pos.x, food_pos.y, food.food_type);
         food_count += 1;
     }
     if food_count == 0 {
@@ -653,9 +733,10 @@ fn dump_game_state(
 
 fn collision_system(
     mut game_state: ResMut<GameState>,
+    mut high_score: ResMut<HighScore>,
     head_query: Query<(&Position, &Direction), With<SnakeHead>>,
     segment_query: Query<(&Position, &SnakeSegment), (With<SnakeSegment>, Without<SnakeHead>)>,
-    food_query: Query<(Entity, &Position), With<Food>>,
+    food_query: Query<(Entity, &Position, &Food), With<Food>>,
     mut commands: Commands,
 ) {
     if game_state.game_over {
@@ -684,6 +765,10 @@ fn collision_system(
     {
         game_state.game_over = true;
         game_state.needs_redraw = true;
+        // Check for new high score on game over
+        if high_score.update(game_state.score) {
+            game_state.new_high_score = true;
+        }
         dump_game_state("Wall collision", &head_pos, &head_dir, &game_state, &segment_query, &food_query);
         return;
     }
@@ -695,6 +780,10 @@ fn collision_system(
         if seg.index > 0 && *seg_pos == head_pos {
             game_state.game_over = true;
             game_state.needs_redraw = true;
+            // Check for new high score on game over
+            if high_score.update(game_state.score) {
+                game_state.new_high_score = true;
+            }
             esp_println::println!("=== GAME OVER: Self collision with segment {} ===", seg.index);
             dump_game_state("Self collision", &head_pos, &head_dir, &game_state, &segment_query, &food_query);
             return;
@@ -702,11 +791,12 @@ fn collision_system(
     }
 
     // Check food collision
-    for (food_entity, food_pos) in food_query.iter() {
+    for (food_entity, food_pos, food) in food_query.iter() {
         if *food_pos == head_pos {
-            // Eat food
+            // Eat food - get points based on food type
+            let points = food.food_type.points();
             commands.entity(food_entity).despawn();
-            game_state.score += 10;
+            game_state.score += points;
             
             // Add new segment to snake
             // Find the last segment (highest index)
@@ -721,21 +811,41 @@ fn collision_system(
                 (head_pos, 0)
             };
             
+            // Safety check: ensure new segment is not spawned at head position
+            // This should never happen, but if it does, spawn it at a safe position
+            let spawn_pos = if last_pos == head_pos {
+                esp_println::println!("FOOD: WARNING - tail at head position ({}, {}), using fallback", head_pos.x, head_pos.y);
+                // Fallback: spawn behind the head in the opposite direction of movement
+                // This is a safety measure and should never be needed
+                match head_dir {
+                    Direction::Up => Position { x: head_pos.x, y: head_pos.y + 1 },
+                    Direction::Down => Position { x: head_pos.x, y: head_pos.y - 1 },
+                    Direction::Left => Position { x: head_pos.x + 1, y: head_pos.y },
+                    Direction::Right => Position { x: head_pos.x - 1, y: head_pos.y },
+                }
+            } else {
+                last_pos
+            };
+            
             commands.spawn((
                 SnakeSegment { index: next_index },
-                Position {
-                    x: last_pos.x,
-                    y: last_pos.y,
-                },
+                spawn_pos,
             ));
 
-            // Speed up slightly
-            if game_state.move_interval > 2 {
-                game_state.move_interval -= 1;
+            // Speed up slightly (more for special foods)
+            let speed_boost = match food.food_type {
+                FoodType::Regular => 1,
+                FoodType::Golden => 1,
+                FoodType::Special => 2,
+            };
+            for _ in 0..speed_boost {
+                if game_state.move_interval > 2 {
+                    game_state.move_interval -= 1;
+                }
             }
             game_state.needs_redraw = true;
 
-            esp_println::println!("Score: {}", game_state.score);
+            esp_println::println!("Score: {} (+{} from {:?})", game_state.score, points, food.food_type);
         }
     }
 }
@@ -759,8 +869,10 @@ fn restart_system(
     // Clear restart flag immediately to prevent multiple restarts
     input_state.restart = false;
     
-    // Reset game state
+    // Reset game state (preserve high score)
+    let old_high_score = game_state.new_high_score;
     *game_state = GameState::default();
+    game_state.new_high_score = old_high_score; // Preserve flag during restart
     
     // Remove all segments
     for entity in segment_query.iter() {
@@ -813,10 +925,22 @@ fn food_spawn_system(
     const GRID_WIDTH: i32 = 46;
     const GRID_HEIGHT: i32 = 56;
 
+    // Determine food type based on weighted random
+    let mut buf = [0u8; 4];
+    rng.0.read(&mut buf);
+    let rand_val = (buf[0] as u32 | ((buf[1] as u32) << 8)) % 100;
+    
+    let food_type = if rand_val < FoodType::Regular.spawn_chance() {
+        FoodType::Regular
+    } else if rand_val < FoodType::Regular.spawn_chance() + FoodType::Golden.spawn_chance() {
+        FoodType::Golden
+    } else {
+        FoodType::Special
+    };
+
     // Try to find a free position
     let mut attempts = 0;
     loop {
-        let mut buf = [0u8; 4];
         rng.0.read(&mut buf);
         let x = ((buf[0] as u32 | ((buf[1] as u32) << 8)) % GRID_WIDTH as u32) as i32;
         rng.0.read(&mut buf);
@@ -826,7 +950,14 @@ fn food_spawn_system(
         let occupied = all_positions.iter().any(|&p| p == pos);
 
         if !occupied {
-            commands.spawn((Food, pos));
+            commands.spawn((
+                Food {
+                    food_type,
+                    animation_frame: 0,
+                },
+                pos,
+            ));
+            esp_println::println!("Food spawned: {:?} at ({}, {})", food_type, x, y);
             break;
         }
 
@@ -838,13 +969,22 @@ fn food_spawn_system(
     }
 }
 
+fn animate_food_system(
+    mut food_query: Query<&mut Food>,
+) {
+    for mut food in food_query.iter_mut() {
+        food.animation_frame = food.animation_frame.wrapping_add(1);
+    }
+}
+
 fn render_system(
     mut display_res: NonSendMut<DisplayResource>,
     mut game_state: ResMut<GameState>,
     mut fb_res: ResMut<FrameBufferResource>,
     head_query: Query<&Position, With<SnakeHead>>,
-    segment_query: Query<&Position, With<SnakeSegment>>,
-    food_query: Query<&Position, With<Food>>,
+    segment_query: Query<(&Position, &SnakeSegment), With<SnakeSegment>>,
+    food_query: Query<(&Position, &Food), With<Food>>,
+    high_score: Res<HighScore>,
     _perf_metrics: Option<Res<PerformanceMetrics>>,
 ) {
     // Only render when needed (after movement or state change)
@@ -876,9 +1016,49 @@ fn render_system(
             }
         }
     }
+    
+    // Helper function to fill a cell with gradient (for snake segments)
+    #[inline(always)]
+    fn fill_cell_gradient(fb_data: &mut [Rgb888], x: usize, y: usize, base_color: Rgb888, intensity: u8, cell_size: usize) {
+        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
+            // Create gradient by adjusting brightness
+            let r = ((base_color.r() as u16 * intensity as u16) / 255) as u8;
+            let g = ((base_color.g() as u16 * intensity as u16) / 255) as u8;
+            let b = ((base_color.b() as u16 * intensity as u16) / 255) as u8;
+            let color = Rgb888::new(r, g, b);
+            
+            for dy in 0..cell_size {
+                let row_start = (y + dy) * LCD_H_RES + x;
+                for dx in 0..cell_size {
+                    fb_data[row_start + dx] = color;
+                }
+            }
+        }
+    }
+    
+    // Helper function to draw animated food (pulsing effect)
+    #[inline(always)]
+    fn fill_cell_animated(fb_data: &mut [Rgb888], x: usize, y: usize, base_color: Rgb888, animation_frame: u8, cell_size: usize) {
+        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
+            // Create pulsing effect using sine wave approximation
+            // animation_frame cycles 0-255, we want brightness 128-255
+            let pulse = 128 + ((animation_frame.wrapping_mul(2) as u16 * 127) / 255) as u8;
+            let r = ((base_color.r() as u16 * pulse as u16) / 255) as u8;
+            let g = ((base_color.g() as u16 * pulse as u16) / 255) as u8;
+            let b = ((base_color.b() as u16 * pulse as u16) / 255) as u8;
+            let color = Rgb888::new(r, g, b);
+            
+            for dy in 0..cell_size {
+                let row_start = (y + dy) * LCD_H_RES + x;
+                for dx in 0..cell_size {
+                    fb_data[row_start + dx] = color;
+                }
+            }
+        }
+    }
 
-    // Draw food (red)
-    for food_pos in food_query.iter() {
+    // Draw food with animation
+    for (food_pos, food) in food_query.iter() {
         let screen_x = GRID_OFFSET_X + food_pos.x * CELL_SIZE;
         let screen_y = GRID_OFFSET_Y + food_pos.y * CELL_SIZE;
         // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
@@ -887,21 +1067,33 @@ fn render_system(
             && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES {
             let x = screen_x as usize;
             let y = screen_y as usize;
-            fill_cell(fb_data, x, y, Rgb888::new(255, 0, 0), CELL_SIZE as usize);
+            fill_cell_animated(fb_data, x, y, food.food_type.color(), food.animation_frame, CELL_SIZE as usize);
         }
     }
 
-    // Draw snake segments (green)
-    for seg_pos in segment_query.iter() {
-        let screen_x = GRID_OFFSET_X + seg_pos.x * CELL_SIZE;
-        let screen_y = GRID_OFFSET_Y + seg_pos.y * CELL_SIZE;
+    // Draw snake segments with gradient (head to tail gets darker)
+    // First, collect all segments with their indices
+    let mut segments: heapless::Vec<(usize, i32, i32), 256> = heapless::Vec::new();
+    for (seg_pos, seg) in segment_query.iter() {
+        segments.push((seg.index, seg_pos.x, seg_pos.y)).ok();
+    }
+    segments.sort_unstable_by_key(|(idx, _, _)| *idx);
+    let total_segments = segments.len().max(1);
+    
+    // Draw segments with gradient based on position in snake
+    for (idx, seg_x, seg_y) in segments.iter() {
+        let screen_x = GRID_OFFSET_X + seg_x * CELL_SIZE;
+        let screen_y = GRID_OFFSET_Y + seg_y * CELL_SIZE;
         // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
         if screen_x >= 0 && screen_y >= 0 
             && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES 
             && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES {
             let x = screen_x as usize;
             let y = screen_y as usize;
-            fill_cell(fb_data, x, y, Rgb888::new(0, 255, 0), CELL_SIZE as usize);
+            // Calculate gradient: head (index 0) is brightest, tail is darkest
+            // Intensity ranges from 255 (head) to 128 (tail)
+            let intensity = 128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
+            fill_cell_gradient(fb_data, x, y, Rgb888::new(0, 255, 0), intensity, CELL_SIZE as usize);
         }
     }
 
@@ -921,24 +1113,32 @@ fn render_system(
 
     if game_state.game_over {
         // Draw game over screen centered
-        let game_over_text = "GAME OVER";
+        let game_over_text = if game_state.new_high_score { "NEW HIGH SCORE!" } else { "GAME OVER" };
         let mut score_text = String::<20>::new();
         write!(score_text, "Score: {}", game_state.score).ok();
+        let mut high_score_text = String::<30>::new();
+        write!(high_score_text, "High: {}", high_score.get()).ok();
         let restart_text = "Hold button to restart";
         
         // Calculate text widths for centering (FONT_10X20 is 10 pixels wide per character)
         let game_over_width = game_over_text.len() as i32 * 10;
         let score_width = score_text.len() as i32 * 10;
-        let restart_width = restart_text.len() as i32 * 10;
+        let high_score_width = high_score_text.len() as i32 * 10;
+        let _restart_width = restart_text.len() as i32 * 10;
         
         let center_x = (LCD_H_RES as i32 - game_over_width) / 2;
         let center_y = LCD_V_RES as i32 / 2;
         
-        // Draw "GAME OVER" centered
+        // Draw "GAME OVER" or "NEW HIGH SCORE!" centered
+        let title_color = if game_state.new_high_score {
+            Rgb888::new(255, 215, 0) // Gold for new high score
+        } else {
+            Rgb888::new(255, 0, 0) // Red for game over
+        };
         Text::new(
             game_over_text,
-            Point::new(center_x, center_y - 40),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 0, 0)),
+            Point::new(center_x, center_y - 50),
+            MonoTextStyle::new(&FONT_10X20, title_color),
         )
         .draw(&mut fb_res.frame_buf)
         .ok();
@@ -947,29 +1147,48 @@ fn render_system(
         let score_center_x = (LCD_H_RES as i32 - score_width) / 2;
         Text::new(
             score_text.as_str(),
-            Point::new(score_center_x, center_y - 10),
+            Point::new(score_center_x, center_y - 20),
             MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
         )
         .draw(&mut fb_res.frame_buf)
         .ok();
         
-        // Draw restart instructions centered below score
-        let _restart_center_x = (LCD_H_RES as i32 - restart_width) / 2;
+        // Draw high score
+        let high_score_center_x = (LCD_H_RES as i32 - high_score_width) / 2;
+        Text::new(
+            high_score_text.as_str(),
+            Point::new(high_score_center_x, center_y + 10),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 215, 0)),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+        
+        // Draw restart instructions centered below high score
         Text::new(
             "Hold both to restart",
-            Point::new((LCD_H_RES as i32 - "Hold both to restart".len() as i32 * 10) / 2, center_y + 20),
+            Point::new((LCD_H_RES as i32 - "Hold both to restart".len() as i32 * 10) / 2, center_y + 40),
             MonoTextStyle::new(&FONT_10X20, Rgb888::new(128, 128, 128)),
         )
         .draw(&mut fb_res.frame_buf)
         .ok();
     } else {
-        // Draw score during gameplay
+        // Draw score and high score during gameplay
         let mut score_str = String::<20>::new();
         write!(score_str, "Score: {}", game_state.score).ok();
         Text::new(
             score_str.as_str(),
-            Point::new(8, LCD_V_RES as i32 - 20),
+            Point::new(8, LCD_V_RES as i32 - 40),
             MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
+        )
+        .draw(&mut fb_res.frame_buf)
+        .ok();
+        
+        let mut high_score_str = String::<30>::new();
+        write!(high_score_str, "High: {}", high_score.get()).ok();
+        Text::new(
+            high_score_str.as_str(),
+            Point::new(8, LCD_V_RES as i32 - 20),
+            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 215, 0)),
         )
         .draw(&mut fb_res.frame_buf)
         .ok();
@@ -1205,6 +1424,7 @@ async fn main(spawner: Spawner) -> ! {
     world.insert_resource(ButtonState::default());
     world.insert_resource(PerformanceMetrics::default());
     world.insert_resource(RngResource(rng));
+    world.insert_resource(HighScore::new());
     world.insert_resource(FrameBufferResource::new());
     world.insert_non_send_resource(DisplayResource { display });
     world.insert_non_send_resource(ButtonLeftResource { button: btn_left });
@@ -1236,6 +1456,7 @@ async fn main(spawner: Spawner) -> ! {
             input_system,
             restart_system, // Check restart before processing other inputs
             process_input_system,
+            animate_food_system, // Animate food before rendering
             move_snake_system,
             collision_system,
             food_spawn_system,
