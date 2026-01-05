@@ -21,7 +21,7 @@ else
 endif
 
 # Serial port (can be overridden: make flash PORT=/dev/ttyUSB0)
-PORT ?= /dev/ttyACM0
+PORT ?= /dev/ttyACM1
 
 # ESP toolchain environment (installed by `espup`; required for Xtensa builds)
 ESP_EXPORT ?= $(HOME)/export-esp.sh

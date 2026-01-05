@@ -4,6 +4,10 @@ name         = "waveshare-esp32-sandbox-1"
 rust-version = "1.88"
 version      = "0.1.0"
 
+[lib]
+name = "waveshare_esp32_sandbox_1"
+path = "src/lib.rs"
+
 [[bin]]
 name = "waveshare-esp32-sandbox-1"
 path = "./src/bin/main.rs"
