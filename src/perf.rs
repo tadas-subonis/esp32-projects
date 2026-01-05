@@ -2,8 +2,6 @@
 //!
 //! Provides frame timing measurement and FPS tracking for games and applications.
 
-use bevy_ecs::prelude::Resource;
-
 /// Resource for tracking frame timing and performance metrics.
 ///
 /// Use this to measure and log FPS, frame times, and identify performance issues.
@@ -22,7 +20,6 @@ use bevy_ecs::prelude::Resource;
 ///     }
 /// }
 /// ```
-#[derive(Resource)]
 pub struct PerformanceMetrics {
     /// Number of frames recorded since last reset
     pub frame_count: u32,

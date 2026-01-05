@@ -76,8 +76,6 @@ profont = "0.3"
 embedded-hal-bus = "0.3"
 # SH8601 driver for Waveshare 1.8" AMOLED (QSPI)
 sh8601-rs = { git = "https://github.com/theembeddedrustacean/sh8601-rs", features = ["waveshare_18_amoled"] }
-# Bevy ECS for game logic
-bevy_ecs = { version = "0.17.2", default-features = false }
 heapless = "0.9.1"
 
 

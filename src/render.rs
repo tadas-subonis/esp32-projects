@@ -15,7 +15,10 @@ use embedded_graphics::{
 };
 use heapless::String;
 
-use crate::config::{LCD_H_RES, LCD_V_RES};
+use crate::config::{CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, LCD_H_RES, LCD_V_RES};
+use crate::display::MyFrameBuf;
+use crate::game::{FoodEntity, Game, GameState, HighScore, Position};
+use crate::hardware::DisplayDriver;
 
 // =============================================================================
 // Color Utilities
@@ -357,4 +360,161 @@ pub const fn default_grid_config() -> GridConfig {
         0, // offset x
         0, // offset y
     )
+}
+
+// =============================================================================
+// Game rendering
+// =============================================================================
+
+/// Snake head color (darker green)
+const SNAKE_HEAD_COLOR: Rgb888 = Rgb888::new(0, 200, 0);
+/// Snake body base color (bright green)
+const SNAKE_BODY_COLOR: Rgb888 = Rgb888::new(0, 255, 0);
+
+fn render_food(fb_data: &mut [Rgb888], config: &GridConfig, food: Option<&FoodEntity>) {
+    if let Some(food) = food {
+        draw_grid_cell_animated(
+            fb_data,
+            config,
+            food.position.x,
+            food.position.y,
+            food.food.food_type.color(),
+            food.food.animation_frame,
+        );
+    }
+}
+
+fn render_snake_segments(fb_data: &mut [Rgb888], config: &GridConfig, segments: &[Position]) {
+    let total_segments = segments.len().max(1);
+
+    for (idx, pos) in segments.iter().enumerate() {
+        // Intensity ranges from 255 (head-adjacent) to 128 (tail)
+        let intensity = 128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
+        draw_grid_cell_gradient(fb_data, config, pos.x, pos.y, SNAKE_BODY_COLOR, intensity);
+    }
+}
+
+fn render_snake_head(fb_data: &mut [Rgb888], config: &GridConfig, head: Position) {
+    draw_grid_cell(fb_data, config, head.x, head.y, SNAKE_HEAD_COLOR);
+}
+
+fn render_game_over_ui(
+    target: &mut MyFrameBuf,
+    game_state: &GameState,
+    high_score: &HighScore,
+) {
+    let game_over_text = if game_state.new_high_score {
+        "NEW HIGH SCORE!"
+    } else {
+        "GAME OVER"
+    };
+
+    let center_y = LCD_V_RES as i32 / 2;
+
+    let title_color = if game_state.new_high_score {
+        colors::GOLD
+    } else {
+        colors::RED
+    };
+    draw_text_centered(
+        target,
+        game_over_text,
+        center_y - 50,
+        title_color,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    let mut score_text = String::<20>::new();
+    write!(score_text, "Score: {}", game_state.score).ok();
+    draw_text_centered(
+        target,
+        score_text.as_str(),
+        center_y - 20,
+        colors::WHITE,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    let mut high_score_text = String::<30>::new();
+    write!(high_score_text, "High: {}", high_score.get()).ok();
+    draw_text_centered(
+        target,
+        high_score_text.as_str(),
+        center_y + 10,
+        colors::GOLD,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    draw_text_centered(
+        target,
+        "Hold both to restart",
+        center_y + 40,
+        colors::GRAY,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+}
+
+fn render_gameplay_ui(target: &mut MyFrameBuf, game_state: &GameState, high_score: &HighScore) {
+    draw_score(
+        target,
+        "Score: ",
+        game_state.score,
+        8,
+        LCD_V_RES as i32 - 40,
+        colors::WHITE,
+    );
+
+    draw_score(
+        target,
+        "High: ",
+        high_score.get(),
+        8,
+        LCD_V_RES as i32 - 20,
+        colors::GOLD,
+    );
+
+    draw_text(
+        target,
+        "Boot=Left Pwr=Right",
+        8,
+        8,
+        colors::GRAY,
+        &FONT_10X20,
+    );
+}
+
+/// Render the current frame to the framebuffer and flush to the display.
+pub fn render_game(display: &mut DisplayDriver, fb: &mut MyFrameBuf, game: &Game) {
+    fb.clear(Rgb888::BLACK).unwrap();
+
+    let config = GridConfig::new(
+        LCD_H_RES,
+        LCD_V_RES,
+        CELL_SIZE as usize,
+        GRID_OFFSET_X,
+        GRID_OFFSET_Y,
+    );
+
+    let fb_data: &mut [Rgb888] = &mut *fb.data;
+
+    render_food(fb_data, &config, game.food());
+    render_snake_segments(fb_data, &config, game.segments());
+    render_snake_head(fb_data, &config, game.head());
+
+    if game.state.game_over {
+        render_game_over_ui(fb, &game.state, &game.high_score);
+    } else {
+        render_gameplay_ui(fb, &game.state, &game.high_score);
+    }
+
+    let fb_data: &[Rgb888] = &*fb.data;
+    transfer_framebuffer_rle(display, fb_data, LCD_H_RES, LCD_V_RES);
+    display.flush().ok();
 }

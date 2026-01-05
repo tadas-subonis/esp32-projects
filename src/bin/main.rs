@@ -10,7 +10,6 @@
 extern crate alloc;
 
 use alloc::rc::Rc;
-use bevy_ecs::prelude::*;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
@@ -34,14 +33,11 @@ use waveshare_esp32_sandbox_1::config::{
     TCA9554_POLARITY,
 };
 use waveshare_esp32_sandbox_1::display::FrameBufferResource;
-use waveshare_esp32_sandbox_1::game::{
-    animate_food_system, collision_system, food_spawn_system, input_system, move_snake_system,
-    process_input_system, render_system, restart_system, ButtonState, Direction, GameState,
-    HighScore, InputState, Position, RngResource, SnakeHead, SnakeSegment,
-};
+use waveshare_esp32_sandbox_1::engine::Engine;
+use waveshare_esp32_sandbox_1::game::Game;
 use waveshare_esp32_sandbox_1::perf::PerformanceMetrics;
 use waveshare_esp32_sandbox_1::hardware::{
-    Axp2101Resource, ButtonLeftResource, DisplayResource, SharedTca9554Reset,
+    Axp2101Resource, ButtonLeftResource, SharedTca9554Reset,
 };
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
@@ -239,58 +235,18 @@ async fn main(spawner: Spawner) -> ! {
         }
     );
 
-    // --- Initialize RNG ---
+    // --- Initialize RNG and engine ---
     let rng = Rng::new();
-
-    // --- Initialize Bevy ECS World ---
-    let mut world = World::default();
-
-    // Insert resources
-    world.insert_resource(GameState::default());
-    world.insert_resource(InputState::default());
-    world.insert_resource(ButtonState::default());
-    world.insert_resource(PerformanceMetrics::default());
-    world.insert_resource(RngResource(rng));
-    world.insert_resource(HighScore::new());
-    world.insert_resource(FrameBufferResource::new());
-    world.insert_non_send_resource(DisplayResource { display });
-    world.insert_non_send_resource(ButtonLeftResource { button: btn_left });
-    world.insert_non_send_resource(Axp2101Resource {
+    let framebuffer = FrameBufferResource::new();
+    let game = Game::new(rng);
+    let mut engine = Engine::new(game, framebuffer, PerformanceMetrics::default());
+    let mut display = display;
+    let button_left = ButtonLeftResource { button: btn_left };
+    let mut axp2101_res = Axp2101Resource {
         i2c: Rc::clone(i2c_bus),
-    });
+    };
 
-    // Spawn initial snake
-    world.spawn((
-        SnakeHead,
-        Position { x: 23, y: 28 }, // Center of grid
-        Direction::Right,
-    ));
-
-    // Add initial segments
-    world.spawn((SnakeSegment { index: 0 }, Position { x: 22, y: 28 }));
-    world.spawn((SnakeSegment { index: 1 }, Position { x: 21, y: 28 }));
-
-    // Create schedule
-    let mut schedule = Schedule::default();
-    schedule.add_systems(
-        (
-            input_system,
-            restart_system, // Check restart before processing other inputs
-            process_input_system,
-            animate_food_system, // Animate food before rendering
-            move_snake_system,
-            collision_system,
-            food_spawn_system,
-            render_system,
-        )
-            .chain(),
-    );
-
-    esp_println::println!("Entering Bevy ECS main loop...");
-
-    // Performance measurement (variables kept for future use)
-    let _frame_start_us = 0u64;
-    let _last_perf_log = 0u32;
+    esp_println::println!("Entering game loop...");
 
     loop {
         // Measure frame time using system timer
@@ -298,33 +254,23 @@ async fn main(spawner: Spawner) -> ! {
         // For simplicity, we'll use a frame counter and estimate based on loop timing
         let loop_start = embassy_time::Instant::now();
 
-        schedule.run(&mut world);
+        engine.run_frame(&mut display, &button_left, &mut axp2101_res);
 
         let loop_end = embassy_time::Instant::now();
         let frame_time = loop_end.saturating_duration_since(loop_start);
         let frame_time_us = frame_time.as_micros() as u64;
 
-        // Record performance metrics
-        if let Some(mut perf) = world.get_resource_mut::<PerformanceMetrics>() {
-            perf.record_frame(frame_time_us);
-
-            // Log performance every 300 frames (~6 seconds at 50 FPS)
-            if perf.should_log(300) {
-                perf.log_performance();
-            }
+        engine.record_frame_time(frame_time_us);
+        if engine.perf.should_log(300) {
+            engine.perf.log_performance();
         }
 
-        // Minimal delay for cooperative multitasking - let other tasks run
-        // Don't artificially limit frame rate; instead, run input polling as fast as possible.
-        // The render_system already uses needs_redraw optimization to avoid unnecessary work.
-        // With ~16ms target, we get ~60 FPS for responsive input, but rendering only happens when needed.
         let target_frame_time_ms = 16; // ~60 FPS target for responsive input
         let frame_time_ms = frame_time_us / 1000;
         if frame_time_ms < target_frame_time_ms {
             let delay_ms = target_frame_time_ms - frame_time_ms;
             Timer::after(Duration::from_millis(delay_ms as u64)).await;
         } else {
-            // Frame took too long - minimal yield for cooperative multitasking
             Timer::after(Duration::from_micros(100)).await;
         }
     }

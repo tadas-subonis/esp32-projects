@@ -53,8 +53,7 @@ pub type FbBuffer = HeapBuffer<Rgb888, LCD_BUFFER_SIZE>;
 /// Type alias for the complete framebuffer type.
 pub type MyFrameBuf = FrameBuf<Rgb888, FbBuffer>;
 
-/// Bevy ECS resource wrapping the framebuffer.
-#[derive(bevy_ecs::prelude::Resource)]
+/// Framebuffer wrapper.
 pub struct FrameBufferResource {
     pub frame_buf: MyFrameBuf,
 }

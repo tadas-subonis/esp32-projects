@@ -43,7 +43,8 @@ pub struct Axp2101Resource {
 /// Type alias for the display driver to simplify the type.
 pub type DisplayDriver = Sh8601Driver<Ws18AmoledDriver, SharedTca9554Reset>;
 
-/// Display resource - NonSend because it contains non-thread-safe components.
+/// Display resource - kept for compatibility.
+#[allow(dead_code)]
 pub struct DisplayResource {
     pub display: DisplayDriver,
 }
