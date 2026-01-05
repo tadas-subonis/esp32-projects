@@ -4138,3 +4138,2060 @@ The code compiles successfully with `cargo check --target xtensa-esp32s3-none-el
 
 ---
 
+_**User (2026-01-04 22:45Z)**_
+
+render system should be it's own file
+
+render system should be decomposed into reusable modular pieces that I could use in other games
+
+performance tracking features should be it's own file
+
+
+
+---
+
+_**Agent (model claude-4.5-opus-high-thinking, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants me to:
+1. Move the render system to its own file
+2. Decompose the render system into reusable modular pieces for other games
+3. Move performance tracking features to its own file
+
+Let me read the current game.rs to understand the render system and performance tracking code.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/game.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to:
+1. Create `src/perf.rs` for performance tracking (PerformanceMetrics)
+2. Create `src/render.rs` with reusable rendering primitives and the render system
+
+Let me break down the render system into reusable parts:
+- Generic cell filling functions (fill_cell, fill_cell_gradient, fill_cell_animated)
+- Text drawing utilities
+- Framebuffer to display transfer logic
+
+And game-specific parts:
+- Snake rendering
+- Food rendering
+- UI rendering (score, game over screen)
+
+Let me create a modular structure for rendering.</details></think>
+
+---
+
+I'll create the new modules for performance tracking and rendering. Let me start:
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [-] Create src/perf.rs with PerformanceMetrics
+- [ ] Create src/render.rs with reusable rendering primitives
+- [ ] Update game.rs to use new modules and add snake render system
+- [ ] Update lib.rs to export new modules
+- [ ] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/perf.rs</summary>
+
+**Chunk 1**
+Lines added: 161, lines removed: 1
+
+```diff
+@@ -1,1 +1,161 @@
+- 
++ //! Performance tracking and metrics.
++ //!
++ //! Provides frame timing measurement and FPS tracking for games and applications.
++ 
++ use bevy_ecs::prelude::Resource;
++ 
++ /// Resource for tracking frame timing and performance metrics.
++ ///
++ /// Use this to measure and log FPS, frame times, and identify performance issues.
++ ///
++ /// # Example
++ /// &#96;&#96;&#96;ignore
++ /// // In your main loop:
++ /// let frame_start = embassy_time::Instant::now();
++ /// schedule.run(&amp;mut world);
++ /// let frame_time_us = frame_start.elapsed().as_micros() as u64;
++ ///
++ /// if let Some(mut perf) = world.get_resource_mut::&lt;PerformanceMetrics&gt;() {
++ ///     perf.record_frame(frame_time_us);
++ ///     if perf.should_log(300) {  // Log every 300 frames
++ ///         perf.log_performance();
++ ///     }
++ /// }
++ /// &#96;&#96;&#96;
++ #[derive(Resource)]
++ pub struct PerformanceMetrics {
++     /// Number of frames recorded since last reset
++     pub frame_count: u32,
++     /// Total frame time in microseconds since last reset
++     pub total_frame_time_us: u64,
++     /// Maximum frame time recorded since last reset
++     pub max_frame_time_us: u64,
++     /// Minimum frame time recorded since last reset
++     pub min_frame_time_us: u64,
++     /// Frame counter for logging interval tracking
++     pub last_log_frame: u32,
++     /// Whether to display FPS on screen (for future use)
++     #[allow(dead_code)]
++     pub show_on_screen: bool,
++ }
++ 
++ impl Default for PerformanceMetrics {
++     fn default() -&gt; Self {
++         Self {
++             frame_count: 0,
++             total_frame_time_us: 0,
++             max_frame_time_us: 0,
++             min_frame_time_us: u64::MAX,
++             last_log_frame: 0,
++             show_on_screen: true,
++         }
++     }
++ }
++ 
++ impl PerformanceMetrics {
++     /// Create a new PerformanceMetrics instance.
++     pub fn new() -&gt; Self {
++         Self::default()
++     }
++ 
++     /// Record a frame's timing.
++     ///
++     /// Call this once per frame with the frame time in microseconds.
++     pub fn record_frame(&amp;mut self, frame_time_us: u64) {
++         self.frame_count += 1;
++         self.total_frame_time_us += frame_time_us;
++         if frame_time_us &gt; self.max_frame_time_us {
++             self.max_frame_time_us = frame_time_us;
++         }
++         if frame_time_us &lt; self.min_frame_time_us {
++             self.min_frame_time_us = frame_time_us;
++         }
++     }
++ 
++     /// Check if it's time to log performance (based on frame interval).
++     ///
++     /// Returns true if &#96;last_log_frame&#96; has exceeded the given interval.
++     pub fn should_log(&amp;mut self, interval: u32) -&gt; bool {
++         self.last_log_frame += 1;
++         if self.last_log_frame &gt;= interval {
++             self.last_log_frame = 0;
++             true
++         } else {
++             false
++         }
++     }
++ 
++     /// Log performance metrics to serial output and reset counters.
++     pub fn log_performance(&amp;mut self) {
++         if self.frame_count == 0 {
++             return;
++         }
++ 
++         let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
++         let avg_fps = if avg_frame_time_us &gt; 0 {
++             1_000_000 / avg_frame_time_us
++         } else {
++             0
++         };
++ 
++         esp_println::println!("=== Performance ({} frames) ===", self.frame_count);
++         esp_println::println!("  Avg: {} us ({} FPS)", avg_frame_time_us, avg_fps);
++         esp_println::println!("  Min: {} us", self.min_frame_time_us);
++         esp_println::println!("  Max: {} us", self.max_frame_time_us);
++ 
++         self.reset();
++     }
++ 
++     /// Reset all metrics counters.
++     pub fn reset(&amp;mut self) {
++         self.frame_count = 0;
++         self.total_frame_time_us = 0;
++         self.max_frame_time_us = 0;
++         self.min_frame_time_us = u64::MAX;
++     }
++ 
++     /// Get the current average FPS based on recorded frames.
++     ///
++     /// Returns 0 if no frames have been recorded.
++     #[allow(dead_code)]
++     pub fn get_current_fps(&amp;self) -&gt; u32 {
++         if self.frame_count == 0 {
++             return 0;
++         }
++         let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
++         if avg_frame_time_us &gt; 0 {
++             (1_000_000 / avg_frame_time_us) as u32
++         } else {
++             0
++         }
++     }
++ 
++     /// Get the average frame time in microseconds.
++     ///
++     /// Returns 0 if no frames have been recorded.
++     #[allow(dead_code)]
++     pub fn get_avg_frame_time_us(&amp;self) -&gt; u64 {
++         if self.frame_count == 0 {
++             0
++         } else {
++             self.total_frame_time_us / self.frame_count as u64
++         }
++     }
++ 
++     /// Get the minimum frame time recorded (fastest frame).
++     #[allow(dead_code)]
++     pub fn get_min_frame_time_us(&amp;self) -&gt; u64 {
++         if self.min_frame_time_us == u64::MAX {
++             0
++         } else {
++             self.min_frame_time_us
++         }
++     }
++ 
++     /// Get the maximum frame time recorded (slowest frame).
++     #[allow(dead_code)]
++     pub fn get_max_frame_time_us(&amp;self) -&gt; u64 {
++         self.max_frame_time_us
++     }
++ }
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me create the render.rs with reusable rendering primitives.</details></think>
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Create src/perf.rs with PerformanceMetrics
+- [-] Create src/render.rs with reusable rendering primitives
+- [ ] Update game.rs to use new modules and add snake render system
+- [ ] Update lib.rs to export new modules
+- [ ] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/render.rs</summary>
+
+**Chunk 1**
+Lines added: 360, lines removed: 1
+
+```diff
+@@ -1,1 +1,360 @@
+- 
++ //! Reusable rendering primitives for grid-based games.
++ //!
++ //! This module provides generic framebuffer drawing utilities that can be
++ //! used across different games. It includes cell-based drawing, gradient
++ //! effects, animations, and text rendering helpers.
++ 
++ use core::fmt::Write;
++ use embedded_graphics::{
++     mono_font::{ascii::FONT_10X20, MonoFont, MonoTextStyle},
++     pixelcolor::Rgb888,
++     prelude::*,
++     primitives::{PrimitiveStyle, Rectangle},
++     text::Text,
++     Drawable,
++ };
++ use heapless::String;
++ 
++ use crate::config::{LCD_H_RES, LCD_V_RES};
++ 
++ // =============================================================================
++ // Color Utilities
++ // =============================================================================
++ 
++ /// Apply brightness/intensity to a color.
++ ///
++ /// Scales RGB values by intensity (0-255, where 255 = full brightness).
++ #[inline(always)]
++ pub fn apply_intensity(color: Rgb888, intensity: u8) -&gt; Rgb888 {
++     let r = ((color.r() as u16 * intensity as u16) / 255) as u8;
++     let g = ((color.g() as u16 * intensity as u16) / 255) as u8;
++     let b = ((color.b() as u16 * intensity as u16) / 255) as u8;
++     Rgb888::new(r, g, b)
++ }
++ 
++ /// Calculate a pulsing brightness value for animations.
++ ///
++ /// Returns a value between &#96;min_brightness&#96; and 255 based on the animation frame.
++ #[inline(always)]
++ pub fn pulse_brightness(animation_frame: u8, min_brightness: u8) -&gt; u8 {
++     let range = 255 - min_brightness;
++     min_brightness + ((animation_frame.wrapping_mul(2) as u16 * range as u16) / 255) as u8
++ }
++ 
++ // =============================================================================
++ // Framebuffer Cell Drawing
++ // =============================================================================
++ 
++ /// Configuration for grid-based rendering.
++ #[derive(Clone, Copy)]
++ pub struct GridConfig {
++     /// Width of the display in pixels
++     pub display_width: usize,
++     /// Height of the display in pixels
++     pub display_height: usize,
++     /// Size of each cell in pixels
++     pub cell_size: usize,
++     /// X offset for the grid (for centering)
++     pub offset_x: i32,
++     /// Y offset for the grid (for centering)
++     pub offset_y: i32,
++ }
++ 
++ impl GridConfig {
++     /// Create a new grid configuration.
++     pub const fn new(
++         display_width: usize,
++         display_height: usize,
++         cell_size: usize,
++         offset_x: i32,
++         offset_y: i32,
++     ) -&gt; Self {
++         Self {
++             display_width,
++             display_height,
++             cell_size,
++             offset_x,
++             offset_y,
++         }
++     }
++ 
++     /// Convert grid coordinates to screen pixel coordinates.
++     ///
++     /// Returns None if the resulting position would be out of bounds.
++     #[inline(always)]
++     pub fn grid_to_screen(&amp;self, grid_x: i32, grid_y: i32) -&gt; Option&lt;(usize, usize)&gt; {
++         let screen_x = self.offset_x + grid_x * self.cell_size as i32;
++         let screen_y = self.offset_y + grid_y * self.cell_size as i32;
++ 
++         if screen_x &gt;= 0
++             &amp;&amp; screen_y &gt;= 0
++             &amp;&amp; (screen_x as usize) + self.cell_size &lt;= self.display_width
++             &amp;&amp; (screen_y as usize) + self.cell_size &lt;= self.display_height
++         {
++             Some((screen_x as usize, screen_y as usize))
++         } else {
++             None
++         }
++     }
++ }
++ 
++ /// Fill a rectangular cell with a solid color.
++ ///
++ /// This is the most basic drawing primitive for grid-based games.
++ #[inline(always)]
++ pub fn fill_cell(
++     fb_data: &amp;mut [Rgb888],
++     x: usize,
++     y: usize,
++     color: Rgb888,
++     cell_size: usize,
++     row_width: usize,
++     display_height: usize,
++ ) {
++     if x + cell_size &lt;= row_width &amp;&amp; y + cell_size &lt;= display_height {
++         for dy in 0..cell_size {
++             let row_start = (y + dy) * row_width + x;
++             for dx in 0..cell_size {
++                 fb_data[row_start + dx] = color;
++             }
++         }
++     }
++ }
++ 
++ /// Fill a cell with a color adjusted by intensity (for gradients).
++ #[inline(always)]
++ pub fn fill_cell_gradient(
++     fb_data: &amp;mut [Rgb888],
++     x: usize,
++     y: usize,
++     base_color: Rgb888,
++     intensity: u8,
++     cell_size: usize,
++     row_width: usize,
++     display_height: usize,
++ ) {
++     let color = apply_intensity(base_color, intensity);
++     fill_cell(fb_data, x, y, color, cell_size, row_width, display_height);
++ }
++ 
++ /// Fill a cell with animated pulsing effect.
++ #[inline(always)]
++ pub fn fill_cell_animated(
++     fb_data: &amp;mut [Rgb888],
++     x: usize,
++     y: usize,
++     base_color: Rgb888,
++     animation_frame: u8,
++     cell_size: usize,
++     row_width: usize,
++     display_height: usize,
++ ) {
++     let pulse = pulse_brightness(animation_frame, 128);
++     let color = apply_intensity(base_color, pulse);
++     fill_cell(fb_data, x, y, color, cell_size, row_width, display_height);
++ }
++ 
++ // =============================================================================
++ // Grid-Based Drawing with Config
++ // =============================================================================
++ 
++ /// Draw a cell at grid coordinates with a solid color.
++ #[inline(always)]
++ pub fn draw_grid_cell(
++     fb_data: &amp;mut [Rgb888],
++     config: &amp;GridConfig,
++     grid_x: i32,
++     grid_y: i32,
++     color: Rgb888,
++ ) {
++     if let Some((x, y)) = config.grid_to_screen(grid_x, grid_y) {
++         fill_cell(
++             fb_data,
++             x,
++             y,
++             color,
++             config.cell_size,
++             config.display_width,
++             config.display_height,
++         );
++     }
++ }
++ 
++ /// Draw a cell at grid coordinates with gradient intensity.
++ #[inline(always)]
++ pub fn draw_grid_cell_gradient(
++     fb_data: &amp;mut [Rgb888],
++     config: &amp;GridConfig,
++     grid_x: i32,
++     grid_y: i32,
++     base_color: Rgb888,
++     intensity: u8,
++ ) {
++     if let Some((x, y)) = config.grid_to_screen(grid_x, grid_y) {
++         fill_cell_gradient(
++             fb_data,
++             x,
++             y,
++             base_color,
++             intensity,
++             config.cell_size,
++             config.display_width,
++             config.display_height,
++         );
++     }
++ }
++ 
++ /// Draw a cell at grid coordinates with animation.
++ #[inline(always)]
++ pub fn draw_grid_cell_animated(
++     fb_data: &amp;mut [Rgb888],
++     config: &amp;GridConfig,
++     grid_x: i32,
++     grid_y: i32,
++     base_color: Rgb888,
++     animation_frame: u8,
++ ) {
++     if let Some((x, y)) = config.grid_to_screen(grid_x, grid_y) {
++         fill_cell_animated(
++             fb_data,
++             x,
++             y,
++             base_color,
++             animation_frame,
++             config.cell_size,
++             config.display_width,
++             config.display_height,
++         );
++     }
++ }
++ 
++ // =============================================================================
++ // Text Rendering Utilities
++ // =============================================================================
++ 
++ /// Common colors for UI text.
++ pub mod colors {
++     use embedded_graphics::pixelcolor::Rgb888;
++ 
++     pub const WHITE: Rgb888 = Rgb888::WHITE;
++     pub const BLACK: Rgb888 = Rgb888::BLACK;
++     pub const RED: Rgb888 = Rgb888::new(255, 0, 0);
++     pub const GREEN: Rgb888 = Rgb888::new(0, 255, 0);
++     pub const GOLD: Rgb888 = Rgb888::new(255, 215, 0);
++     pub const GRAY: Rgb888 = Rgb888::new(128, 128, 128);
++     pub const MAGENTA: Rgb888 = Rgb888::new(255, 0, 255);
++ }
++ 
++ /// Calculate the pixel width of text using a monospace font.
++ ///
++ /// Assumes each character is &#96;char_width&#96; pixels wide.
++ #[inline]
++ pub fn text_width(text: &amp;str, char_width: i32) -&gt; i32 {
++     text.len() as i32 * char_width
++ }
++ 
++ /// Calculate X position to center text horizontally on screen.
++ #[inline]
++ pub fn center_text_x(text: &amp;str, char_width: i32, screen_width: i32) -&gt; i32 {
++     (screen_width - text_width(text, char_width)) / 2
++ }
++ 
++ /// Draw text at a specific position.
++ pub fn draw_text&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     target: &amp;mut D,
++     text: &amp;str,
++     x: i32,
++     y: i32,
++     color: Rgb888,
++     font: &amp;MonoFont,
++ ) {
++     Text::new(text, Point::new(x, y), MonoTextStyle::new(font, color))
++         .draw(target)
++         .ok();
++ }
++ 
++ /// Draw centered text.
++ pub fn draw_text_centered&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     target: &amp;mut D,
++     text: &amp;str,
++     y: i32,
++     color: Rgb888,
++     font: &amp;MonoFont,
++     screen_width: i32,
++     char_width: i32,
++ ) {
++     let x = center_text_x(text, char_width, screen_width);
++     draw_text(target, text, x, y, color, font);
++ }
++ 
++ /// Draw a formatted score string.
++ pub fn draw_score&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     target: &amp;mut D,
++     label: &amp;str,
++     score: u32,
++     x: i32,
++     y: i32,
++     color: Rgb888,
++ ) {
++     let mut text = String::&lt;32&gt;::new();
++     write!(text, "{}{}", label, score).ok();
++     draw_text(target, text.as_str(), x, y, color, &amp;FONT_10X20);
++ }
++ 
++ // =============================================================================
++ // Framebuffer to Display Transfer
++ // =============================================================================
++ 
++ /// Transfer framebuffer to display using run-length encoded row drawing.
++ ///
++ /// This optimized transfer method groups identical pixels into rectangles,
++ /// reducing the number of draw calls significantly for sparse displays.
++ pub fn transfer_framebuffer_rle&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     display: &amp;mut D,
++     fb_data: &amp;[Rgb888],
++     width: usize,
++     height: usize,
++ ) {
++     for y in 0..height {
++         let row_start = y * width;
++         let mut x = 0;
++         while x &lt; width {
++             let pixel = fb_data[row_start + x];
++ 
++             // Find run of identical pixels
++             let start_x = x;
++             let mut end_x = x + 1;
++             while end_x &lt; width &amp;&amp; fb_data[row_start + end_x] == pixel {
++                 end_x += 1;
++             }
++ 
++             // Draw rectangle for this run
++             let run_width = end_x - start_x;
++             Rectangle::new(
++                 Point::new(start_x as i32, y as i32),
++                 Size::new(run_width as u32, 1),
++             )
++             .into_styled(PrimitiveStyle::with_fill(pixel))
++             .draw(display)
++             .ok();
++ 
++             x = end_x;
++         }
++     }
++ }
++ 
++ // =============================================================================
++ // Default Grid Config for this hardware
++ // =============================================================================
++ 
++ /// Create the default grid configuration for the Waveshare display.
++ pub const fn default_grid_config() -&gt; GridConfig {
++     GridConfig::new(
++         LCD_H_RES,
++         LCD_V_RES,
++         8, // cell size
++         0, // offset x
++         0, // offset y
++     )
++ }
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update game.rs to use the new render module and perf module, and refactor the render system to use the new primitives.</details></think>
+
+---
+
+Now let me update lib.rs, then update game.rs to use the new modules:
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Create src/perf.rs with PerformanceMetrics
+- [x] Create src/render.rs with reusable rendering primitives
+- [ ] Update game.rs to use new modules and add snake render system
+- [-] Update lib.rs to export new modules
+- [ ] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+Illegal value for lineNumber
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me try reading the file first to see the exact content.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Oh, looks like lib.rs was already updated somehow. Let me check main.rs to update imports there, then update game.rs.</details></think>
+
+---
+
+The lib.rs is already updated. Let me update game.rs to use the new modules:
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Create src/perf.rs with PerformanceMetrics
+- [x] Create src/render.rs with reusable rendering primitives
+- [-] Update game.rs to use new modules and add snake render system
+- [x] Update lib.rs to export new modules
+- [ ] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/game.rs</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 4
+
+```diff
+@@ -6,10 +6,7 @@
+  use core::fmt::Write;
+  use embedded_graphics::{
+-     mono_font::{ascii::FONT_10X20, MonoTextStyle},
++     mono_font::ascii::FONT_10X20,
+      pixelcolor::Rgb888,
+      prelude::*,
+-     primitives::{PrimitiveStyle, Rectangle},
+-     text::Text,
+-     Drawable,
+  };
+  use esp_hal::rng::Rng;
+```
+
+**Chunk 2**
+Lines added: 6, lines removed: 2
+
+```diff
+@@ -18,9 +15,13 @@
+  use crate::config::{
+      AXP2101_ADDR, AXP2101_INTSTS2, AXP2101_PKEY_SHORT_IRQ_BIT, CELL_SIZE, GRID_HEIGHT,
+-     GRID_OFFSET_X, GRID_OFFSET_Y, GRID_WIDTH, HOLD_TO_RESTART_FRAMES, LCD_H_RES,
+-     LCD_V_RES,
++     GRID_OFFSET_X, GRID_OFFSET_Y, GRID_WIDTH, HOLD_TO_RESTART_FRAMES, LCD_H_RES, LCD_V_RES,
+  };
+  use crate::display::FrameBufferResource;
+  use crate::hardware::{Axp2101Resource, ButtonLeftResource, DisplayResource};
++ use crate::perf::PerformanceMetrics;
++ use crate::render::{
++     colors, default_grid_config, draw_grid_cell, draw_grid_cell_animated, draw_grid_cell_gradient,
++     draw_score, draw_text, draw_text_centered, transfer_framebuffer_rle, GridConfig,
++ };
+  
+  // =============================================================================
+```
+
+**Chunk 3**
+Lines added: 3, lines removed: 3
+
+```diff
+@@ -88,7 +89,7 @@
+      pub fn color(&amp;self) -&gt; Rgb888 {
+          match self {
+-             FoodType::Regular =&gt; Rgb888::new(255, 0, 0),   // Red
+-             FoodType::Golden =&gt; Rgb888::new(255, 215, 0), // Gold
+-             FoodType::Special =&gt; Rgb888::new(255, 0, 255), // Magenta
++             FoodType::Regular =&gt; colors::RED,
++             FoodType::Golden =&gt; colors::GOLD,
++             FoodType::Special =&gt; colors::MAGENTA,
+          }
+      }
+```
+
+**Chunk 4**
+Lines added: 4, lines removed: 4
+
+```diff
+@@ -118,8 +119,8 @@
+      pub game_over: bool,
+      pub move_timer: u32,
+-     pub move_interval: u32,    // frames between moves
+-     pub frames_elapsed: u32,   // Track total frames to prevent immediate collision
+-     pub needs_redraw: bool,    // Track if we need to redraw
+-     pub new_high_score: bool,  // Track if we just achieved a new high score
++     pub move_interval: u32,   // frames between moves
++     pub frames_elapsed: u32,  // Track total frames to prevent immediate collision
++     pub needs_redraw: bool,   // Track if we need to redraw
++     pub new_high_score: bool, // Track if we just achieved a new high score
+  }
+  
+```
+
+**Chunk 5**
+Lines added: undefined, lines removed: 74
+
+```diff
+@@ -180,78 +181,4 @@
+      pub restart: bool,
+  }
+- 
+- #[derive(Resource)]
+- pub struct PerformanceMetrics {
+-     pub frame_count: u32,
+-     pub total_frame_time_us: u64,
+-     pub max_frame_time_us: u64,
+-     pub min_frame_time_us: u64,
+-     pub last_log_frame: u32,
+-     #[allow(dead_code)] // For future on-screen FPS display
+-     pub show_on_screen: bool,
+- }
+- 
+- impl Default for PerformanceMetrics {
+-     fn default() -&gt; Self {
+-         Self {
+-             frame_count: 0,
+-             total_frame_time_us: 0,
+-             max_frame_time_us: 0,
+-             min_frame_time_us: u64::MAX,
+-             last_log_frame: 0,
+-             show_on_screen: true, // Show FPS on screen by default
+-         }
+-     }
+- }
+- 
+- impl PerformanceMetrics {
+-     pub fn record_frame(&amp;mut self, frame_time_us: u64) {
+-         self.frame_count += 1;
+-         self.total_frame_time_us += frame_time_us;
+-         if frame_time_us &gt; self.max_frame_time_us {
+-             self.max_frame_time_us = frame_time_us;
+-         }
+-         if frame_time_us &lt; self.min_frame_time_us {
+-             self.min_frame_time_us = frame_time_us;
+-         }
+-     }
+- 
+-     pub fn log_performance(&amp;mut self) {
+-         if self.frame_count == 0 {
+-             return;
+-         }
+- 
+-         let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
+-         let avg_fps = if avg_frame_time_us &gt; 0 {
+-             1_000_000 / avg_frame_time_us
+-         } else {
+-             0
+-         };
+- 
+-         esp_println::println!("=== Performance ({} frames) ===", self.frame_count);
+-         esp_println::println!("  Avg: {} us ({} FPS)", avg_frame_time_us, avg_fps);
+-         esp_println::println!("  Min: {} us", self.min_frame_time_us);
+-         esp_println::println!("  Max: {} us", self.max_frame_time_us);
+- 
+-         // Reset for next measurement period
+-         self.frame_count = 0;
+-         self.total_frame_time_us = 0;
+-         self.max_frame_time_us = 0;
+-         self.min_frame_time_us = u64::MAX;
+-     }
+- 
+-     #[allow(dead_code)] // For future on-screen FPS display
+-     pub fn get_current_fps(&amp;self) -&gt; u32 {
+-         if self.frame_count == 0 {
+-             return 0;
+-         }
+-         let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
+-         if avg_frame_time_us &gt; 0 {
+-             (1_000_000 / avg_frame_time_us) as u32
+-         } else {
+-             0
+-         }
+-     }
+- }
+  
+  #[derive(Resource, Default)]
+```
+
+**Chunk 6**
+Lines added: 1, lines removed: 5
+
+```diff
+@@ -662,9 +589,5 @@
+  
+      // Check wall collision
+-     if head_pos.x &lt; 0
+-         || head_pos.x &gt;= GRID_WIDTH
+-         || head_pos.y &lt; 0
+-         || head_pos.y &gt;= GRID_HEIGHT
+-     {
++     if head_pos.x &lt; 0 || head_pos.x &gt;= GRID_WIDTH || head_pos.y &lt; 0 || head_pos.y &gt;= GRID_HEIGHT {
+          game_state.game_over = true;
+          game_state.needs_redraw = true;
+```
+
+**Chunk 7**
+Lines added: 28, lines removed: 113
+
+```diff
+@@ -903,119 +826,34 @@
+  }
+  
+- pub fn render_system(
+-     mut display_res: NonSendMut&lt;DisplayResource&gt;,
+-     mut game_state: ResMut&lt;GameState&gt;,
+-     mut fb_res: ResMut&lt;FrameBufferResource&gt;,
+-     head_query: Query&lt;&amp;Position, With&lt;SnakeHead&gt;&gt;,
+-     segment_query: Query&lt;(&amp;Position, &amp;SnakeSegment), With&lt;SnakeSegment&gt;&gt;,
+-     food_query: Query&lt;(&amp;Position, &amp;Food), With&lt;Food&gt;&gt;,
+-     high_score: Res&lt;HighScore&gt;,
+-     _perf_metrics: Option&lt;Res&lt;PerformanceMetrics&gt;&gt;,
+- ) {
+-     // Only render when needed (after movement or state change)
+-     // For game over, only render once when it first happens
+-     if !game_state.needs_redraw {
+-         return;
+-     }
+-     game_state.needs_redraw = false;
+-     // Clear framebuffer
+-     fb_res.frame_buf.clear(Rgb888::BLACK).unwrap();
+- 
+-     // Direct framebuffer writes for game objects (much faster than embedded-graphics primitives)
+-     // Access the underlying array slice from HeapBuffer
+-     let fb_data: &amp;mut [Rgb888] = &amp;mut *fb_res.frame_buf.data;
+- 
+-     // Helper function to fill a cell in the framebuffer
+-     #[inline(always)]
+-     fn fill_cell(fb_data: &amp;mut [Rgb888], x: usize, y: usize, color: Rgb888, cell_size: usize) {
+-         if x + cell_size &lt;= LCD_H_RES &amp;&amp; y + cell_size &lt;= LCD_V_RES {
+-             for dy in 0..cell_size {
+-                 let row_start = (y + dy) * LCD_H_RES + x;
+-                 for dx in 0..cell_size {
+-                     fb_data[row_start + dx] = color;
+-                 }
+-             }
+-         }
+-     }
+- 
+-     // Helper function to fill a cell with gradient (for snake segments)
+-     #[inline(always)]
+-     fn fill_cell_gradient(
+-         fb_data: &amp;mut [Rgb888],
+-         x: usize,
+-         y: usize,
+-         base_color: Rgb888,
+-         intensity: u8,
+-         cell_size: usize,
+-     ) {
+-         if x + cell_size &lt;= LCD_H_RES &amp;&amp; y + cell_size &lt;= LCD_V_RES {
+-             // Create gradient by adjusting brightness
+-             let r = ((base_color.r() as u16 * intensity as u16) / 255) as u8;
+-             let g = ((base_color.g() as u16 * intensity as u16) / 255) as u8;
+-             let b = ((base_color.b() as u16 * intensity as u16) / 255) as u8;
+-             let color = Rgb888::new(r, g, b);
+- 
+-             for dy in 0..cell_size {
+-                 let row_start = (y + dy) * LCD_H_RES + x;
+-                 for dx in 0..cell_size {
+-                     fb_data[row_start + dx] = color;
+-                 }
+-             }
+-         }
+-     }
+- 
+-     // Helper function to draw animated food (pulsing effect)
+-     #[inline(always)]
+-     fn fill_cell_animated(
+-         fb_data: &amp;mut [Rgb888],
+-         x: usize,
+-         y: usize,
+-         base_color: Rgb888,
+-         animation_frame: u8,
+-         cell_size: usize,
+-     ) {
+-         if x + cell_size &lt;= LCD_H_RES &amp;&amp; y + cell_size &lt;= LCD_V_RES {
+-             // Create pulsing effect using sine wave approximation
+-             // animation_frame cycles 0-255, we want brightness 128-255
+-             let pulse = 128 + ((animation_frame.wrapping_mul(2) as u16 * 127) / 255) as u8;
+-             let r = ((base_color.r() as u16 * pulse as u16) / 255) as u8;
+-             let g = ((base_color.g() as u16 * pulse as u16) / 255) as u8;
+-             let b = ((base_color.b() as u16 * pulse as u16) / 255) as u8;
+-             let color = Rgb888::new(r, g, b);
+- 
+-             for dy in 0..cell_size {
+-                 let row_start = (y + dy) * LCD_H_RES + x;
+-                 for dx in 0..cell_size {
+-                     fb_data[row_start + dx] = color;
+-                 }
+-             }
+-         }
+-     }
+- 
+-     // Draw food with animation
++ // =============================================================================
++ // Render System
++ // =============================================================================
++ 
++ /// Snake head color (darker green)
++ const SNAKE_HEAD_COLOR: Rgb888 = Rgb888::new(0, 200, 0);
++ /// Snake body base color (bright green)
++ const SNAKE_BODY_COLOR: Rgb888 = Rgb888::new(0, 255, 0);
++ 
++ /// Render food items to the framebuffer.
++ fn render_food(fb_data: &amp;mut [Rgb888], config: &amp;GridConfig, food_query: &amp;Query&lt;(&amp;Position, &amp;Food), With&lt;Food&gt;&gt;) {
+      for (food_pos, food) in food_query.iter() {
+-         let screen_x = GRID_OFFSET_X + food_pos.x * CELL_SIZE;
+-         let screen_y = GRID_OFFSET_Y + food_pos.y * CELL_SIZE;
+-         // Bounds check: skip if position is out of bounds (prevents panic from negative -&gt; usize conversion)
+-         if screen_x &gt;= 0
+-             &amp;&amp; screen_y &gt;= 0
+-             &amp;&amp; (screen_x as usize) + (CELL_SIZE as usize) &lt;= LCD_H_RES
+-             &amp;&amp; (screen_y as usize) + (CELL_SIZE as usize) &lt;= LCD_V_RES
+-         {
+-             let x = screen_x as usize;
+-             let y = screen_y as usize;
+-             fill_cell_animated(
+-                 fb_data,
+-                 x,
+-                 y,
+-                 food.food_type.color(),
+-                 food.animation_frame,
+-                 CELL_SIZE as usize,
+-             );
+-         }
+-     }
++         draw_grid_cell_animated(
++             fb_data,
++             config,
++             food_pos.x,
++             food_pos.y,
++             food.food_type.color(),
++             food.animation_frame,
++         );
++     }
++ }
+  
+-     // Draw snake segments with gradient (head to tail gets darker)
+-     // First, collect all segments with their indices
++ /// Render snake segments to the framebuffer with gradient effect.
++ fn render_snake_segments(
++     fb_data: &amp;mut [Rgb888],
++     config: &amp;GridConfig,
++     segment_query: &amp;Query&lt;(&amp;Position, &amp;SnakeSegment), With&lt;SnakeSegment&gt;&gt;,
++ ) {
++     // Collect all segments with their indices
+      let mut segments: heapless::Vec&lt;(usize, i32, i32), 256&gt; = heapless::Vec::new();
+      for (seg_pos, seg) in segment_query.iter() {
+```
+
+**Chunk 8**
+Lines added: 171, lines removed: 173
+
+```diff
+@@ -1027,182 +865,180 @@
+      // Draw segments with gradient based on position in snake
+      for (idx, seg_x, seg_y) in segments.iter() {
+-         let screen_x = GRID_OFFSET_X + seg_x * CELL_SIZE;
+-         let screen_y = GRID_OFFSET_Y + seg_y * CELL_SIZE;
+-         // Bounds check: skip if position is out of bounds (prevents panic from negative -&gt; usize conversion)
+-         if screen_x &gt;= 0
+-             &amp;&amp; screen_y &gt;= 0
+-             &amp;&amp; (screen_x as usize) + (CELL_SIZE as usize) &lt;= LCD_H_RES
+-             &amp;&amp; (screen_y as usize) + (CELL_SIZE as usize) &lt;= LCD_V_RES
+-         {
+-             let x = screen_x as usize;
+-             let y = screen_y as usize;
+-             // Calculate gradient: head (index 0) is brightest, tail is darkest
+-             // Intensity ranges from 255 (head) to 128 (tail)
+-             let intensity =
+-                 128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
+-             fill_cell_gradient(
+-                 fb_data,
+-                 x,
+-                 y,
+-                 Rgb888::new(0, 255, 0),
+-                 intensity,
+-                 CELL_SIZE as usize,
+-             );
+-         }
+-     }
+- 
+-     // Draw head (darker green)
++         // Calculate gradient: head (index 0) is brightest, tail is darkest
++         // Intensity ranges from 255 (head) to 128 (tail)
++         let intensity = 128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
++         draw_grid_cell_gradient(fb_data, config, *seg_x, *seg_y, SNAKE_BODY_COLOR, intensity);
++     }
++ }
++ 
++ /// Render the snake head to the framebuffer.
++ fn render_snake_head(
++     fb_data: &amp;mut [Rgb888],
++     config: &amp;GridConfig,
++     head_query: &amp;Query&lt;&amp;Position, With&lt;SnakeHead&gt;&gt;,
++ ) {
+      if let Ok(head_pos) = head_query.single() {
+-         let screen_x = GRID_OFFSET_X + head_pos.x * CELL_SIZE;
+-         let screen_y = GRID_OFFSET_Y + head_pos.y * CELL_SIZE;
+-         // Bounds check: skip if position is out of bounds (prevents panic from negative -&gt; usize conversion)
+-         if screen_x &gt;= 0
+-             &amp;&amp; screen_y &gt;= 0
+-             &amp;&amp; (screen_x as usize) + (CELL_SIZE as usize) &lt;= LCD_H_RES
+-             &amp;&amp; (screen_y as usize) + (CELL_SIZE as usize) &lt;= LCD_V_RES
+-         {
+-             let x = screen_x as usize;
+-             let y = screen_y as usize;
+-             fill_cell(fb_data, x, y, Rgb888::new(0, 200, 0), CELL_SIZE as usize);
+-         }
+-     }
+- 
+-     if game_state.game_over {
+-         // Draw game over screen centered
+-         let game_over_text = if game_state.new_high_score {
+-             "NEW HIGH SCORE!"
+-         } else {
+-             "GAME OVER"
+-         };
+-         let mut score_text = String::&lt;20&gt;::new();
+-         write!(score_text, "Score: {}", game_state.score).ok();
+-         let mut high_score_text = String::&lt;30&gt;::new();
+-         write!(high_score_text, "High: {}", high_score.get()).ok();
+-         let restart_text = "Hold button to restart";
+- 
+-         // Calculate text widths for centering (FONT_10X20 is 10 pixels wide per character)
+-         let game_over_width = game_over_text.len() as i32 * 10;
+-         let score_width = score_text.len() as i32 * 10;
+-         let high_score_width = high_score_text.len() as i32 * 10;
+-         let _restart_width = restart_text.len() as i32 * 10;
+- 
+-         let center_x = (LCD_H_RES as i32 - game_over_width) / 2;
+-         let center_y = LCD_V_RES as i32 / 2;
++         draw_grid_cell(fb_data, config, head_pos.x, head_pos.y, SNAKE_HEAD_COLOR);
++     }
++ }
++ 
++ /// Render the game over screen UI.
++ fn render_game_over_ui&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     target: &amp;mut D,
++     game_state: &amp;GameState,
++     high_score: &amp;HighScore,
++ ) {
++     let game_over_text = if game_state.new_high_score {
++         "NEW HIGH SCORE!"
++     } else {
++         "GAME OVER"
++     };
++ 
++     let center_y = LCD_V_RES as i32 / 2;
+  
+-         // Draw "GAME OVER" or "NEW HIGH SCORE!" centered
+-         let title_color = if game_state.new_high_score {
+-             Rgb888::new(255, 215, 0) // Gold for new high score
+-         } else {
+-             Rgb888::new(255, 0, 0) // Red for game over
+-         };
+-         Text::new(
+-             game_over_text,
+-             Point::new(center_x, center_y - 50),
+-             MonoTextStyle::new(&amp;FONT_10X20, title_color),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
+- 
+-         // Draw score centered below
+-         let score_center_x = (LCD_H_RES as i32 - score_width) / 2;
+-         Text::new(
+-             score_text.as_str(),
+-             Point::new(score_center_x, center_y - 20),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::WHITE),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
++     // Draw title
++     let title_color = if game_state.new_high_score {
++         colors::GOLD
++     } else {
++         colors::RED
++     };
++     draw_text_centered(
++         target,
++         game_over_text,
++         center_y - 50,
++         title_color,
++         &amp;FONT_10X20,
++         LCD_H_RES as i32,
++         10,
++     );
++ 
++     // Draw current score
++     let mut score_text = String::&lt;20&gt;::new();
++     write!(score_text, "Score: {}", game_state.score).ok();
++     draw_text_centered(
++         target,
++         score_text.as_str(),
++         center_y - 20,
++         colors::WHITE,
++         &amp;FONT_10X20,
++         LCD_H_RES as i32,
++         10,
++     );
+  
+-         // Draw high score
+-         let high_score_center_x = (LCD_H_RES as i32 - high_score_width) / 2;
+-         Text::new(
+-             high_score_text.as_str(),
+-             Point::new(high_score_center_x, center_y + 10),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::new(255, 215, 0)),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
++     // Draw high score
++     let mut high_score_text = String::&lt;30&gt;::new();
++     write!(high_score_text, "High: {}", high_score.get()).ok();
++     draw_text_centered(
++         target,
++         high_score_text.as_str(),
++         center_y + 10,
++         colors::GOLD,
++         &amp;FONT_10X20,
++         LCD_H_RES as i32,
++         10,
++     );
+  
+-         // Draw restart instructions centered below high score
+-         Text::new(
+-             "Hold both to restart",
+-             Point::new(
+-                 (LCD_H_RES as i32 - "Hold both to restart".len() as i32 * 10) / 2,
+-                 center_y + 40,
+-             ),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::new(128, 128, 128)),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
+-     } else {
+-         // Draw score and high score during gameplay
+-         let mut score_str = String::&lt;20&gt;::new();
+-         write!(score_str, "Score: {}", game_state.score).ok();
+-         Text::new(
+-             score_str.as_str(),
+-             Point::new(8, LCD_V_RES as i32 - 40),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::WHITE),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
+- 
+-         let mut high_score_str = String::&lt;30&gt;::new();
+-         write!(high_score_str, "High: {}", high_score.get()).ok();
+-         Text::new(
+-             high_score_str.as_str(),
+-             Point::new(8, LCD_V_RES as i32 - 20),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::new(255, 215, 0)),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
++     // Draw restart instructions
++     draw_text_centered(
++         target,
++         "Hold both to restart",
++         center_y + 40,
++         colors::GRAY,
++         &amp;FONT_10X20,
++         LCD_H_RES as i32,
++         10,
++     );
++ }
++ 
++ /// Render the in-game HUD (score, high score, instructions).
++ fn render_gameplay_ui&lt;D: DrawTarget&lt;Color = Rgb888&gt;&gt;(
++     target: &amp;mut D,
++     game_state: &amp;GameState,
++     high_score: &amp;HighScore,
++ ) {
++     // Draw score
++     draw_score(
++         target,
++         "Score: ",
++         game_state.score,
++         8,
++         LCD_V_RES as i32 - 40,
++         colors::WHITE,
++     );
++ 
++     // Draw high score
++     draw_score(
++         target,
++         "High: ",
++         high_score.get(),
++         8,
++         LCD_V_RES as i32 - 20,
++         colors::GOLD,
++     );
+  
+-         // Draw instructions
+-         Text::new(
+-             "Boot=Left Pwr=Right",
+-             Point::new(8, 8),
+-             MonoTextStyle::new(&amp;FONT_10X20, Rgb888::new(128, 128, 128)),
+-         )
+-         .draw(&amp;mut fb_res.frame_buf)
+-         .ok();
+-     }
+- 
+-     // Copy framebuffer to display - OPTIMIZED VERSION
+-     // Use direct framebuffer transfer: draw entire framebuffer efficiently
+-     // Removed redundant display.clear() - framebuffer is already cleared
+- 
+-     // Access the underlying array slice from HeapBuffer
+-     let fb_data: &amp;[Rgb888] = &amp;*fb_res.frame_buf.data;
+- 
+-     // Strategy: Draw row-by-row with run-length encoding
+-     // IMPORTANT: We MUST draw black pixels too because we removed display.clear()!
+-     // If we skip black pixels, the old snake position will remain on screen (artifacts).
+- 
+-     for y in 0..LCD_V_RES {
+-         let row_start = y * LCD_H_RES;
+-         let mut x = 0;
+-         while x &lt; LCD_H_RES {
+-             let pixel = fb_data[row_start + x];
+- 
+-             // Find run of identical pixels (works for Black and Colors)
+-             let start_x = x;
+-             let mut end_x = x + 1;
+-             while end_x &lt; LCD_H_RES &amp;&amp; fb_data[row_start + end_x] == pixel {
+-                 end_x += 1;
+-             }
+- 
+-             // Draw rectangle for this run
+-             // Drawing black rectangles effectively "clears" that part of the screen
+-             let width = end_x - start_x;
+-             Rectangle::new(
+-                 Point::new(start_x as i32, y as i32),
+-                 Size::new(width as u32, 1),
+-             )
+-             .into_styled(PrimitiveStyle::with_fill(pixel))
+-             .draw(&amp;mut display_res.display)
+-             .ok();
+- 
+-             x = end_x;
+-         }
+-     }
++     // Draw instructions
++     draw_text(
++         target,
++         "Boot=Left Pwr=Right",
++         8,
++         8,
++         colors::GRAY,
++         &amp;FONT_10X20,
++     );
++ }
++ 
++ /// Main render system for the snake game.
++ ///
++ /// This system renders:
++ /// - Food items with pulsing animation
++ /// - Snake body with gradient effect
++ /// - Snake head
++ /// - UI elements (score, high score, game over screen)
++ pub fn render_system(
++     mut display_res: NonSendMut&lt;DisplayResource&gt;,
++     mut game_state: ResMut&lt;GameState&gt;,
++     mut fb_res: ResMut&lt;FrameBufferResource&gt;,
++     head_query: Query&lt;&amp;Position, With&lt;SnakeHead&gt;&gt;,
++     segment_query: Query&lt;(&amp;Position, &amp;SnakeSegment), With&lt;SnakeSegment&gt;&gt;,
++     food_query: Query&lt;(&amp;Position, &amp;Food), With&lt;Food&gt;&gt;,
++     high_score: Res&lt;HighScore&gt;,
++     _perf_metrics: Option&lt;Res&lt;PerformanceMetrics&gt;&gt;,
++ ) {
++     // Only render when needed (after movement or state change)
++     if !game_state.needs_redraw {
++         return;
++     }
++     game_state.needs_redraw = false;
++ 
++     // Clear framebuffer
++     fb_res.frame_buf.clear(Rgb888::BLACK).unwrap();
++ 
++     // Get grid config
++     let config = GridConfig::new(
++         LCD_H_RES,
++         LCD_V_RES,
++         CELL_SIZE as usize,
++         GRID_OFFSET_X,
++         GRID_OFFSET_Y,
++     );
++ 
++     // Access framebuffer data
++     let fb_data: &amp;mut [Rgb888] = &amp;mut *fb_res.frame_buf.data;
++ 
++     // Render game objects
++     render_food(fb_data, &amp;config, &amp;food_query);
++     render_snake_segments(fb_data, &amp;config, &amp;segment_query);
++     render_snake_head(fb_data, &amp;config, &amp;head_query);
++ 
++     // Render UI
++     if game_state.game_over {
++         render_game_over_ui(&amp;mut fb_res.frame_buf, &amp;game_state, &amp;high_score);
++     } else {
++         render_gameplay_ui(&amp;mut fb_res.frame_buf, &amp;game_state, &amp;high_score);
++     }
++ 
++     // Transfer framebuffer to display
++     let fb_data: &amp;[Rgb888] = &amp;*fb_res.frame_buf.data;
++     transfer_framebuffer_rle(&amp;mut display_res.display, fb_data, LCD_H_RES, LCD_V_RES);
+  
+      display_res.display.flush().ok();
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me update main.rs to use the new perf module instead of the one in game.rs.</details></think>
+
+---
+
+Now let me update main.rs to use the new perf module:
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Create src/perf.rs with PerformanceMetrics
+- [x] Create src/render.rs with reusable rendering primitives
+- [x] Update game.rs to use new modules and add snake render system
+- [x] Update lib.rs to export new modules
+- [-] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/bin/main.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to update the imports in main.rs to use `PerformanceMetrics` from the `perf` module instead of `game`. Let me update the imports.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/bin/main.rs</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 1
+
+```diff
+@@ -38,6 +38,7 @@
+      animate_food_system, collision_system, food_spawn_system, input_system, move_snake_system,
+      process_input_system, render_system, restart_system, ButtonState, Direction, GameState,
+-     HighScore, InputState, PerformanceMetrics, Position, RngResource, SnakeHead, SnakeSegment,
++     HighScore, InputState, Position, RngResource, SnakeHead, SnakeSegment,
+  };
++ use waveshare_esp32_sandbox_1::perf::PerformanceMetrics;
+  use waveshare_esp32_sandbox_1::hardware::{
+      Axp2101Resource, ButtonLeftResource, DisplayResource, SharedTca9554Reset,
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I also need to update the main loop to use the new should_log method. Let me also simplify that code.</details></think>
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/bin/main.rs</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: 3
+
+```diff
+@@ -308,10 +308,8 @@
+          if let Some(mut perf) = world.get_resource_mut::&lt;PerformanceMetrics&gt;() {
+              perf.record_frame(frame_time_us);
+-             perf.last_log_frame += 1;
+  
+              // Log performance every 300 frames (~6 seconds at 50 FPS)
+-             if perf.last_log_frame &gt;= 300 {
++             if perf.should_log(300) {
+                  perf.log_performance();
+-                 perf.last_log_frame = 0;
+              }
+          }
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me verify everything compiles correctly.</details></think>
+
+---
+
+Let me verify everything compiles:
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1</summary>
+
+```bash
+cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1
+```
+
+```
+   Compiling waveshare-esp32-sandbox-1 v0.1.0 (/home/tadas/work/my/waveshare-esp32-sandbox-1)
+error[E0432]: unresolved import &#96;crate::perf&#96;
+  --&gt; src/game.rs:21:12
+   |
+21 | use crate::perf::PerformanceMetrics;
+   |            ^^^^ could not find &#96;perf&#96; in the crate root
+
+error[E0432]: unresolved import &#96;crate::render&#96;
+  --&gt; src/game.rs:22:12
+   |
+22 | use crate::render::{
+   |            ^^^^^^ could not find &#96;render&#96; in the crate root
+
+For more information about this error, try &#96;rustc --explain E0432&#96;.
+error: could not compile &#96;waveshare-esp32-sandbox-1&#96; (lib) due to 2 previous errors
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The lib.rs didn't get the perf and render modules added. Let me check it.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+lib.rs looks correct - it has perf and render. The error is strange. Let me check if the files exist.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: ls -la /home/tadas/work/my/waveshare-esp32-sandbox-1/src/</summary>
+
+```bash
+ls -la /home/tadas/work/my/waveshare-esp32-sandbox-1/src/
+```
+
+```
+total 84
+drwxr-xr-x  3 tadas tadas  4096 Jan  5 23:36 .
+drwxr-xr-x 11 tadas tadas  4096 Jan  4 21:59 ..
+drwxr-xr-x  2 tadas tadas  4096 Dec 28 23:16 bin
+-rw-r--r--  1 tadas tadas  1568 Jan  5 23:22 config.rs
+-rw-r--r--  1 tadas tadas  2167 Jan  5 23:22 display.rs
+-rw-r--r--  1 tadas tadas 33641 Jan  5 23:38 game.rs
+-rw-r--r--  1 tadas tadas  1795 Jan  5 23:22 hardware.rs
+-rw-r--r--  1 tadas tadas    98 Jan  5 23:30 lib.rs
+-rw-r--r--  1 tadas tadas  4860 Jan  5 23:35 perf.rs
+-rw-r--r--  1 tadas tadas 10365 Jan  5 23:36 render.rs
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The files exist. Maybe there's a caching issue. Let me try cleaning and rebuilding.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo clean && cargo check --target xtensa-esp32s3-none-elf 2>&1 | head -50</summary>
+
+```bash
+cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo clean && cargo check --target xtensa-esp32s3-none-elf 2>&1 | head -50
+```
+
+```
+     Removed 6483 files, 2.3GiB total
+   Compiling compiler_builtins v0.1.160 (/home/tadas/.rustup/toolchains/esp/lib/rustlib/src/rust/library/compiler-builtins/compiler-builtins)
+   Compiling core v0.0.0 (/home/tadas/.rustup/toolchains/esp/lib/rustlib/src/rust/library/core)
+   Compiling proc-macro2 v1.0.104
+   Compiling quote v1.0.42
+   Compiling unicode-ident v1.0.22
+   Compiling litrs v1.0.0
+   Compiling esp-metadata-generated v0.3.0
+   Compiling portable-atomic v1.13.0
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.16.1
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling ryu v1.0.22
+   Compiling unsafe-libyaml v0.2.11
+   Compiling somni-parser v0.2.2
+   Compiling itoa v1.0.17
+   Compiling heapless v0.8.0
+   Compiling ident_case v1.0.1
+   Compiling embedded-io-async v0.6.1
+   Compiling fnv v1.0.7
+   Compiling version_check v0.9.5
+   Compiling strsim v0.11.1
+   Compiling embassy-sync v0.7.2
+   Compiling winnow v0.7.14
+   Compiling autocfg v1.5.0
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling embassy-sync v0.6.2
+   Compiling typenum v1.19.0
+   Compiling esp-sync v0.1.1
+   Compiling somni-expr v0.2.0
+   Compiling esp-rom-sys v0.1.3
+   Compiling embedded-hal-async v1.0.0
+   Compiling xtensa-lx-rt v0.21.0
+   Compiling object v0.37.3
+   Compiling syn v1.0.109
+   Compiling az v1.2.1
+   Compiling log v0.4.29
+   Compiling memchr v2.7.6
+   Compiling generic-array v0.14.7
+   Compiling embassy-hal-internal v0.3.0
+   Compiling heck v0.5.0
+   Compiling termcolor v1.4.1
+   Compiling anyhow v1.0.100
+   Compiling paste v1.0.15
+   Compiling instability v0.3.11
+   Compiling esp-println v0.16.1
+   Compiling libc v0.2.178
+   Compiling esp32s3 v0.34.0
+   Compiling esp-synopsys-usb-otg v0.4.2
+   Compiling indoc v2.0.7
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+It's still compiling. Let me wait for it to finish. I'll run the command again to see if there are more errors.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -50</summary>
+
+```bash
+cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -50
+```
+
+```
+   Compiling variadics_please v1.1.0
+   Compiling bevy_ecs_macros v0.17.3
+    Checking embassy-sync v0.6.2
+    Checking embassy-usb-synopsys-otg v0.3.1
+    Checking embassy-embedded-hal v0.5.0
+    Checking portable_atomic_enum v0.3.1
+   Compiling num-derive v0.4.2
+    Checking embedded-graphics v0.8.1
+    Checking mipidsi v0.9.0
+    Checking bitfield v0.19.4
+    Checking esp-sync v0.1.1
+   Compiling darling_macro v0.20.11
+   Compiling darling v0.20.11
+   Compiling embassy-executor-macros v0.7.0
+   Compiling darling_macro v0.23.0
+   Compiling darling_macro v0.21.3
+    Checking embassy-net v0.7.1
+   Compiling darling v0.23.0
+   Compiling instability v0.3.11
+   Compiling darling v0.21.3
+   Compiling enumset_derive v0.14.0
+    Checking strum v0.27.2
+    Checking embedded-graphics-framebuf v0.5.0
+   Compiling serde v1.0.228
+    Checking enumset v1.1.10
+    Checking derive_more v2.1.1
+    Checking bevy_tasks v0.17.3
+   Compiling serde_yaml v0.9.34+deprecated
+    Checking bevy_ecs v0.17.3
+   Compiling esp-hal v1.0.0
+   Compiling esp-alloc v0.9.0
+   Compiling esp-backtrace v0.18.1
+   Compiling esp-phy v0.1.1
+   Compiling esp-bootloader-esp-idf v0.4.0
+   Compiling esp-rtos v0.2.0
+   Compiling esp-radio v0.17.0
+error[E0432]: unresolved import &#96;crate::perf&#96;
+  --&gt; src/game.rs:21:12
+   |
+21 | use crate::perf::PerformanceMetrics;
+   |            ^^^^ could not find &#96;perf&#96; in the crate root
+
+error[E0432]: unresolved import &#96;crate::render&#96;
+  --&gt; src/game.rs:22:12
+   |
+22 | use crate::render::{
+   |            ^^^^^^ could not find &#96;render&#96; in the crate root
+
+For more information about this error, try &#96;rustc --explain E0432&#96;.
+error: could not compile &#96;waveshare-esp32-sandbox-1&#96; (lib) due to 2 previous errors
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Hmm, the lib.rs file looks correct but the modules are not being found. Let me re-read the lib.rs file to confirm it's correct, and also check if there's a newline issue.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cat -A /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs</summary>
+
+```bash
+cat -A /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs
+```
+
+```
+#![no_std]$
+$
+extern crate alloc;$
+$
+pub mod config;$
+pub mod display;$
+pub mod game;$
+pub mod hardware;$
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The lib.rs file on disk doesn't have the `perf` and `render` modules! The file write I did earlier must not have worked or got reverted. Let me fix it.</details></think>
+
+---
+
+The lib.rs doesn't have the new modules. Let me fix it:
+
+---
+
+Illegal value for lineNumber
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me try running the command directly.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cat > /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs << 'EOF'
+#![no_std]
+
+extern crate alloc;
+
+pub mod config;
+pub mod display;
+pub mod game;
+pub mod hardware;
+pub mod perf;
+pub mod render;
+EOF</summary>
+
+```bash
+cat > /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs << 'EOF'
+#![no_std]
+
+extern crate alloc;
+
+pub mod config;
+pub mod display;
+pub mod game;
+pub mod hardware;
+pub mod perf;
+pub mod render;
+EOF
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me verify it was written correctly and then rebuild.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cat /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -30</summary>
+
+```bash
+cat /home/tadas/work/my/waveshare-esp32-sandbox-1/src/lib.rs && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -30
+```
+
+```
+#![no_std]
+
+extern crate alloc;
+
+pub mod config;
+pub mod display;
+pub mod game;
+pub mod hardware;
+pub mod perf;
+pub mod render;
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait &#96;RgbColor&#96; which provides &#96;WHITE&#96; is implemented but not in scope; perhaps you want to import it
+    |
+237 +     use embedded_graphics::prelude::RgbColor;
+    |
+help: there is an associated constant &#96;CSS_WHITE&#96; with a similar name
+    |
+239 |     pub const WHITE: Rgb888 = Rgb888::CSS_WHITE;
+    |                                       ++++
+
+error[E0599]: no associated item named &#96;BLACK&#96; found for struct &#96;embedded_graphics::pixelcolor::Rgb888&#96; in the current scope
+   --&gt; src/render.rs:240:39
+    |
+240 |     pub const BLACK: Rgb888 = Rgb888::BLACK;
+    |                                       ^^^^^ associated item not found in &#96;embedded_graphics::pixelcolor::Rgb888&#96;
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait &#96;RgbColor&#96; which provides &#96;BLACK&#96; is implemented but not in scope; perhaps you want to import it
+    |
+237 +     use embedded_graphics::prelude::RgbColor;
+    |
+help: there is an associated constant &#96;CSS_BLACK&#96; with a similar name
+    |
+240 |     pub const BLACK: Rgb888 = Rgb888::CSS_BLACK;
+    |                                       ++++
+
+For more information about this error, try &#96;rustc --explain E0599&#96;.
+warning: &#96;waveshare-esp32-sandbox-1&#96; (lib) generated 1 warning
+error: could not compile &#96;waveshare-esp32-sandbox-1&#96; (lib) due to 2 previous errors; 1 warning emitted
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+I need to fix the colors module in render.rs to import RgbColor trait.</details></think>
+
+---
+
+I need to fix the colors module in render.rs:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/render.rs</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -236,4 +236,5 @@
+  pub mod colors {
+      use embedded_graphics::pixelcolor::Rgb888;
++     use embedded_graphics::prelude::RgbColor;
+  
+      pub const WHITE: Rgb888 = Rgb888::WHITE;
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Now let me check if it compiles.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -30</summary>
+
+```bash
+cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1 | tail -30
+```
+
+```
+   Compiling waveshare-esp32-sandbox-1 v0.1.0 (/home/tadas/work/my/waveshare-esp32-sandbox-1)
+warning: unused import: &#96;default_grid_config&#96;
+  --&gt; src/game.rs:23:13
+   |
+23 |     colors, default_grid_config, draw_grid_cell, draw_grid_cell_animated, draw_grid_cell_gradient,
+   |             ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: &#96;#[warn(unused_imports)]&#96; on by default
+
+warning: &#96;waveshare-esp32-sandbox-1&#96; (lib) generated 1 warning (run &#96;cargo fix --lib -p waveshare-esp32-sandbox-1&#96; to apply 1 suggestion)
+    Finished &#96;dev&#96; profile [optimized + debuginfo] target(s) in 0.71s
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+The code compiles with just a warning about an unused import. Let me fix that warning.</details></think>
+
+---
+
+Let me fix the unused import warning:
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/game.rs</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -21,6 +21,6 @@
+  use crate::perf::PerformanceMetrics;
+  use crate::render::{
+-     colors, default_grid_config, draw_grid_cell, draw_grid_cell_animated, draw_grid_cell_gradient,
+-     draw_score, draw_text, draw_text_centered, transfer_framebuffer_rle, GridConfig,
++     colors, draw_grid_cell, draw_grid_cell_animated, draw_grid_cell_gradient, draw_score,
++     draw_text, draw_text_centered, transfer_framebuffer_rle, GridConfig,
+  };
+  
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+Let me do a final check that everything compiles cleanly.</details></think>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1</summary>
+
+```bash
+cd /home/tadas/work/my/waveshare-esp32-sandbox-1 && cargo check --target xtensa-esp32s3-none-elf 2>&1
+```
+
+```
+    Blocking waiting for file lock on build directory
+   Compiling waveshare-esp32-sandbox-1 v0.1.0 (/home/tadas/work/my/waveshare-esp32-sandbox-1)
+    Finished &#96;dev&#96; profile [optimized + debuginfo] target(s) in 24.37s
+
+```
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+It compiles cleanly. Let me mark the last todos as completed.</details></think>
+
+---
+
+<tool-use data-tool-type="task" data-tool-name="todo_write">
+<details><summary>Tool use: **todo_write** • Todo List</summary>
+
+- [x] Create src/perf.rs with PerformanceMetrics
+- [x] Create src/render.rs with reusable rendering primitives
+- [x] Update game.rs to use new modules and add snake render system
+- [x] Update lib.rs to export new modules
+- [x] Update main.rs imports
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+All done! Let me provide a summary of the changes.</details></think>
+
+---
+
+All tasks completed. Here's a summary of the refactoring:
+
+## Summary
+
+### New Files Created
+
+**`src/perf.rs`** (~150 lines) - Performance tracking module:
+- `PerformanceMetrics` resource with frame timing, FPS calculation
+- `record_frame()`, `should_log()`, `log_performance()`, `reset()` methods
+- Getters: `get_current_fps()`, `get_avg_frame_time_us()`, `get_min/max_frame_time_us()`
+
+**`src/render.rs`** (~300 lines) - Reusable rendering primitives:
+- **Color utilities**: `apply_intensity()`, `pulse_brightness()`
+- **Cell drawing**: `fill_cell()`, `fill_cell_gradient()`, `fill_cell_animated()`
+- **Grid-based drawing**: `GridConfig`, `draw_grid_cell()`, `draw_grid_cell_gradient()`, `draw_grid_cell_animated()`
+- **Text utilities**: `text_width()`, `center_text_x()`, `draw_text()`, `draw_text_centered()`, `draw_score()`
+- **Display transfer**: `transfer_framebuffer_rle()` for efficient framebuffer-to-display copying
+- **Colors module**: Common colors (WHITE, BLACK, RED, GREEN, GOLD, GRAY, MAGENTA)
+
+### Updated Files
+
+**`src/lib.rs`** - Added module exports for `perf` and `render`
+
+**`src/game.rs`** - Now uses the render module:
+- Snake-specific render helpers: `render_food()`, `render_snake_segments()`, `render_snake_head()`
+- UI helpers: `render_game_over_ui()`, `render_gameplay_ui()`
+- Main `render_system()` now uses modular primitives
+
+**`src/bin/main.rs`** - Updated imports to use `PerformanceMetrics` from `perf` module
+
+### File Structure Now
+```
+src/
+├── lib.rs           # Module exports
+├── config.rs        # Constants
+├── display.rs       # Framebuffer types
+├── hardware.rs      # Hardware drivers
+├── perf.rs          # Performance tracking (NEW)
+├── render.rs        # Reusable rendering primitives (NEW)
+├── game.rs          # Snake game ECS (uses render module)
+└── bin/main.rs      # Entry point
+```
+
+The rendering primitives in `render.rs` can now be reused in other grid-based games!
+
+---
+

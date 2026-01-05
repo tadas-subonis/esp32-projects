@@ -5,23 +5,24 @@
 use bevy_ecs::prelude::*;
 use core::fmt::Write;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_10X20, MonoTextStyle},
+    mono_font::ascii::FONT_10X20,
     pixelcolor::Rgb888,
     prelude::*,
-    primitives::{PrimitiveStyle, Rectangle},
-    text::Text,
-    Drawable,
 };
 use esp_hal::rng::Rng;
 use heapless::String;
 
 use crate::config::{
     AXP2101_ADDR, AXP2101_INTSTS2, AXP2101_PKEY_SHORT_IRQ_BIT, CELL_SIZE, GRID_HEIGHT,
-    GRID_OFFSET_X, GRID_OFFSET_Y, GRID_WIDTH, HOLD_TO_RESTART_FRAMES, LCD_H_RES,
-    LCD_V_RES,
+    GRID_OFFSET_X, GRID_OFFSET_Y, GRID_WIDTH, HOLD_TO_RESTART_FRAMES, LCD_H_RES, LCD_V_RES,
 };
 use crate::display::FrameBufferResource;
 use crate::hardware::{Axp2101Resource, ButtonLeftResource, DisplayResource};
+use crate::perf::PerformanceMetrics;
+use crate::render::{
+    colors, draw_grid_cell, draw_grid_cell_animated, draw_grid_cell_gradient, draw_score,
+    draw_text, draw_text_centered, transfer_framebuffer_rle, GridConfig,
+};
 
 // =============================================================================
 // Components
@@ -87,9 +88,9 @@ impl FoodType {
 
     pub fn color(&self) -> Rgb888 {
         match self {
-            FoodType::Regular => Rgb888::new(255, 0, 0),   // Red
-            FoodType::Golden => Rgb888::new(255, 215, 0), // Gold
-            FoodType::Special => Rgb888::new(255, 0, 255), // Magenta
+            FoodType::Regular => colors::RED,
+            FoodType::Golden => colors::GOLD,
+            FoodType::Special => colors::MAGENTA,
         }
     }
 
@@ -117,10 +118,10 @@ pub struct GameState {
     pub score: u32,
     pub game_over: bool,
     pub move_timer: u32,
-    pub move_interval: u32,    // frames between moves
-    pub frames_elapsed: u32,   // Track total frames to prevent immediate collision
-    pub needs_redraw: bool,    // Track if we need to redraw
-    pub new_high_score: bool,  // Track if we just achieved a new high score
+    pub move_interval: u32,   // frames between moves
+    pub frames_elapsed: u32,  // Track total frames to prevent immediate collision
+    pub needs_redraw: bool,   // Track if we need to redraw
+    pub new_high_score: bool, // Track if we just achieved a new high score
 }
 
 impl Default for GameState {
@@ -178,80 +179,6 @@ pub struct InputState {
     pub turn_left: bool,
     pub turn_right: bool,
     pub restart: bool,
-}
-
-#[derive(Resource)]
-pub struct PerformanceMetrics {
-    pub frame_count: u32,
-    pub total_frame_time_us: u64,
-    pub max_frame_time_us: u64,
-    pub min_frame_time_us: u64,
-    pub last_log_frame: u32,
-    #[allow(dead_code)] // For future on-screen FPS display
-    pub show_on_screen: bool,
-}
-
-impl Default for PerformanceMetrics {
-    fn default() -> Self {
-        Self {
-            frame_count: 0,
-            total_frame_time_us: 0,
-            max_frame_time_us: 0,
-            min_frame_time_us: u64::MAX,
-            last_log_frame: 0,
-            show_on_screen: true, // Show FPS on screen by default
-        }
-    }
-}
-
-impl PerformanceMetrics {
-    pub fn record_frame(&mut self, frame_time_us: u64) {
-        self.frame_count += 1;
-        self.total_frame_time_us += frame_time_us;
-        if frame_time_us > self.max_frame_time_us {
-            self.max_frame_time_us = frame_time_us;
-        }
-        if frame_time_us < self.min_frame_time_us {
-            self.min_frame_time_us = frame_time_us;
-        }
-    }
-
-    pub fn log_performance(&mut self) {
-        if self.frame_count == 0 {
-            return;
-        }
-
-        let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
-        let avg_fps = if avg_frame_time_us > 0 {
-            1_000_000 / avg_frame_time_us
-        } else {
-            0
-        };
-
-        esp_println::println!("=== Performance ({} frames) ===", self.frame_count);
-        esp_println::println!("  Avg: {} us ({} FPS)", avg_frame_time_us, avg_fps);
-        esp_println::println!("  Min: {} us", self.min_frame_time_us);
-        esp_println::println!("  Max: {} us", self.max_frame_time_us);
-
-        // Reset for next measurement period
-        self.frame_count = 0;
-        self.total_frame_time_us = 0;
-        self.max_frame_time_us = 0;
-        self.min_frame_time_us = u64::MAX;
-    }
-
-    #[allow(dead_code)] // For future on-screen FPS display
-    pub fn get_current_fps(&self) -> u32 {
-        if self.frame_count == 0 {
-            return 0;
-        }
-        let avg_frame_time_us = self.total_frame_time_us / self.frame_count as u64;
-        if avg_frame_time_us > 0 {
-            (1_000_000 / avg_frame_time_us) as u32
-        } else {
-            0
-        }
-    }
 }
 
 #[derive(Resource, Default)]
@@ -661,11 +588,7 @@ pub fn collision_system(
     };
 
     // Check wall collision
-    if head_pos.x < 0
-        || head_pos.x >= GRID_WIDTH
-        || head_pos.y < 0
-        || head_pos.y >= GRID_HEIGHT
-    {
+    if head_pos.x < 0 || head_pos.x >= GRID_WIDTH || head_pos.y < 0 || head_pos.y >= GRID_HEIGHT {
         game_state.game_over = true;
         game_state.needs_redraw = true;
         // Check for new high score on game over
@@ -902,6 +825,175 @@ pub fn animate_food_system(mut food_query: Query<&mut Food>) {
     }
 }
 
+// =============================================================================
+// Render System
+// =============================================================================
+
+/// Snake head color (darker green)
+const SNAKE_HEAD_COLOR: Rgb888 = Rgb888::new(0, 200, 0);
+/// Snake body base color (bright green)
+const SNAKE_BODY_COLOR: Rgb888 = Rgb888::new(0, 255, 0);
+
+/// Render food items to the framebuffer.
+fn render_food(fb_data: &mut [Rgb888], config: &GridConfig, food_query: &Query<(&Position, &Food), With<Food>>) {
+    for (food_pos, food) in food_query.iter() {
+        draw_grid_cell_animated(
+            fb_data,
+            config,
+            food_pos.x,
+            food_pos.y,
+            food.food_type.color(),
+            food.animation_frame,
+        );
+    }
+}
+
+/// Render snake segments to the framebuffer with gradient effect.
+fn render_snake_segments(
+    fb_data: &mut [Rgb888],
+    config: &GridConfig,
+    segment_query: &Query<(&Position, &SnakeSegment), With<SnakeSegment>>,
+) {
+    // Collect all segments with their indices
+    let mut segments: heapless::Vec<(usize, i32, i32), 256> = heapless::Vec::new();
+    for (seg_pos, seg) in segment_query.iter() {
+        segments.push((seg.index, seg_pos.x, seg_pos.y)).ok();
+    }
+    segments.sort_unstable_by_key(|(idx, _, _)| *idx);
+    let total_segments = segments.len().max(1);
+
+    // Draw segments with gradient based on position in snake
+    for (idx, seg_x, seg_y) in segments.iter() {
+        // Calculate gradient: head (index 0) is brightest, tail is darkest
+        // Intensity ranges from 255 (head) to 128 (tail)
+        let intensity = 128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
+        draw_grid_cell_gradient(fb_data, config, *seg_x, *seg_y, SNAKE_BODY_COLOR, intensity);
+    }
+}
+
+/// Render the snake head to the framebuffer.
+fn render_snake_head(
+    fb_data: &mut [Rgb888],
+    config: &GridConfig,
+    head_query: &Query<&Position, With<SnakeHead>>,
+) {
+    if let Ok(head_pos) = head_query.single() {
+        draw_grid_cell(fb_data, config, head_pos.x, head_pos.y, SNAKE_HEAD_COLOR);
+    }
+}
+
+/// Render the game over screen UI.
+fn render_game_over_ui<D: DrawTarget<Color = Rgb888>>(
+    target: &mut D,
+    game_state: &GameState,
+    high_score: &HighScore,
+) {
+    let game_over_text = if game_state.new_high_score {
+        "NEW HIGH SCORE!"
+    } else {
+        "GAME OVER"
+    };
+
+    let center_y = LCD_V_RES as i32 / 2;
+
+    // Draw title
+    let title_color = if game_state.new_high_score {
+        colors::GOLD
+    } else {
+        colors::RED
+    };
+    draw_text_centered(
+        target,
+        game_over_text,
+        center_y - 50,
+        title_color,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    // Draw current score
+    let mut score_text = String::<20>::new();
+    write!(score_text, "Score: {}", game_state.score).ok();
+    draw_text_centered(
+        target,
+        score_text.as_str(),
+        center_y - 20,
+        colors::WHITE,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    // Draw high score
+    let mut high_score_text = String::<30>::new();
+    write!(high_score_text, "High: {}", high_score.get()).ok();
+    draw_text_centered(
+        target,
+        high_score_text.as_str(),
+        center_y + 10,
+        colors::GOLD,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+
+    // Draw restart instructions
+    draw_text_centered(
+        target,
+        "Hold both to restart",
+        center_y + 40,
+        colors::GRAY,
+        &FONT_10X20,
+        LCD_H_RES as i32,
+        10,
+    );
+}
+
+/// Render the in-game HUD (score, high score, instructions).
+fn render_gameplay_ui<D: DrawTarget<Color = Rgb888>>(
+    target: &mut D,
+    game_state: &GameState,
+    high_score: &HighScore,
+) {
+    // Draw score
+    draw_score(
+        target,
+        "Score: ",
+        game_state.score,
+        8,
+        LCD_V_RES as i32 - 40,
+        colors::WHITE,
+    );
+
+    // Draw high score
+    draw_score(
+        target,
+        "High: ",
+        high_score.get(),
+        8,
+        LCD_V_RES as i32 - 20,
+        colors::GOLD,
+    );
+
+    // Draw instructions
+    draw_text(
+        target,
+        "Boot=Left Pwr=Right",
+        8,
+        8,
+        colors::GRAY,
+        &FONT_10X20,
+    );
+}
+
+/// Main render system for the snake game.
+///
+/// This system renders:
+/// - Food items with pulsing animation
+/// - Snake body with gradient effect
+/// - Snake head
+/// - UI elements (score, high score, game over screen)
 pub fn render_system(
     mut display_res: NonSendMut<DisplayResource>,
     mut game_state: ResMut<GameState>,
@@ -913,297 +1005,41 @@ pub fn render_system(
     _perf_metrics: Option<Res<PerformanceMetrics>>,
 ) {
     // Only render when needed (after movement or state change)
-    // For game over, only render once when it first happens
     if !game_state.needs_redraw {
         return;
     }
     game_state.needs_redraw = false;
+
     // Clear framebuffer
     fb_res.frame_buf.clear(Rgb888::BLACK).unwrap();
 
-    // Direct framebuffer writes for game objects (much faster than embedded-graphics primitives)
-    // Access the underlying array slice from HeapBuffer
+    // Get grid config
+    let config = GridConfig::new(
+        LCD_H_RES,
+        LCD_V_RES,
+        CELL_SIZE as usize,
+        GRID_OFFSET_X,
+        GRID_OFFSET_Y,
+    );
+
+    // Access framebuffer data
     let fb_data: &mut [Rgb888] = &mut *fb_res.frame_buf.data;
 
-    // Helper function to fill a cell in the framebuffer
-    #[inline(always)]
-    fn fill_cell(fb_data: &mut [Rgb888], x: usize, y: usize, color: Rgb888, cell_size: usize) {
-        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
-            for dy in 0..cell_size {
-                let row_start = (y + dy) * LCD_H_RES + x;
-                for dx in 0..cell_size {
-                    fb_data[row_start + dx] = color;
-                }
-            }
-        }
-    }
+    // Render game objects
+    render_food(fb_data, &config, &food_query);
+    render_snake_segments(fb_data, &config, &segment_query);
+    render_snake_head(fb_data, &config, &head_query);
 
-    // Helper function to fill a cell with gradient (for snake segments)
-    #[inline(always)]
-    fn fill_cell_gradient(
-        fb_data: &mut [Rgb888],
-        x: usize,
-        y: usize,
-        base_color: Rgb888,
-        intensity: u8,
-        cell_size: usize,
-    ) {
-        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
-            // Create gradient by adjusting brightness
-            let r = ((base_color.r() as u16 * intensity as u16) / 255) as u8;
-            let g = ((base_color.g() as u16 * intensity as u16) / 255) as u8;
-            let b = ((base_color.b() as u16 * intensity as u16) / 255) as u8;
-            let color = Rgb888::new(r, g, b);
-
-            for dy in 0..cell_size {
-                let row_start = (y + dy) * LCD_H_RES + x;
-                for dx in 0..cell_size {
-                    fb_data[row_start + dx] = color;
-                }
-            }
-        }
-    }
-
-    // Helper function to draw animated food (pulsing effect)
-    #[inline(always)]
-    fn fill_cell_animated(
-        fb_data: &mut [Rgb888],
-        x: usize,
-        y: usize,
-        base_color: Rgb888,
-        animation_frame: u8,
-        cell_size: usize,
-    ) {
-        if x + cell_size <= LCD_H_RES && y + cell_size <= LCD_V_RES {
-            // Create pulsing effect using sine wave approximation
-            // animation_frame cycles 0-255, we want brightness 128-255
-            let pulse = 128 + ((animation_frame.wrapping_mul(2) as u16 * 127) / 255) as u8;
-            let r = ((base_color.r() as u16 * pulse as u16) / 255) as u8;
-            let g = ((base_color.g() as u16 * pulse as u16) / 255) as u8;
-            let b = ((base_color.b() as u16 * pulse as u16) / 255) as u8;
-            let color = Rgb888::new(r, g, b);
-
-            for dy in 0..cell_size {
-                let row_start = (y + dy) * LCD_H_RES + x;
-                for dx in 0..cell_size {
-                    fb_data[row_start + dx] = color;
-                }
-            }
-        }
-    }
-
-    // Draw food with animation
-    for (food_pos, food) in food_query.iter() {
-        let screen_x = GRID_OFFSET_X + food_pos.x * CELL_SIZE;
-        let screen_y = GRID_OFFSET_Y + food_pos.y * CELL_SIZE;
-        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
-        if screen_x >= 0
-            && screen_y >= 0
-            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES
-            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES
-        {
-            let x = screen_x as usize;
-            let y = screen_y as usize;
-            fill_cell_animated(
-                fb_data,
-                x,
-                y,
-                food.food_type.color(),
-                food.animation_frame,
-                CELL_SIZE as usize,
-            );
-        }
-    }
-
-    // Draw snake segments with gradient (head to tail gets darker)
-    // First, collect all segments with their indices
-    let mut segments: heapless::Vec<(usize, i32, i32), 256> = heapless::Vec::new();
-    for (seg_pos, seg) in segment_query.iter() {
-        segments.push((seg.index, seg_pos.x, seg_pos.y)).ok();
-    }
-    segments.sort_unstable_by_key(|(idx, _, _)| *idx);
-    let total_segments = segments.len().max(1);
-
-    // Draw segments with gradient based on position in snake
-    for (idx, seg_x, seg_y) in segments.iter() {
-        let screen_x = GRID_OFFSET_X + seg_x * CELL_SIZE;
-        let screen_y = GRID_OFFSET_Y + seg_y * CELL_SIZE;
-        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
-        if screen_x >= 0
-            && screen_y >= 0
-            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES
-            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES
-        {
-            let x = screen_x as usize;
-            let y = screen_y as usize;
-            // Calculate gradient: head (index 0) is brightest, tail is darkest
-            // Intensity ranges from 255 (head) to 128 (tail)
-            let intensity =
-                128 + ((127 * (total_segments - idx)) / total_segments.max(1)) as u8;
-            fill_cell_gradient(
-                fb_data,
-                x,
-                y,
-                Rgb888::new(0, 255, 0),
-                intensity,
-                CELL_SIZE as usize,
-            );
-        }
-    }
-
-    // Draw head (darker green)
-    if let Ok(head_pos) = head_query.single() {
-        let screen_x = GRID_OFFSET_X + head_pos.x * CELL_SIZE;
-        let screen_y = GRID_OFFSET_Y + head_pos.y * CELL_SIZE;
-        // Bounds check: skip if position is out of bounds (prevents panic from negative -> usize conversion)
-        if screen_x >= 0
-            && screen_y >= 0
-            && (screen_x as usize) + (CELL_SIZE as usize) <= LCD_H_RES
-            && (screen_y as usize) + (CELL_SIZE as usize) <= LCD_V_RES
-        {
-            let x = screen_x as usize;
-            let y = screen_y as usize;
-            fill_cell(fb_data, x, y, Rgb888::new(0, 200, 0), CELL_SIZE as usize);
-        }
-    }
-
+    // Render UI
     if game_state.game_over {
-        // Draw game over screen centered
-        let game_over_text = if game_state.new_high_score {
-            "NEW HIGH SCORE!"
-        } else {
-            "GAME OVER"
-        };
-        let mut score_text = String::<20>::new();
-        write!(score_text, "Score: {}", game_state.score).ok();
-        let mut high_score_text = String::<30>::new();
-        write!(high_score_text, "High: {}", high_score.get()).ok();
-        let restart_text = "Hold button to restart";
-
-        // Calculate text widths for centering (FONT_10X20 is 10 pixels wide per character)
-        let game_over_width = game_over_text.len() as i32 * 10;
-        let score_width = score_text.len() as i32 * 10;
-        let high_score_width = high_score_text.len() as i32 * 10;
-        let _restart_width = restart_text.len() as i32 * 10;
-
-        let center_x = (LCD_H_RES as i32 - game_over_width) / 2;
-        let center_y = LCD_V_RES as i32 / 2;
-
-        // Draw "GAME OVER" or "NEW HIGH SCORE!" centered
-        let title_color = if game_state.new_high_score {
-            Rgb888::new(255, 215, 0) // Gold for new high score
-        } else {
-            Rgb888::new(255, 0, 0) // Red for game over
-        };
-        Text::new(
-            game_over_text,
-            Point::new(center_x, center_y - 50),
-            MonoTextStyle::new(&FONT_10X20, title_color),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
-
-        // Draw score centered below
-        let score_center_x = (LCD_H_RES as i32 - score_width) / 2;
-        Text::new(
-            score_text.as_str(),
-            Point::new(score_center_x, center_y - 20),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
-
-        // Draw high score
-        let high_score_center_x = (LCD_H_RES as i32 - high_score_width) / 2;
-        Text::new(
-            high_score_text.as_str(),
-            Point::new(high_score_center_x, center_y + 10),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 215, 0)),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
-
-        // Draw restart instructions centered below high score
-        Text::new(
-            "Hold both to restart",
-            Point::new(
-                (LCD_H_RES as i32 - "Hold both to restart".len() as i32 * 10) / 2,
-                center_y + 40,
-            ),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::new(128, 128, 128)),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
+        render_game_over_ui(&mut fb_res.frame_buf, &game_state, &high_score);
     } else {
-        // Draw score and high score during gameplay
-        let mut score_str = String::<20>::new();
-        write!(score_str, "Score: {}", game_state.score).ok();
-        Text::new(
-            score_str.as_str(),
-            Point::new(8, LCD_V_RES as i32 - 40),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
-
-        let mut high_score_str = String::<30>::new();
-        write!(high_score_str, "High: {}", high_score.get()).ok();
-        Text::new(
-            high_score_str.as_str(),
-            Point::new(8, LCD_V_RES as i32 - 20),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::new(255, 215, 0)),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
-
-        // Draw instructions
-        Text::new(
-            "Boot=Left Pwr=Right",
-            Point::new(8, 8),
-            MonoTextStyle::new(&FONT_10X20, Rgb888::new(128, 128, 128)),
-        )
-        .draw(&mut fb_res.frame_buf)
-        .ok();
+        render_gameplay_ui(&mut fb_res.frame_buf, &game_state, &high_score);
     }
 
-    // Copy framebuffer to display - OPTIMIZED VERSION
-    // Use direct framebuffer transfer: draw entire framebuffer efficiently
-    // Removed redundant display.clear() - framebuffer is already cleared
-
-    // Access the underlying array slice from HeapBuffer
+    // Transfer framebuffer to display
     let fb_data: &[Rgb888] = &*fb_res.frame_buf.data;
-
-    // Strategy: Draw row-by-row with run-length encoding
-    // IMPORTANT: We MUST draw black pixels too because we removed display.clear()!
-    // If we skip black pixels, the old snake position will remain on screen (artifacts).
-
-    for y in 0..LCD_V_RES {
-        let row_start = y * LCD_H_RES;
-        let mut x = 0;
-        while x < LCD_H_RES {
-            let pixel = fb_data[row_start + x];
-
-            // Find run of identical pixels (works for Black and Colors)
-            let start_x = x;
-            let mut end_x = x + 1;
-            while end_x < LCD_H_RES && fb_data[row_start + end_x] == pixel {
-                end_x += 1;
-            }
-
-            // Draw rectangle for this run
-            // Drawing black rectangles effectively "clears" that part of the screen
-            let width = end_x - start_x;
-            Rectangle::new(
-                Point::new(start_x as i32, y as i32),
-                Size::new(width as u32, 1),
-            )
-            .into_styled(PrimitiveStyle::with_fill(pixel))
-            .draw(&mut display_res.display)
-            .ok();
-
-            x = end_x;
-        }
-    }
+    transfer_framebuffer_rle(&mut display_res.display, fb_data, LCD_H_RES, LCD_V_RES);
 
     display_res.display.flush().ok();
 }

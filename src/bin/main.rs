@@ -37,8 +37,9 @@ use waveshare_esp32_sandbox_1::display::FrameBufferResource;
 use waveshare_esp32_sandbox_1::game::{
     animate_food_system, collision_system, food_spawn_system, input_system, move_snake_system,
     process_input_system, render_system, restart_system, ButtonState, Direction, GameState,
-    HighScore, InputState, PerformanceMetrics, Position, RngResource, SnakeHead, SnakeSegment,
+    HighScore, InputState, Position, RngResource, SnakeHead, SnakeSegment,
 };
+use waveshare_esp32_sandbox_1::perf::PerformanceMetrics;
 use waveshare_esp32_sandbox_1::hardware::{
     Axp2101Resource, ButtonLeftResource, DisplayResource, SharedTca9554Reset,
 };
@@ -306,12 +307,10 @@ async fn main(spawner: Spawner) -> ! {
         // Record performance metrics
         if let Some(mut perf) = world.get_resource_mut::<PerformanceMetrics>() {
             perf.record_frame(frame_time_us);
-            perf.last_log_frame += 1;
 
             // Log performance every 300 frames (~6 seconds at 50 FPS)
-            if perf.last_log_frame >= 300 {
+            if perf.should_log(300) {
                 perf.log_performance();
-                perf.last_log_frame = 0;
             }
         }
 
