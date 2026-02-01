@@ -35,8 +35,12 @@ pub const LCD_BUFFER_SIZE: usize = LCD_H_RES * LCD_V_RES;
 
 // --- Game Constants ---
 pub const HOLD_TO_RESTART_FRAMES: u32 = 90; // ~1.5 seconds at 60fps to restart
-pub const GRID_WIDTH: i32 = 46; // 368 / 8
-pub const GRID_HEIGHT: i32 = 56; // 448 / 8
-pub const CELL_SIZE: i32 = 8;
-pub const GRID_OFFSET_X: i32 = 0;
-pub const GRID_OFFSET_Y: i32 = 0;
+pub const CELL_SIZE: i32 = 32; // 4x scale from 8px cells
+pub const GRID_WIDTH: i32 = LCD_H_RES as i32 / CELL_SIZE;
+pub const GRID_HEIGHT: i32 = LCD_V_RES as i32 / CELL_SIZE;
+pub const GRID_OFFSET_X: i32 = (LCD_H_RES as i32 - (GRID_WIDTH * CELL_SIZE)) / 2;
+pub const GRID_OFFSET_Y: i32 = (LCD_V_RES as i32 - (GRID_HEIGHT * CELL_SIZE)) / 2;
+pub const UI_PADDING_X: i32 = 12;
+pub const UI_PADDING_Y: i32 = 12;
+pub const UI_TEXT_SCALE_NUM: i32 = 3;
+pub const UI_TEXT_SCALE_DEN: i32 = 2;

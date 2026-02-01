@@ -180,10 +180,17 @@ struct Snake {
 impl Snake {
     fn new() -> Self {
         let mut segments: Vec<Position, MAX_SEGMENTS> = Vec::new();
-        segments.push(Position { x: 22, y: 28 }).ok();
-        segments.push(Position { x: 21, y: 28 }).ok();
+        let center_x = GRID_WIDTH / 2;
+        let center_y = GRID_HEIGHT / 2;
+        let seg_1_x = (center_x - 1).max(0);
+        let seg_2_x = (center_x - 2).max(0);
+        segments.push(Position { x: seg_1_x, y: center_y }).ok();
+        segments.push(Position { x: seg_2_x, y: center_y }).ok();
         Self {
-            head: Position { x: 23, y: 28 },
+            head: Position {
+                x: center_x,
+                y: center_y,
+            },
             direction: Direction::Right,
             segments,
         }
@@ -198,7 +205,7 @@ impl Snake {
         game_state.move_timer = 0;
         game_state.needs_redraw = true;
 
-        let new_head = match self.direction {
+        let mut new_head = match self.direction {
             Direction::Up => Position {
                 x: self.head.x,
                 y: self.head.y - 1,
@@ -216,6 +223,18 @@ impl Snake {
                 y: self.head.y,
             },
         };
+
+        if new_head.x < 0 {
+            new_head.x = GRID_WIDTH - 1;
+        } else if new_head.x >= GRID_WIDTH {
+            new_head.x = 0;
+        }
+
+        if new_head.y < 0 {
+            new_head.y = GRID_HEIGHT - 1;
+        } else if new_head.y >= GRID_HEIGHT {
+            new_head.y = 0;
+        }
 
         let mut prev_pos = self.head;
         for seg in self.segments.iter_mut() {
@@ -401,11 +420,6 @@ impl Game {
         }
 
         let head = self.snake.head();
-
-        if head.x < 0 || head.x >= GRID_WIDTH || head.y < 0 || head.y >= GRID_HEIGHT {
-            self.game_over("Wall collision", head);
-            return;
-        }
 
         for (idx, seg) in self.snake.segments().iter().enumerate() {
             if idx == 0 {

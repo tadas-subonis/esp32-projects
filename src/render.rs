@@ -15,7 +15,10 @@ use embedded_graphics::{
 };
 use heapless::String;
 
-use crate::config::{CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, LCD_H_RES, LCD_V_RES};
+use crate::config::{
+    CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, LCD_H_RES, LCD_V_RES, UI_PADDING_X, UI_PADDING_Y,
+    UI_TEXT_SCALE_DEN, UI_TEXT_SCALE_NUM,
+};
 use crate::display::MyFrameBuf;
 use crate::game::{FoodEntity, Game, GameState, HighScore, Position};
 use crate::hardware::DisplayDriver;
@@ -263,6 +266,53 @@ pub fn center_text_x(text: &str, char_width: i32, screen_width: i32) -> i32 {
     (screen_width - text_width(text, char_width)) / 2
 }
 
+struct ScaledDrawTarget<'a, D> {
+    target: &'a mut D,
+    origin: Point,
+    scale_num: i32,
+    scale_den: i32,
+}
+
+impl<'a, D> ScaledDrawTarget<'a, D> {
+    fn new(target: &'a mut D, origin: Point, scale_num: i32, scale_den: i32) -> Self {
+        Self {
+            target,
+            origin,
+            scale_num,
+            scale_den,
+        }
+    }
+}
+
+impl<D: DrawTarget<Color = Rgb888> + OriginDimensions> DrawTarget for ScaledDrawTarget<'_, D> {
+    type Color = Rgb888;
+    type Error = D::Error;
+
+    fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        for Pixel(point, color) in pixels {
+            let x0 = self.origin.x + (point.x * self.scale_num) / self.scale_den;
+            let y0 = self.origin.y + (point.y * self.scale_num) / self.scale_den;
+            let x1 = self.origin.x + ((point.x + 1) * self.scale_num) / self.scale_den;
+            let y1 = self.origin.y + ((point.y + 1) * self.scale_num) / self.scale_den;
+            let width = (x1 - x0).max(1) as u32;
+            let height = (y1 - y0).max(1) as u32;
+            Rectangle::new(Point::new(x0, y0), Size::new(width, height))
+                .into_styled(PrimitiveStyle::with_fill(color))
+                .draw(self.target)?;
+        }
+        Ok(())
+    }
+}
+
+impl<D: OriginDimensions> OriginDimensions for ScaledDrawTarget<'_, D> {
+    fn size(&self) -> Size {
+        self.target.size()
+    }
+}
+
 /// Draw text at a specific position.
 pub fn draw_text<D: DrawTarget<Color = Rgb888>>(
     target: &mut D,
@@ -274,6 +324,29 @@ pub fn draw_text<D: DrawTarget<Color = Rgb888>>(
 ) {
     Text::new(text, Point::new(x, y), MonoTextStyle::new(font, color))
         .draw(target)
+        .ok();
+}
+
+/// Draw scaled text at a specific position.
+pub fn draw_text_scaled<D: DrawTarget<Color = Rgb888> + OriginDimensions>(
+    target: &mut D,
+    text: &str,
+    x: i32,
+    y: i32,
+    color: Rgb888,
+    font: &MonoFont,
+    scale_num: i32,
+    scale_den: i32,
+) {
+    if scale_num <= scale_den {
+        draw_text(target, text, x, y, color, font);
+        return;
+    }
+
+    let mut scaled_target =
+        ScaledDrawTarget::new(target, Point::new(x, y), scale_num, scale_den);
+    Text::new(text, Point::zero(), MonoTextStyle::new(font, color))
+        .draw(&mut scaled_target)
         .ok();
 }
 
@@ -291,18 +364,45 @@ pub fn draw_text_centered<D: DrawTarget<Color = Rgb888>>(
     draw_text(target, text, x, y, color, font);
 }
 
+/// Draw centered scaled text.
+pub fn draw_text_centered_scaled<D: DrawTarget<Color = Rgb888> + OriginDimensions>(
+    target: &mut D,
+    text: &str,
+    y: i32,
+    color: Rgb888,
+    font: &MonoFont,
+    screen_width: i32,
+    scale_num: i32,
+    scale_den: i32,
+) {
+    let char_width = font.character_size.width as i32 * scale_num / scale_den;
+    let x = center_text_x(text, char_width, screen_width);
+    draw_text_scaled(target, text, x, y, color, font, scale_num, scale_den);
+}
+
 /// Draw a formatted score string.
-pub fn draw_score<D: DrawTarget<Color = Rgb888>>(
+pub fn draw_score_scaled<D: DrawTarget<Color = Rgb888> + OriginDimensions>(
     target: &mut D,
     label: &str,
     score: u32,
     x: i32,
     y: i32,
     color: Rgb888,
+    scale_num: i32,
+    scale_den: i32,
 ) {
     let mut text = String::<32>::new();
     write!(text, "{}{}", label, score).ok();
-    draw_text(target, text.as_str(), x, y, color, &FONT_10X20);
+    draw_text_scaled(
+        target,
+        text.as_str(),
+        x,
+        y,
+        color,
+        &FONT_10X20,
+        scale_num,
+        scale_den,
+    );
 }
 
 // =============================================================================
@@ -367,7 +467,7 @@ pub const fn default_grid_config() -> GridConfig {
 // =============================================================================
 
 /// Snake head color (darker green)
-const SNAKE_HEAD_COLOR: Rgb888 = Rgb888::new(0, 200, 0);
+const SNAKE_HEAD_COLOR: Rgb888 = Rgb888::new(0, 160, 0);
 /// Snake body base color (bright green)
 const SNAKE_BODY_COLOR: Rgb888 = Rgb888::new(0, 255, 0);
 
@@ -416,77 +516,99 @@ fn render_game_over_ui(
     } else {
         colors::RED
     };
-    draw_text_centered(
+    let line_height =
+        FONT_10X20.character_size.height as i32 * UI_TEXT_SCALE_NUM / UI_TEXT_SCALE_DEN;
+    let title_y = center_y - (line_height * 2);
+    let score_y = center_y - line_height;
+    let high_score_y = center_y;
+    let hint_y = center_y + line_height;
+
+    draw_text_centered_scaled(
         target,
         game_over_text,
-        center_y - 50,
+        title_y,
         title_color,
         &FONT_10X20,
         LCD_H_RES as i32,
-        10,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 
     let mut score_text = String::<20>::new();
     write!(score_text, "Score: {}", game_state.score).ok();
-    draw_text_centered(
+    draw_text_centered_scaled(
         target,
         score_text.as_str(),
-        center_y - 20,
+        score_y,
         colors::WHITE,
         &FONT_10X20,
         LCD_H_RES as i32,
-        10,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 
     let mut high_score_text = String::<30>::new();
     write!(high_score_text, "High: {}", high_score.get()).ok();
-    draw_text_centered(
+    draw_text_centered_scaled(
         target,
         high_score_text.as_str(),
-        center_y + 10,
+        high_score_y,
         colors::GOLD,
         &FONT_10X20,
         LCD_H_RES as i32,
-        10,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 
-    draw_text_centered(
+    draw_text_centered_scaled(
         target,
         "Hold both to restart",
-        center_y + 40,
+        hint_y,
         colors::GRAY,
         &FONT_10X20,
         LCD_H_RES as i32,
-        10,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 }
 
 fn render_gameplay_ui(target: &mut MyFrameBuf, game_state: &GameState, high_score: &HighScore) {
-    draw_score(
+    let line_height =
+        FONT_10X20.character_size.height as i32 * UI_TEXT_SCALE_NUM / UI_TEXT_SCALE_DEN;
+    let bottom_y = LCD_V_RES as i32 - UI_PADDING_Y - line_height;
+    let above_bottom_y = bottom_y - line_height;
+
+    draw_score_scaled(
         target,
         "Score: ",
         game_state.score,
-        8,
-        LCD_V_RES as i32 - 40,
+        UI_PADDING_X,
+        above_bottom_y,
         colors::WHITE,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 
-    draw_score(
+    draw_score_scaled(
         target,
         "High: ",
         high_score.get(),
-        8,
-        LCD_V_RES as i32 - 20,
+        UI_PADDING_X,
+        bottom_y,
         colors::GOLD,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 
-    draw_text(
+    draw_text_scaled(
         target,
         "Boot=Left Pwr=Right",
-        8,
-        8,
+        UI_PADDING_X,
+        UI_PADDING_Y,
         colors::GRAY,
         &FONT_10X20,
+        UI_TEXT_SCALE_NUM,
+        UI_TEXT_SCALE_DEN,
     );
 }
 
