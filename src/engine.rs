@@ -13,6 +13,8 @@ pub struct Engine {
     pub game: Game,
     pub framebuffer: FrameBufferResource,
     pub perf: PerformanceMetrics,
+    pub ui_fps: u32,
+    pub ui_battery_percent: Option<u8>,
 }
 
 impl Engine {
@@ -21,6 +23,8 @@ impl Engine {
             game,
             framebuffer,
             perf,
+            ui_fps: 0,
+            ui_battery_percent: None,
         }
     }
 
@@ -40,9 +44,20 @@ impl Engine {
         self.game.spawn_food_if_needed();
 
         if self.game.should_render() {
-            render_game(display, &mut self.framebuffer.frame_buf, &self.game);
+            render_game(
+                display,
+                &mut self.framebuffer.frame_buf,
+                &self.game,
+                self.ui_fps,
+                self.ui_battery_percent,
+            );
             self.game.mark_rendered();
         }
+    }
+
+    pub fn set_ui_status(&mut self, fps: u32, battery_percent: Option<u8>) {
+        self.ui_fps = fps;
+        self.ui_battery_percent = battery_percent;
     }
 
     pub fn record_frame_time(&mut self, frame_time_us: u64) {

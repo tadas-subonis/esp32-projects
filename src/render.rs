@@ -6,7 +6,7 @@
 
 use core::fmt::Write;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_10X20, MonoFont, MonoTextStyle},
+    mono_font::{ascii::FONT_10X20, ascii::FONT_6X9, MonoFont, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::*,
     primitives::{PrimitiveStyle, Rectangle},
@@ -612,8 +612,50 @@ fn render_gameplay_ui(target: &mut MyFrameBuf, game_state: &GameState, high_scor
     );
 }
 
+fn render_status_overlay(target: &mut MyFrameBuf, fps: u32, battery_percent: Option<u8>) {
+    let font = &FONT_6X9;
+    let char_width = font.character_size.width as i32;
+    let line_height = font.character_size.height as i32 + 2;
+
+    let mut fps_text = String::<16>::new();
+    write!(fps_text, "FPS: {}", fps).ok();
+    let fps_x = LCD_H_RES as i32 - UI_PADDING_X - text_width(fps_text.as_str(), char_width);
+    let fps_y = UI_PADDING_Y;
+    draw_text(
+        target,
+        fps_text.as_str(),
+        fps_x,
+        fps_y,
+        colors::GRAY,
+        font,
+    );
+
+    let mut batt_text = String::<16>::new();
+    if let Some(percent) = battery_percent {
+        write!(batt_text, "BAT: {}%", percent).ok();
+    } else {
+        batt_text.push_str("BAT: --").ok();
+    }
+    let batt_x = LCD_H_RES as i32 - UI_PADDING_X - text_width(batt_text.as_str(), char_width);
+    let batt_y = fps_y + line_height;
+    draw_text(
+        target,
+        batt_text.as_str(),
+        batt_x,
+        batt_y,
+        colors::GRAY,
+        font,
+    );
+}
+
 /// Render the current frame to the framebuffer and flush to the display.
-pub fn render_game(display: &mut DisplayDriver, fb: &mut MyFrameBuf, game: &Game) {
+pub fn render_game(
+    display: &mut DisplayDriver,
+    fb: &mut MyFrameBuf,
+    game: &Game,
+    fps: u32,
+    battery_percent: Option<u8>,
+) {
     fb.clear(Rgb888::BLACK).unwrap();
 
     let config = GridConfig::new(
@@ -635,6 +677,7 @@ pub fn render_game(display: &mut DisplayDriver, fb: &mut MyFrameBuf, game: &Game
     } else {
         render_gameplay_ui(fb, &game.state, &game.high_score);
     }
+    render_status_overlay(fb, fps, battery_percent);
 
     let fb_data: &[Rgb888] = &*fb.data;
     transfer_framebuffer_rle(display, fb_data, LCD_H_RES, LCD_V_RES);

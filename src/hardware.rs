@@ -9,7 +9,10 @@ use esp_hal::gpio::Input;
 use esp_hal::i2c::master::I2c;
 use sh8601_rs::{ResetInterface, Sh8601Driver, Ws18AmoledDriver};
 
-use crate::config::{TCA9554_CONFIG, TCA9554_OUTPUT, TCA9554_POLARITY};
+use crate::config::{
+    AXP2101_ADDR, AXP2101_BATTERY_PERCENT, AXP2101_BATTERY_PRESENT_BIT, AXP2101_PMU_STATUS1,
+    TCA9554_CONFIG, TCA9554_OUTPUT, TCA9554_POLARITY,
+};
 
 /// Shared TCA9554 reset interface that uses Rc to share I2C bus.
 ///
@@ -38,6 +41,32 @@ impl ResetInterface for SharedTca9554Reset {
 /// AXP2101 PMU resource for reading power button.
 pub struct Axp2101Resource {
     pub i2c: Rc<RefCell<I2c<'static, esp_hal::Blocking>>>,
+}
+
+/// Read battery percentage from AXP2101 (0-100). Returns None if no battery.
+pub fn read_battery_percent(axp2101: &mut Axp2101Resource) -> Option<u8> {
+    let mut i2c = axp2101.i2c.borrow_mut();
+    let mut status = [0u8; 1];
+    if i2c
+        .write_read(AXP2101_ADDR, &[AXP2101_PMU_STATUS1], &mut status)
+        .is_err()
+    {
+        return None;
+    }
+
+    if (status[0] & AXP2101_BATTERY_PRESENT_BIT) == 0 {
+        return None;
+    }
+
+    let mut percent = [0u8; 1];
+    if i2c
+        .write_read(AXP2101_ADDR, &[AXP2101_BATTERY_PERCENT], &mut percent)
+        .is_ok()
+    {
+        Some(percent[0].min(100))
+    } else {
+        None
+    }
 }
 
 /// Type alias for the display driver to simplify the type.

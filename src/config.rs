@@ -12,6 +12,7 @@ pub const TCA9554_CONFIG: u8 = 0x03;
 
 // --- AXP2101 PMU Support (for power button) ---
 pub const AXP2101_ADDR: u8 = 0x34;
+pub const AXP2101_PMU_STATUS1: u8 = 0x00;
 // Interrupt Enable registers
 pub const AXP2101_INTEN1: u8 = 0x40;
 pub const AXP2101_INTEN2: u8 = 0x41;
@@ -27,6 +28,8 @@ pub const AXP2101_INTSTS3: u8 = 0x4A;
 pub const AXP2101_PKEY_SHORT_IRQ_BIT: u8 = 0x08; // Bit 3: POWERON Short Press IRQ
 #[allow(dead_code)]
 pub const AXP2101_PKEY_LONG_IRQ_BIT: u8 = 0x04; // Bit 2: POWERON Long Press IRQ
+pub const AXP2101_BATTERY_PERCENT: u8 = 0xA4;
+pub const AXP2101_BATTERY_PRESENT_BIT: u8 = 0x08; // PmuStatus1 bit 3
 
 // --- Framebuffer / LCD Support ---
 pub const LCD_H_RES: usize = 368;

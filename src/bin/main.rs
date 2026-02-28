@@ -37,7 +37,7 @@ use waveshare_esp32_sandbox_1::engine::Engine;
 use waveshare_esp32_sandbox_1::game::Game;
 use waveshare_esp32_sandbox_1::perf::PerformanceMetrics;
 use waveshare_esp32_sandbox_1::hardware::{
-    Axp2101Resource, ButtonLeftResource, SharedTca9554Reset,
+    read_battery_percent, Axp2101Resource, ButtonLeftResource, SharedTca9554Reset,
 };
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
@@ -248,6 +248,9 @@ async fn main(spawner: Spawner) -> ! {
 
     esp_println::println!("Entering game loop...");
 
+    let mut battery_percent: Option<u8> = None;
+    let mut battery_poll_frames: u32 = 0;
+
     loop {
         // Measure frame time using system timer
         // Note: SystemTimer counts in microseconds at 80MHz, so we need to read it
@@ -261,6 +264,13 @@ async fn main(spawner: Spawner) -> ! {
         let frame_time_us = frame_time.as_micros() as u64;
 
         engine.record_frame_time(frame_time_us);
+        let fps = engine.perf.get_current_fps();
+        battery_poll_frames = battery_poll_frames.saturating_add(1);
+        if battery_poll_frames >= 60 {
+            battery_poll_frames = 0;
+            battery_percent = read_battery_percent(&mut axp2101_res);
+        }
+        engine.set_ui_status(fps, battery_percent);
         if engine.perf.should_log(300) {
             engine.perf.log_performance();
         }

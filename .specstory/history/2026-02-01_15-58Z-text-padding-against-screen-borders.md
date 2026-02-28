@@ -1133,3 +1133,1972 @@ Darkened the snake head color in `src/render.rs` by reducing the green channel t
 
 ---
 
+_**User**_
+
+top right corner show fps as very small text and also battery pct
+
+---
+
+_**Agent (model gpt-5.2-codex, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+**Exploring performance and battery data sources**
+
+I'm checking perf.rs and hardware modules to identify where FPS and battery percentage data can be accessed for adding those metrics.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/perf.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Investigating performance usage**</details></think>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "pattern": "PerformanceMetrics|perf",
+  "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/src",
+  "outputMode": "content",
+  "caseInsensitive": false
+}
+```
+Result:
+
+```json
+{
+  "success": {
+    "pattern": "PerformanceMetrics|perf",
+    "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/src",
+    "outputMode": "content",
+    "workspaceResults": {
+      "/home/tadas/work/my/waveshare-esp32-sandbox-1": {
+        "content": {
+          "matches": [
+            {
+              "file": "src/lib.rs",
+              "matches": [
+                {
+                  "lineNumber": 9,
+                  "content": "pub mod perf;"
+                }
+              ]
+            },
+            {
+              "file": "src/engine.rs",
+              "matches": [
+                {
+                  "lineNumber": 3,
+                  "content": "//! Owns core resources (game state, framebuffer, perf metrics) and runs the"
+                },
+                {
+                  "lineNumber": 9,
+                  "content": "use crate::perf::PerformanceMetrics;"
+                },
+                {
+                  "lineNumber": 15,
+                  "content": "    pub perf: PerformanceMetrics,"
+                },
+                {
+                  "lineNumber": 19,
+                  "content": "    pub fn new(game: Game, framebuffer: FrameBufferResource, perf: PerformanceMetrics) -&gt; Self {"
+                },
+                {
+                  "lineNumber": 23,
+                  "content": "            perf,"
+                },
+                {
+                  "lineNumber": 49,
+                  "content": "        self.perf.record_frame(frame_time_us);"
+                }
+              ]
+            },
+            {
+              "file": "src/bin/main.rs",
+              "matches": [
+                {
+                  "lineNumber": 38,
+                  "content": "use waveshare_esp32_sandbox_1::perf::PerformanceMetrics;"
+                },
+                {
+                  "lineNumber": 87,
+                  "content": "            .with_frequency(Rate::from_mhz(60)) // Increased from 40MHz for better performance"
+                },
+                {
+                  "lineNumber": 242,
+                  "content": "    let mut engine = Engine::new(game, framebuffer, PerformanceMetrics::default());"
+                },
+                {
+                  "lineNumber": 264,
+                  "content": "        if engine.perf.should_log(300) {"
+                },
+                {
+                  "lineNumber": 265,
+                  "content": "            engine.perf.log_performance();"
+                }
+              ]
+            },
+            {
+              "file": "src/perf.rs",
+              "matches": [
+                {
+                  "lineNumber": 5,
+                  "content": "/// Resource for tracking frame timing and performance metrics."
+                },
+                {
+                  "lineNumber": 7,
+                  "content": "/// Use this to measure and log FPS, frame times, and identify performance issues."
+                },
+                {
+                  "lineNumber": 16,
+                  "content": "/// if let Some(mut perf) = world.get_resource_mut::&lt;PerformanceMetrics&gt;() {"
+                },
+                {
+                  "lineNumber": 17,
+                  "content": "///     perf.record_frame(frame_time_us);"
+                },
+                {
+                  "lineNumber": 18,
+                  "content": "///     if perf.should_log(300) {  // Log every 300 frames"
+                },
+                {
+                  "lineNumber": 19,
+                  "content": "///         perf.log_performance();"
+                },
+                {
+                  "lineNumber": 23,
+                  "content": "pub struct PerformanceMetrics {"
+                },
+                {
+                  "lineNumber": 39,
+                  "content": "impl Default for PerformanceMetrics {"
+                },
+                {
+                  "lineNumber": 52,
+                  "content": "impl PerformanceMetrics {"
+                },
+                {
+                  "lineNumber": 53,
+                  "content": "    /// Create a new PerformanceMetrics instance."
+                },
+                {
+                  "lineNumber": 72,
+                  "content": "    /// Check if it's time to log performance (based on frame interval)."
+                },
+                {
+                  "lineNumber": 85,
+                  "content": "    /// Log performance metrics to serial output and reset counters."
+                },
+                {
+                  "lineNumber": 86,
+                  "content": "    pub fn log_performance(&amp;mut self) {"
+                }
+              ]
+            }
+          ],
+          "totalLines": 25,
+          "totalMatchedLines": 25
+        }
+      }
+    }
+  }
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/engine.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/bin/main.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Checking hardware module for battery info**
+
+I'm looking into the hardware module to confirm if battery percentage can be retrieved from the AXP2101 chip for displaying alongside FPS.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/src/hardware.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Planning battery percent implementation**
+
+I'm planning to read the battery percentage from the AXP2101 chip via I2C, deciding to consult the device documentation for the correct register instead of guessing. Next, I'll search the docs/devices files for AXP2101 register details to implement a simple method for this.</details></think>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "pattern": "AXP2101|battery|percent|SOC|fuel",
+  "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs",
+  "outputMode": "content",
+  "caseInsensitive": true
+}
+```
+Result:
+
+```json
+{
+  "success": {
+    "pattern": "AXP2101|battery|percent|SOC|fuel",
+    "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs",
+    "outputMode": "content",
+    "workspaceResults": {
+      "/home/tadas/work/my/waveshare-esp32-sandbox-1": {
+        "content": {
+          "matches": [
+            {
+              "file": "docs/devices/waveshare-esp32-s3-touch-amoled-1.8-pdf-notes.md",
+              "matches": [
+                {
+                  "lineNumber": 15,
+                  "content": "- &#96;PWRON&#96; is labeled on &#96;GPIO21&#96; and feeds the AXP2101 PMU; **this is NOT a user button**. It's the PMU power-enable input."
+                },
+                {
+                  "lineNumber": 18,
+                  "content": "### AXP2101 Power Key (Second Input)"
+                },
+                {
+                  "lineNumber": 19,
+                  "content": "The AXP2101 PMU has a dedicated **power key** input that can be used as a second \"button\":"
+                },
+                {
+                  "lineNumber": 27,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 28,
+                  "content": "const AXP2101_INTSTS2: u8 = 0x49;"
+                },
+                {
+                  "lineNumber": 33,
+                  "content": "i2c.write_read(AXP2101_ADDR, &amp;[AXP2101_INTSTS2], &amp;mut status)?;"
+                },
+                {
+                  "lineNumber": 38,
+                  "content": "    i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTSTS2, 0xFF])?;"
+                }
+              ]
+            },
+            {
+              "file": "docs/examples-rust/README.md",
+              "matches": [
+                {
+                  "lineNumber": 140,
+                  "content": "- **AXP2101** PMU (I2C, address 0x34) - for power management examples"
+                }
+              ]
+            },
+            {
+              "file": "docs/examples-rust/05_rtc_clock.rs",
+              "matches": [
+                {
+                  "lineNumber": 314,
+                  "content": "// - The RTC maintains time even when ESP32 is powered off (if battery is connected)"
+                }
+              ]
+            },
+            {
+              "file": "docs/examples-rust/12_lvgl_pmu_adc.rs",
+              "matches": [
+                {
+                  "lineNumber": 8,
+                  "content": "//! - Reads ADC (Analog-to-Digital Converter) data from AXP2101 PMU"
+                },
+                {
+                  "lineNumber": 10,
+                  "content": "//! - Shows battery status and charging information"
+                },
+                {
+                  "lineNumber": 16,
+                  "content": "//! - Monitoring power consumption and battery status"
+                },
+                {
+                  "lineNumber": 18,
+                  "content": "//! - Creating battery monitoring applications"
+                },
+                {
+                  "lineNumber": 28,
+                  "content": "//!     pmu: Axp2101,"
+                },
+                {
+                  "lineNumber": 38,
+                  "content": "//!             let battery_percent = self.pmu.read_battery_percent();"
+                },
+                {
+                  "lineNumber": 51,
+                  "content": "//!         // Draw voltage, current, battery status"
+                },
+                {
+                  "lineNumber": 58,
+                  "content": "//! See device documentation for AXP2101 PMU register details."
+                }
+              ]
+            },
+            {
+              "file": "docs/button-handling.md",
+              "matches": [
+                {
+                  "lineNumber": 249,
+                  "content": "Buttons accessed via I2C (like AXP2101 power key) have additional latency:"
+                },
+                {
+                  "lineNumber": 254,
+                  "content": "- Use interrupt-driven detection if available (GPIO40 for AXP2101 IRQ)"
+                },
+                {
+                  "lineNumber": 482,
+                  "content": "| **AXP2101 Power Key** | Physical tactile | I2C (0x34) | Secondary input |"
+                },
+                {
+                  "lineNumber": 489,
+                  "content": "| GPIO21 (PWRON) | PMU power enable | Not readable as GPIO; drives AXP2101 |"
+                },
+                {
+                  "lineNumber": 500,
+                  "content": "// Constants for AXP2101 PMU"
+                },
+                {
+                  "lineNumber": 501,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 502,
+                  "content": "const AXP2101_INTSTS2: u8 = 0x49;"
+                },
+                {
+                  "lineNumber": 526,
+                  "content": "        if i2c.write_read(AXP2101_ADDR, &amp;[AXP2101_INTSTS2], &amp;mut status).is_ok() {"
+                },
+                {
+                  "lineNumber": 530,
+                  "content": "                let _ = i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTSTS2, 0xFF]);"
+                },
+                {
+                  "lineNumber": 542,
+                  "content": "### Enabling AXP2101 Power Key Interrupts"
+                },
+                {
+                  "lineNumber": 547,
+                  "content": "const AXP2101_INTEN2: u8 = 0x41;  // Interrupt enable register 2"
+                },
+                {
+                  "lineNumber": 551,
+                  "content": "i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTEN2, PKEY_SHORT_IRQ_EN])?;"
+                },
+                {
+                  "lineNumber": 554,
+                  "content": "i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTSTS2, 0xFF])?;"
+                }
+              ]
+            },
+            {
+              "file": "docs/devices/waveshare-amoled-1.8-arduino-patterns.md",
+              "matches": [
+                {
+                  "lineNumber": 14,
+                  "content": "#define XPOWERS_CHIP_AXP2101"
+                },
+                {
+                  "lineNumber": 57,
+                  "content": "| AXP2101 PMU | &#96;0x34&#96; | &#96;AXP2101_SLAVE_ADDRESS&#96; |"
+                },
+                {
+                  "lineNumber": 73,
+                  "content": "| EXIO5 | PMU_IRQ | Input | AXP2101 interrupt |"
+                },
+                {
+                  "lineNumber": 358,
+                  "content": "## PMU (AXP2101) Patterns"
+                },
+                {
+                  "lineNumber": 365,
+                  "content": "bool result = power.begin(Wire, AXP2101_SLAVE_ADDRESS, IIC_SDA, IIC_SCL);"
+                },
+                {
+                  "lineNumber": 395,
+                  "content": "power.disableIRQ(XPOWERS_AXP2101_ALL_IRQ);"
+                },
+                {
+                  "lineNumber": 398,
+                  "content": "power.enableIRQ(XPOWERS_AXP2101_PKEY_SHORT_IRQ);  // Power key press"
+                },
+                {
+                  "lineNumber": 411,
+                  "content": "info += \"Battery Voltage: \" + String(power.getBattVoltage()) + \"mV\\n\";"
+                },
+                {
+                  "lineNumber": 415,
+                  "content": "if (power.isBatteryConnect()) {"
+                },
+                {
+                  "lineNumber": 416,
+                  "content": "    info += \"Battery Percent: \" + String(power.getBatteryPercent()) + \"%\\n\";"
+                },
+                {
+                  "lineNumber": 422,
+                  "content": "    case XPOWERS_AXP2101_CHG_TRI_STATE:   // tri_charge"
+                },
+                {
+                  "lineNumber": 423,
+                  "content": "    case XPOWERS_AXP2101_CHG_PRE_STATE:   // pre_charge"
+                },
+                {
+                  "lineNumber": 424,
+                  "content": "    case XPOWERS_AXP2101_CHG_CC_STATE:    // constant charge"
+                },
+                {
+                  "lineNumber": 425,
+                  "content": "    case XPOWERS_AXP2101_CHG_CV_STATE:    // constant voltage"
+                },
+                {
+                  "lineNumber": 426,
+                  "content": "    case XPOWERS_AXP2101_CHG_DONE_STATE:  // charge done"
+                },
+                {
+                  "lineNumber": 427,
+                  "content": "    case XPOWERS_AXP2101_CHG_STOP_STATE:  // not charging"
+                }
+              ]
+            },
+            {
+              "file": "docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md",
+              "matches": [
+                {
+                  "lineNumber": 9,
+                  "content": "**Power:** **AXP2101** PMU (I2C)  "
+                },
+                {
+                  "lineNumber": 99,
+                  "content": "| AXP2101 PMU | &#96;0x34&#96; | Fixed |"
+                },
+                {
+                  "lineNumber": 143,
+                  "content": "### PMU (AXP2101)"
+                },
+                {
+                  "lineNumber": 199,
+                  "content": "| EXIO5 | PMU_IRQ | Input | AXP2101 interrupt line |"
+                },
+                {
+                  "lineNumber": 276,
+                  "content": "- **Power:** AXP2101 PMU with 3.7V Li-ion battery support"
+                },
+                {
+                  "lineNumber": 371,
+                  "content": "- AXP2101 PMU (0x34)"
+                },
+                {
+                  "lineNumber": 396,
+                  "content": "#### Power Management (AXP2101 - I2C)"
+                },
+                {
+                  "lineNumber": 406,
+                  "content": "**Note:** AXP2101 I2C address is 0x34 (can be 0x68/0x69 depending on config, but schematic shows 0x34)"
+                },
+                {
+                  "lineNumber": 409,
+                  "content": "The AXP2101 has a dedicated power key that can be used as a secondary user input. The key press is detected via interrupt status registers, not GPIO:"
+                },
+                {
+                  "lineNumber": 431,
+                  "content": "- EXIO5: PMU_IRQ (input, AXP2101 interrupt line)"
+                },
+                {
+                  "lineNumber": 519,
+                  "content": "| **AXP2101 Power Key** | Physical button | I2C PMU registers | Requires reading IRQ status from PMU. **Secondary input.** |"
+                },
+                {
+                  "lineNumber": 528,
+                  "content": "**Using the AXP2101 Power Key:**"
+                },
+                {
+                  "lineNumber": 531,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 532,
+                  "content": "const AXP2101_INTSTS2: u8 = 0x49;  // Interrupt status register 2"
+                },
+                {
+                  "lineNumber": 536,
+                  "content": "i2c.write_read(AXP2101_ADDR, &amp;[AXP2101_INTSTS2], &amp;mut status)?;"
+                },
+                {
+                  "lineNumber": 539,
+                  "content": "    i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTSTS2, 0xFF])?;  // Clear IRQ"
+                },
+                {
+                  "lineNumber": 573,
+                  "content": "| AXP2101 | 0x34 | Power management IC | EXIO5 (via TCA9554) |"
+                },
+                {
+                  "lineNumber": 660,
+                  "content": "- Battery backup support (via AXP2101)"
+                },
+                {
+                  "lineNumber": 676,
+                  "content": "**Backup Battery:**"
+                },
+                {
+                  "lineNumber": 677,
+                  "content": "- Primary power from AXP2101"
+                },
+                {
+                  "lineNumber": 678,
+                  "content": "- Optional backup battery pads for continuous RTC operation"
+                },
+                {
+                  "lineNumber": 680,
+                  "content": "### Power Management (AXP2101)"
+                },
+                {
+                  "lineNumber": 704,
+                  "content": "**Battery Charging:**"
+                },
+                {
+                  "lineNumber": 706,
+                  "content": "- Battery: 3.7V Li-ion (JST PH1.25 connector)"
+                },
+                {
+                  "lineNumber": 714,
+                  "content": "- Battery status: 0x01[6:5]"
+                },
+                {
+                  "lineNumber": 724,
+                  "content": "**E-Gauge (Fuel Gauge):**"
+                },
+                {
+                  "lineNumber": 725,
+                  "content": "- Battery capacity estimation"
+                },
+                {
+                  "lineNumber": 727,
+                  "content": "- Real-time SoC (State of Charge) calculation"
+                },
+                {
+                  "lineNumber": 1241,
+                  "content": "**AXP2101:**"
+                },
+                {
+                  "lineNumber": 1247,
+                  "content": "# Check esp-idf-lib components for AXP2101 if using ESP-IDF"
+                },
+                {
+                  "lineNumber": 1255,
+                  "content": "remote_component = { name = \"xpowers_axp2101\", git = \"https://github.com/XPowersLib\" }"
+                },
+                {
+                  "lineNumber": 1836,
+                  "content": "### AXP2101 Initialization"
+                },
+                {
+                  "lineNumber": 1839,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 1841,
+                  "content": "fn init_axp2101(i2c: &amp;mut I2c) -&gt; Result&lt;(), ()&gt; {"
+                },
+                {
+                  "lineNumber": 1844,
+                  "content": "    i2c.write_read(AXP2101_ADDR, &amp;[0x00], &amp;mut status).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1845,
+                  "content": "    println!(\"AXP2101 Status: 0x{:02X}\", status[0]);"
+                },
+                {
+                  "lineNumber": 1849,
+                  "content": "    // Set battery charge parameters"
+                },
+                {
+                  "lineNumber": 1854,
+                  "content": "fn read_battery_voltage(i2c: &amp;mut I2c) -&gt; Result&lt;u16, ()&gt; {"
+                },
+                {
+                  "lineNumber": 1858,
+                  "content": "    i2c.write_read(AXP2101_ADDR, &amp;[0x34], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1865,
+                  "content": "### Battery Monitoring"
+                },
+                {
+                  "lineNumber": 1869,
+                  "content": "    if let Ok(voltage) = read_battery_voltage(&amp;mut i2c) {"
+                },
+                {
+                  "lineNumber": 1870,
+                  "content": "        println!(\"Battery: {}mV\", voltage);"
+                },
+                {
+                  "lineNumber": 1927,
+                  "content": "- Ensure power is stable (check AXP2101 outputs)"
+                },
+                {
+                  "lineNumber": 2002,
+                  "content": "- Check AXP2101 RTC power configuration"
+                },
+                {
+                  "lineNumber": 2003,
+                  "content": "- Verify RTC battery backup (optional external battery)"
+                },
+                {
+                  "lineNumber": 2004,
+                  "content": "- Ensure RTCLDO is enabled in AXP2101"
+                },
+                {
+                  "lineNumber": 2085,
+                  "content": "- 0x34: AXP2101"
+                },
+                {
+                  "lineNumber": 2096,
+                  "content": "Monitor battery voltage and current via AXP2101 ADC registers."
+                },
+                {
+                  "lineNumber": 2122,
+                  "content": "- **AXP2101 PMU:** [AXP2101 Datasheet](https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/products/core/Core2%20v1.1/axp2101.pdf)"
+                }
+              ]
+            },
+            {
+              "file": "docs/devices/esp32-s3-waveshare-touch-amoled-1.8-and-lilygo-t-circle-s3.md",
+              "matches": [
+                {
+                  "lineNumber": 17,
+                  "content": "| **PCF85063** RTC | &#96;0x51&#96; | Real-time clock with backup battery |"
+                },
+                {
+                  "lineNumber": 19,
+                  "content": "| **AXP2101** PMIC | &#96;0x34&#96; | Power management IC |"
+                },
+                {
+                  "lineNumber": 71,
+                  "content": "**Power:** AXP2101 PMIC (I2C @ 0x34), 3.7V Li-ion battery  "
+                },
+                {
+                  "lineNumber": 210,
+                  "content": "- Limit refresh to 30 FPS for battery apps"
+                },
+                {
+                  "lineNumber": 379,
+                  "content": "- Real-time clock with backup battery"
+                },
+                {
+                  "lineNumber": 498,
+                  "content": "### 8. Implementing Power Management (AXP2101)"
+                },
+                {
+                  "lineNumber": 504,
+                  "content": "- Battery charging"
+                },
+                {
+                  "lineNumber": 512,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 514,
+                  "content": "// Read battery voltage (example register - check AXP2101 datasheet)"
+                },
+                {
+                  "lineNumber": 515,
+                  "content": "fn read_battery_voltage(i2c: &amp;mut I2c) -&gt; Result&lt;f32&gt; {"
+                },
+                {
+                  "lineNumber": 517,
+                  "content": "    // Read from battery voltage ADC register (check datasheet)"
+                },
+                {
+                  "lineNumber": 518,
+                  "content": "    i2c.write_read(AXP2101_ADDR, &amp;[0x26], &amp;mut data)?;"
+                },
+                {
+                  "lineNumber": 520,
+                  "content": "    // Convert to voltage (formula per AXP2101 datasheet)"
+                },
+                {
+                  "lineNumber": 540,
+                  "content": "    i2c.write(AXP2101_ADDR, &amp;[0x33, reg_value])  // Example register"
+                },
+                {
+                  "lineNumber": 645,
+                  "content": "### Battery &amp; Charging"
+                },
+                {
+                  "lineNumber": 647,
+                  "content": "**Battery:** 3.7V MX1.25 lithium ion  "
+                },
+                {
+                  "lineNumber": 649,
+                  "content": "**PMIC:** AXP2101 handles charging and power regulation"
+                },
+                {
+                  "lineNumber": 706,
+                  "content": "| **RTC loses time** | Verify backup battery connection, check I2C communication |"
+                },
+                {
+                  "lineNumber": 738,
+                  "content": "- **Device Datasheets**: Check manufacturer websites for FT3168, QMI8658, PCF85063, ES8311, AXP2101, TCA9554, SH8601, GC9D01N"
+                }
+              ]
+            },
+            {
+              "file": "docs/references.md",
+              "matches": [
+                {
+                  "lineNumber": 38,
+                  "content": "- **The Rust on ESP Book** - Comprehensive guide for Rust on Espressif SoCs:"
+                },
+                {
+                  "lineNumber": 88,
+                  "content": "- **espflash** - Serial flasher utility for Espressif SoCs (based on esptool):"
+                },
+                {
+                  "lineNumber": 96,
+                  "content": "- **esp-web-flash-server** - WebSocket server for flashing from VS Code Remote Containers:"
+                },
+                {
+                  "lineNumber": 98,
+                  "content": "- **wokwi-server** - WebSocket server for Wokwi simulations from VS Code Remote Containers:"
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/smoltcp.md",
+              "matches": [
+                {
+                  "lineNumber": 5,
+                  "content": "&#96;smoltcp&#96; is a lightweight TCP/IP stack often used in embedded environments. This repo includes it (with &#96;default-features = false&#96;) and enables multiple protocol/socket features."
+                },
+                {
+                  "lineNumber": 18,
+                  "content": "- &#96;smoltcp::socket&#96;: TCP/UDP/ICMP/raw socket state machines + buffering"
+                },
+                {
+                  "lineNumber": 19,
+                  "content": "- &#96;smoltcp::iface&#96;: interface logic (routing packets between device + sockets)"
+                },
+                {
+                  "lineNumber": 36,
+                  "content": "3) **Create sockets** (&#96;smoltcp::socket&#96;), with explicit RX/TX buffers"
+                },
+                {
+                  "lineNumber": 41,
+                  "content": "## Code sketch: TCP socket buffers + polling loop"
+                },
+                {
+                  "lineNumber": 48,
+                  "content": "use smoltcp::iface::{Config as IfaceConfig, Interface, SocketSet};"
+                },
+                {
+                  "lineNumber": 49,
+                  "content": "use smoltcp::socket::tcp::{Socket as TcpSocket, SocketBuffer};"
+                },
+                {
+                  "lineNumber": 60,
+                  "content": "// 3) Create sockets with explicit buffers."
+                },
+                {
+                  "lineNumber": 63,
+                  "content": "let tcp_rx = SocketBuffer::new(&amp;mut rx_storage);"
+                },
+                {
+                  "lineNumber": 64,
+                  "content": "let tcp_tx = SocketBuffer::new(&amp;mut tx_storage);"
+                },
+                {
+                  "lineNumber": 65,
+                  "content": "let tcp_socket = TcpSocket::new(tcp_rx, tcp_tx);"
+                },
+                {
+                  "lineNumber": 67,
+                  "content": "let mut sockets_storage = [None; 1];"
+                },
+                {
+                  "lineNumber": 68,
+                  "content": "let mut sockets = SocketSet::new(&amp;mut sockets_storage[..]);"
+                },
+                {
+                  "lineNumber": 69,
+                  "content": "let tcp_handle = sockets.add(tcp_socket);"
+                },
+                {
+                  "lineNumber": 74,
+                  "content": "    // iface.poll(now, &amp;mut device, &amp;mut sockets);"
+                },
+                {
+                  "lineNumber": 76,
+                  "content": "    // let mut socket = sockets.get_mut::&lt;TcpSocket&gt;(tcp_handle);"
+                },
+                {
+                  "lineNumber": 77,
+                  "content": "    // if !socket.is_open() { socket.connect((remote_ip, remote_port), local_port).unwrap(); }"
+                },
+                {
+                  "lineNumber": 78,
+                  "content": "    // if socket.can_send() { socket.send_slice(b\"hello\").unwrap(); }"
+                },
+                {
+                  "lineNumber": 79,
+                  "content": "    // if socket.can_recv() { let _n = socket.recv(|buf| (buf.len(), ())).unwrap(); }"
+                },
+                {
+                  "lineNumber": 98,
+                  "content": "- **&#96;iface::SocketHandle&#96;**: Handle to a socket in a &#96;SocketSet&#96;."
+                },
+                {
+                  "lineNumber": 99,
+                  "content": "- **&#96;iface::SocketSet&#96;**: Collection storing sockets (no heap required if you provide storage)."
+                },
+                {
+                  "lineNumber": 100,
+                  "content": "- **&#96;iface::SocketStorage&#96;**: Storage for socket handles."
+                },
+                {
+                  "lineNumber": 129,
+                  "content": "### Module: &#96;smoltcp::socket&#96; (Socket Implementations)"
+                },
+                {
+                  "lineNumber": 132,
+                  "content": "- **&#96;socket::Socket&#96;**: Enum of all socket types."
+                },
+                {
+                  "lineNumber": 134,
+                  "content": "#### Module: &#96;smoltcp::socket::tcp&#96; (TCP Sockets)"
+                },
+                {
+                  "lineNumber": 137,
+                  "content": "- **&#96;socket::tcp::Socket&#96;**: TCP socket state machine."
+                },
+                {
+                  "lineNumber": 140,
+                  "content": "- **&#96;socket::tcp::CongestionControl&#96;**: TCP congestion control algorithm."
+                },
+                {
+                  "lineNumber": 141,
+                  "content": "- **&#96;socket::tcp::ConnectError&#96;**: Error connecting TCP socket."
+                },
+                {
+                  "lineNumber": 142,
+                  "content": "- **&#96;socket::tcp::ListenError&#96;**: Error listening on TCP socket."
+                },
+                {
+                  "lineNumber": 143,
+                  "content": "- **&#96;socket::tcp::RecvError&#96;**: Error receiving TCP data."
+                },
+                {
+                  "lineNumber": 144,
+                  "content": "- **&#96;socket::tcp::SendError&#96;**: Error sending TCP data."
+                },
+                {
+                  "lineNumber": 145,
+                  "content": "- **&#96;socket::tcp::State&#96;**: TCP socket state (Closed, Listen, SynSent, etc.)."
+                },
+                {
+                  "lineNumber": 148,
+                  "content": "- **&#96;socket::tcp::SocketBuffer&#96;**: Type alias for TCP socket buffer."
+                },
+                {
+                  "lineNumber": 150,
+                  "content": "#### Module: &#96;smoltcp::socket::udp&#96; (UDP Sockets)"
+                },
+                {
+                  "lineNumber": 153,
+                  "content": "- **&#96;socket::udp::Socket&#96;**: UDP socket."
+                },
+                {
+                  "lineNumber": 154,
+                  "content": "- **&#96;socket::udp::UdpMetadata&#96;**: Metadata for UDP packets."
+                },
+                {
+                  "lineNumber": 157,
+                  "content": "- **&#96;socket::udp::BindError&#96;**: Error binding UDP socket."
+                },
+                {
+                  "lineNumber": 158,
+                  "content": "- **&#96;socket::udp::RecvError&#96;**: Error receiving UDP."
+                },
+                {
+                  "lineNumber": 159,
+                  "content": "- **&#96;socket::udp::SendError&#96;**: Error sending UDP."
+                },
+                {
+                  "lineNumber": 162,
+                  "content": "- **&#96;socket::udp::PacketBuffer&#96;**: Type alias for UDP packet buffer."
+                },
+                {
+                  "lineNumber": 163,
+                  "content": "- **&#96;socket::udp::PacketMetadata&#96;**: Type alias for UDP packet metadata."
+                },
+                {
+                  "lineNumber": 165,
+                  "content": "#### Module: &#96;smoltcp::socket::icmp&#96; (ICMP Sockets)"
+                },
+                {
+                  "lineNumber": 168,
+                  "content": "- **&#96;socket::icmp::Socket&#96;**: ICMP socket."
+                },
+                {
+                  "lineNumber": 171,
+                  "content": "- **&#96;socket::icmp::BindError&#96;**: Error binding ICMP socket."
+                },
+                {
+                  "lineNumber": 172,
+                  "content": "- **&#96;socket::icmp::Endpoint&#96;**: ICMP endpoint."
+                },
+                {
+                  "lineNumber": 173,
+                  "content": "- **&#96;socket::icmp::RecvError&#96;**: Error receiving ICMP."
+                },
+                {
+                  "lineNumber": 174,
+                  "content": "- **&#96;socket::icmp::SendError&#96;**: Error sending ICMP."
+                },
+                {
+                  "lineNumber": 177,
+                  "content": "- **&#96;socket::icmp::PacketBuffer&#96;**: Type alias for ICMP packet buffer."
+                },
+                {
+                  "lineNumber": 178,
+                  "content": "- **&#96;socket::icmp::PacketMetadata&#96;**: Type alias for ICMP packet metadata."
+                },
+                {
+                  "lineNumber": 180,
+                  "content": "#### Module: &#96;smoltcp::socket::raw&#96; (Raw IP Sockets)"
+                },
+                {
+                  "lineNumber": 183,
+                  "content": "- **&#96;socket::raw::Socket&#96;**: Raw IP socket."
+                },
+                {
+                  "lineNumber": 186,
+                  "content": "- **&#96;socket::raw::BindError&#96;**: Error binding raw socket."
+                },
+                {
+                  "lineNumber": 187,
+                  "content": "- **&#96;socket::raw::RecvError&#96;**: Error receiving raw packets."
+                },
+                {
+                  "lineNumber": 188,
+                  "content": "- **&#96;socket::raw::SendError&#96;**: Error sending raw packets."
+                },
+                {
+                  "lineNumber": 191,
+                  "content": "- **&#96;socket::raw::PacketBuffer&#96;**: Type alias for raw packet buffer."
+                },
+                {
+                  "lineNumber": 192,
+                  "content": "- **&#96;socket::raw::PacketMetadata&#96;**: Type alias for raw packet metadata."
+                },
+                {
+                  "lineNumber": 194,
+                  "content": "#### Module: &#96;smoltcp::socket::dhcpv4&#96; (DHCPv4 Client)"
+                },
+                {
+                  "lineNumber": 197,
+                  "content": "- **&#96;socket::dhcpv4::Config&#96;**: DHCPv4 client configuration."
+                },
+                {
+                  "lineNumber": 198,
+                  "content": "- **&#96;socket::dhcpv4::RetryConfig&#96;**: DHCPv4 retry configuration."
+                },
+                {
+                  "lineNumber": 199,
+                  "content": "- **&#96;socket::dhcpv4::ServerInfo&#96;**: DHCP server information."
+                },
+                {
+                  "lineNumber": 200,
+                  "content": "- **&#96;socket::dhcpv4::Socket&#96;**: DHCPv4 client socket."
+                },
+                {
+                  "lineNumber": 203,
+                  "content": "- **&#96;socket::dhcpv4::Event&#96;**: DHCPv4 event."
+                },
+                {
+                  "lineNumber": 205,
+                  "content": "#### Module: &#96;smoltcp::socket::dns&#96; (DNS Client)"
+                },
+                {
+                  "lineNumber": 208,
+                  "content": "- **&#96;socket::dns::DnsQuery&#96;**: DNS query builder."
+                },
+                {
+                  "lineNumber": 209,
+                  "content": "- **&#96;socket::dns::QueryHandle&#96;**: Handle to a DNS query."
+                },
+                {
+                  "lineNumber": 210,
+                  "content": "- **&#96;socket::dns::Socket&#96;**: DNS client socket."
+                },
+                {
+                  "lineNumber": 213,
+                  "content": "- **&#96;socket::dns::GetQueryResultError&#96;**: Error getting DNS query result."
+                },
+                {
+                  "lineNumber": 214,
+                  "content": "- **&#96;socket::dns::MulticastDns&#96;**: Multicast DNS configuration."
+                },
+                {
+                  "lineNumber": 215,
+                  "content": "- **&#96;socket::dns::StartQueryError&#96;**: Error starting DNS query."
+                },
+                {
+                  "lineNumber": 218,
+                  "content": "- **&#96;socket::AnySocket&#96;**: Trait for any socket type."
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/esp-hal.md",
+              "matches": [
+                {
+                  "lineNumber": 234,
+                  "content": "#### &#96;esp_hal::soc&#96; (SoC-specific)"
+                },
+                {
+                  "lineNumber": 235,
+                  "content": "- SoC-specific types and constants."
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/embassy-net.md",
+              "matches": [
+                {
+                  "lineNumber": 25,
+                  "content": "- &#96;embassy_net::Stack&#96; (handle you pass to sockets/tasks)"
+                },
+                {
+                  "lineNumber": 42,
+                  "content": "6) Create sockets from &#96;embassy_net::tcp&#96; / &#96;embassy_net::udp&#96; etc, using &#96;Stack&#96;."
+                },
+                {
+                  "lineNumber": 55,
+                  "content": "// Pick a size that matches your socket usage (see StackResources docs)."
+                },
+                {
+                  "lineNumber": 77,
+                  "content": "## Code sketch: TCP sockets (embassy-net::tcp)"
+                },
+                {
+                  "lineNumber": 79,
+                  "content": "&#96;embassy-net&#96; exposes TCP sockets under &#96;embassy_net::tcp&#96;:"
+                },
+                {
+                  "lineNumber": 85,
+                  "content": "use embassy_net::tcp::TcpSocket;"
+                },
+                {
+                  "lineNumber": 91,
+                  "content": "    let mut socket = TcpSocket::new(stack, &amp;mut rx_buf, &amp;mut tx_buf);"
+                },
+                {
+                  "lineNumber": 93,
+                  "content": "    // socket.connect((ip, port)).await.unwrap();"
+                },
+                {
+                  "lineNumber": 94,
+                  "content": "    // socket.write_all(b\"GET / HTTP/1.0\\r\\nHost: example.com\\r\\n\\r\\n\").await.unwrap();"
+                },
+                {
+                  "lineNumber": 95,
+                  "content": "    // let n = socket.read(&amp;mut rx_buf).await.unwrap();"
+                },
+                {
+                  "lineNumber": 106,
+                  "content": "- TCP/UDP sockets"
+                },
+                {
+                  "lineNumber": 123,
+                  "content": "- **&#96;Stack&#96;**: Handle used to create sockets and interact with the stack."
+                },
+                {
+                  "lineNumber": 124,
+                  "content": "- **&#96;StackResources&lt;const N: usize&gt;&#96;**: Static memory backing for the stack (socket storage, etc.)."
+                },
+                {
+                  "lineNumber": 139,
+                  "content": "- **&#96;TcpSocket&#96;**: TCP socket implementing &#96;embedded-io-async::Read&#96; and &#96;Write&#96;."
+                },
+                {
+                  "lineNumber": 140,
+                  "content": "- **&#96;TcpReader&#96;**: Read-only view of a TCP socket."
+                },
+                {
+                  "lineNumber": 141,
+                  "content": "- **&#96;TcpWriter&#96;**: Write-only view of a TCP socket."
+                },
+                {
+                  "lineNumber": 148,
+                  "content": "- **&#96;tcp::State&#96;**: TCP socket state."
+                },
+                {
+                  "lineNumber": 151,
+                  "content": "- **&#96;UdpSocket&#96;**: UDP socket."
+                },
+                {
+                  "lineNumber": 153,
+                  "content": "- **&#96;udp::BindError&#96;**: Error binding socket."
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/log.md",
+              "matches": [
+                {
+                  "lineNumber": 30,
+                  "content": "warn!(\"battery low\");"
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/embedded-io-async.md",
+              "matches": [
+                {
+                  "lineNumber": 25,
+                  "content": "- &#96;embassy-net&#96; TCP sockets implement the &#96;embedded-io-async&#96; traits (crate docs mention this explicitly):"
+                },
+                {
+                  "lineNumber": 47,
+                  "content": "- **&#96;ErrorType&#96;**: Base trait defining the associated &#96;Error&#96; type."
+                }
+              ]
+            },
+            {
+              "file": "docs/crates/embedded-io.md",
+              "matches": [
+                {
+                  "lineNumber": 20,
+                  "content": "- &#96;Error&#96; is an associated type (no allocation required)"
+                },
+                {
+                  "lineNumber": 71,
+                  "content": "- **&#96;ErrorType&#96;**: Base trait defining the associated &#96;Error&#96; type."
+                }
+              ]
+            }
+          ],
+          "totalLines": 214,
+          "totalMatchedLines": 214
+        }
+      }
+    }
+  }
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Checking battery percent example**
+
+I'm looking at the example for AXP2101 battery percent reading in the Rust docs to find reusable functions or approaches.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/examples-rust/12_lvgl_pmu_adc.rs</summary>
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Searching for battery percentage register**</details></think>
+
+---
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "pattern": "battery percent|percent|soc|E-Gauge|Fuel|0x|register|SOC",
+  "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md",
+  "outputMode": "content",
+  "caseInsensitive": true
+}
+```
+Result:
+
+```json
+{
+  "success": {
+    "pattern": "battery percent|percent|soc|E-Gauge|Fuel|0x|register|SOC",
+    "path": "/home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md",
+    "outputMode": "content",
+    "workspaceResults": {
+      "/home/tadas/work/my/waveshare-esp32-sandbox-1": {
+        "content": {
+          "matches": [
+            {
+              "file": "docs/devices/waveshare-esp32-s3-touch-amoled-1.8.md",
+              "matches": [
+                {
+                  "lineNumber": 60,
+                  "content": "2. **Initialize TCA9554 GPIO expander** at address &#96;0x20&#96;"
+                },
+                {
+                  "lineNumber": 69,
+                  "content": "if (!expander.begin(0x20)) {  // TCA9554 at 0x20"
+                },
+                {
+                  "lineNumber": 96,
+                  "content": "| FT3168 touch | &#96;0x38&#96; | Capacitive touch controller |"
+                },
+                {
+                  "lineNumber": 97,
+                  "content": "| QMI8658C IMU | &#96;0x6A&#96; | QMI8658_L_SLAVE_ADDRESS (low address) |"
+                },
+                {
+                  "lineNumber": 98,
+                  "content": "| PCF85063A RTC | &#96;0x51&#96; | Fixed |"
+                },
+                {
+                  "lineNumber": 99,
+                  "content": "| AXP2101 PMU | &#96;0x34&#96; | Fixed |"
+                },
+                {
+                  "lineNumber": 100,
+                  "content": "| TCA9554 expander | &#96;0x20&#96; | **Verified from Arduino examples** |"
+                },
+                {
+                  "lineNumber": 101,
+                  "content": "| ES8311 codec | &#96;0x18&#96; | I2C control interface |"
+                },
+                {
+                  "lineNumber": 153,
+                  "content": "**I2C control:** &#96;0x18&#96; on &#96;GPIO14/15&#96;  "
+                },
+                {
+                  "lineNumber": 188,
+                  "content": "**I2C Address:** &#96;0x20&#96; (verified from official Arduino examples)"
+                },
+                {
+                  "lineNumber": 219,
+                  "content": "&gt; **Critical:** The Arduino examples consistently use address &#96;0x20&#96;, not &#96;0x24&#96;."
+                },
+                {
+                  "lineNumber": 228,
+                  "content": "4. **Touch reset**: toggle &#96;TP_RESET&#96;, then read FT3168 registers at &#96;0x38&#96;."
+                },
+                {
+                  "lineNumber": 229,
+                  "content": "5. **IMU WHO_AM_I** read from QMI8658C (commonly register &#96;0x00&#96;; expected value is board/IC revision-dependent)."
+                },
+                {
+                  "lineNumber": 353,
+                  "content": "| TP_SDA | GPIO15 | 0x38 | Touch I2C Data |"
+                },
+                {
+                  "lineNumber": 354,
+                  "content": "| TP_SCL | GPIO14 | 0x38 | Touch I2C Clock |"
+                },
+                {
+                  "lineNumber": 358,
+                  "content": "**Note:** FT3168 I2C slave address is 0x38 (7-bit). Touch interrupt is on **GPIO21 directly**, not via expander."
+                },
+                {
+                  "lineNumber": 368,
+                  "content": "- FT3168 Touch Controller (0x38)"
+                },
+                {
+                  "lineNumber": 369,
+                  "content": "- QMI8658C IMU (0x6B)"
+                },
+                {
+                  "lineNumber": 370,
+                  "content": "- PCF85063A RTC (0x51)"
+                },
+                {
+                  "lineNumber": 371,
+                  "content": "- AXP2101 PMU (0x34)"
+                },
+                {
+                  "lineNumber": 372,
+                  "content": "- TCA9554 GPIO Expander (0x20)"
+                },
+                {
+                  "lineNumber": 373,
+                  "content": "- ES8311 Audio Codec (0x18)"
+                },
+                {
+                  "lineNumber": 379,
+                  "content": "| QMI_SDA | GPIO15 (shared) | 0x6A | IMU I2C Data |"
+                },
+                {
+                  "lineNumber": 380,
+                  "content": "| QMI_SCL | GPIO14 (shared) | 0x6A | IMU I2C Clock |"
+                },
+                {
+                  "lineNumber": 384,
+                  "content": "**Note:** QMI8658C I2C address is &#96;0x6A&#96; (QMI8658_L_SLAVE_ADDRESS) on this board"
+                },
+                {
+                  "lineNumber": 390,
+                  "content": "| RTC_SDA | GPIO15 (shared) | 0x51 | RTC I2C Data |"
+                },
+                {
+                  "lineNumber": 391,
+                  "content": "| RTC_SCL | GPIO14 (shared) | 0x51 | RTC I2C Clock |"
+                },
+                {
+                  "lineNumber": 394,
+                  "content": "**Note:** PCF85063A I2C address is 0x51 (fixed)"
+                },
+                {
+                  "lineNumber": 400,
+                  "content": "| AXP_SDA | GPIO15 (shared) | 0x34 | PMU I2C Data |"
+                },
+                {
+                  "lineNumber": 401,
+                  "content": "| AXP_SCL | GPIO14 (shared) | 0x34 | PMU I2C Clock |"
+                },
+                {
+                  "lineNumber": 404,
+                  "content": "| Power Key | Physical button | - | Detected via PMU IRQ registers |"
+                },
+                {
+                  "lineNumber": 406,
+                  "content": "**Note:** AXP2101 I2C address is 0x34 (can be 0x68/0x69 depending on config, but schematic shows 0x34)"
+                },
+                {
+                  "lineNumber": 409,
+                  "content": "The AXP2101 has a dedicated power key that can be used as a secondary user input. The key press is detected via interrupt status registers, not GPIO:"
+                },
+                {
+                  "lineNumber": 411,
+                  "content": "| Register | Address | Bit | Description |"
+                },
+                {
+                  "lineNumber": 413,
+                  "content": "| INTEN2 | 0x41 | 3 | Enable power key short press IRQ |"
+                },
+                {
+                  "lineNumber": 414,
+                  "content": "| INTSTS2 | 0x49 | 3 | Power key short press status (write 0xFF to clear) |"
+                },
+                {
+                  "lineNumber": 422,
+                  "content": "| TCA_SDA | GPIO15 (shared) | **0x20** | Expander I2C Data |"
+                },
+                {
+                  "lineNumber": 423,
+                  "content": "| TCA_SCL | GPIO14 (shared) | **0x20** | Expander I2C Clock |"
+                },
+                {
+                  "lineNumber": 435,
+                  "content": "&gt; **Important:** Address is &#96;0x20&#96;, verified from official Arduino examples. Touch interrupt (TP_INT) is on GPIO21 directly, NOT via expander."
+                },
+                {
+                  "lineNumber": 443,
+                  "content": "| ES_SDA | GPIO15 (shared) | 0x18 | Codec I2C Data |"
+                },
+                {
+                  "lineNumber": 444,
+                  "content": "| ES_SCL | GPIO14 (shared) | 0x18 | Codec I2C Clock |"
+                },
+                {
+                  "lineNumber": 519,
+                  "content": "| **AXP2101 Power Key** | Physical button | I2C PMU registers | Requires reading IRQ status from PMU. **Secondary input.** |"
+                },
+                {
+                  "lineNumber": 530,
+                  "content": "// Read power key press from PMU interrupt status register"
+                },
+                {
+                  "lineNumber": 531,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 532,
+                  "content": "const AXP2101_INTSTS2: u8 = 0x49;  // Interrupt status register 2"
+                },
+                {
+                  "lineNumber": 539,
+                  "content": "    i2c.write(AXP2101_ADDR, &amp;[AXP2101_INTSTS2, 0xFF])?;  // Clear IRQ"
+                },
+                {
+                  "lineNumber": 570,
+                  "content": "| FT3168 | 0x38 | Capacitive touch controller | GPIO21 (direct) |"
+                },
+                {
+                  "lineNumber": 571,
+                  "content": "| QMI8658C | 0x6A | 6-axis IMU (accel + gyro) | GPIO10, EXIO3 |"
+                },
+                {
+                  "lineNumber": 572,
+                  "content": "| PCF85063A | 0x51 | Real-time clock | GPIO10 |"
+                },
+                {
+                  "lineNumber": 573,
+                  "content": "| AXP2101 | 0x34 | Power management IC | EXIO5 (via TCA9554) |"
+                },
+                {
+                  "lineNumber": 574,
+                  "content": "| TCA9554 | **0x20** | I/O expander (8-bit) | - |"
+                },
+                {
+                  "lineNumber": 575,
+                  "content": "| ES8311 | 0x18 | Audio codec | - |"
+                },
+                {
+                  "lineNumber": 577,
+                  "content": "&gt; **Verified from Arduino examples:** TCA9554 is at &#96;0x20&#96;, QMI8658C is at &#96;0x6A&#96;"
+                },
+                {
+                  "lineNumber": 594,
+                  "content": "- Brightness control via register 0x51 (0x00-0xFF)"
+                },
+                {
+                  "lineNumber": 596,
+                  "content": "**Register Access:**"
+                },
+                {
+                  "lineNumber": 599,
+                  "content": "- See SH8601 datasheet for full register map"
+                },
+                {
+                  "lineNumber": 604,
+                  "content": "**I2C Address:** 0x38 (7-bit)  "
+                },
+                {
+                  "lineNumber": 614,
+                  "content": "**Register Map (Key Registers):**"
+                },
+                {
+                  "lineNumber": 615,
+                  "content": "- Touch point data starts at register 0x03"
+                },
+                {
+                  "lineNumber": 616,
+                  "content": "- Number of touch points at register 0x02"
+                },
+                {
+                  "lineNumber": 627,
+                  "content": "**I2C Address:** 0x6B (when SA0 = 1, which is the default)  "
+                },
+                {
+                  "lineNumber": 628,
+                  "content": "**Alternative Address:** 0x6A (when SA0 = 0)"
+                },
+                {
+                  "lineNumber": 646,
+                  "content": "**Register Map (Key Registers):**"
+                },
+                {
+                  "lineNumber": 647,
+                  "content": "- WHO_AM_I: 0x00 (returns device ID)"
+                },
+                {
+                  "lineNumber": 648,
+                  "content": "- Accelerometer data: 0x35-0x3A (X, Y, Z 16-bit values)"
+                },
+                {
+                  "lineNumber": 649,
+                  "content": "- Gyroscope data: 0x3B-0x40 (X, Y, Z 16-bit values)"
+                },
+                {
+                  "lineNumber": 650,
+                  "content": "- Control registers: 0x02-0x08"
+                },
+                {
+                  "lineNumber": 655,
+                  "content": "**I2C Address:** 0x51 (fixed, 7-bit)  "
+                },
+                {
+                  "lineNumber": 663,
+                  "content": "- Offset register for fine-tuning"
+                },
+                {
+                  "lineNumber": 671,
+                  "content": "**Register Map:**"
+                },
+                {
+                  "lineNumber": 672,
+                  "content": "- Time/date registers: 0x04-0x0A"
+                },
+                {
+                  "lineNumber": 673,
+                  "content": "- Alarm registers: 0x0B-0x0E"
+                },
+                {
+                  "lineNumber": 674,
+                  "content": "- Control registers: 0x00-0x01"
+                },
+                {
+                  "lineNumber": 683,
+                  "content": "**I2C Address:** 0x34 (can be 0x68/0x69 in other configurations)  "
+                },
+                {
+                  "lineNumber": 711,
+                  "content": "**Key Registers:**"
+                },
+                {
+                  "lineNumber": 712,
+                  "content": "- Power status: 0x00, 0x01"
+                },
+                {
+                  "lineNumber": 713,
+                  "content": "- DC-DC enable: Various registers"
+                },
+                {
+                  "lineNumber": 714,
+                  "content": "- Battery status: 0x01[6:5]"
+                },
+                {
+                  "lineNumber": 715,
+                  "content": "- IRQ control: 0x40-0x4C"
+                },
+                {
+                  "lineNumber": 716,
+                  "content": "- ADC data: Multiple registers for voltage/current monitoring"
+                },
+                {
+                  "lineNumber": 724,
+                  "content": "**E-Gauge (Fuel Gauge):**"
+                },
+                {
+                  "lineNumber": 727,
+                  "content": "- Real-time SoC (State of Charge) calculation"
+                },
+                {
+                  "lineNumber": 732,
+                  "content": "**I2C Address:** 0x18 (typical)"
+                },
+                {
+                  "lineNumber": 800,
+                  "content": "- Register: 0x51"
+                },
+                {
+                  "lineNumber": 801,
+                  "content": "- Range: 0x00 (off) to 0xFF (maximum 350 cd/m²)"
+                },
+                {
+                  "lineNumber": 817,
+                  "content": "- Poll I2C registers or use interrupt pin (EXIO6)"
+                },
+                {
+                  "lineNumber": 824,
+                  "content": "- Check FT3168 datasheet for gesture registers"
+                },
+                {
+                  "lineNumber": 1189,
+                  "content": "    address: u8,  // 0x38"
+                },
+                {
+                  "lineNumber": 1199,
+                  "content": "            address: 0x38,"
+                },
+                {
+                  "lineNumber": 1303,
+                  "content": "const TCA9554_ADDR: u8 = 0x20;  // Verified from Arduino examples"
+                },
+                {
+                  "lineNumber": 1305,
+                  "content": "// TCA9554 Registers"
+                },
+                {
+                  "lineNumber": 1306,
+                  "content": "const TCA9554_INPUT: u8 = 0x00;"
+                },
+                {
+                  "lineNumber": 1307,
+                  "content": "const TCA9554_OUTPUT: u8 = 0x01;"
+                },
+                {
+                  "lineNumber": 1308,
+                  "content": "const TCA9554_POLARITY: u8 = 0x02;"
+                },
+                {
+                  "lineNumber": 1309,
+                  "content": "const TCA9554_CONFIG: u8 = 0x03;  // 0 = output, 1 = input"
+                },
+                {
+                  "lineNumber": 1334,
+                  "content": "        self.write_register(TCA9554_CONFIG, config)?;"
+                },
+                {
+                  "lineNumber": 1338,
+                  "content": "        self.write_register(TCA9554_OUTPUT, output)?;"
+                },
+                {
+                  "lineNumber": 1344,
+                  "content": "        let mut current = self.read_register(TCA9554_OUTPUT)?;"
+                },
+                {
+                  "lineNumber": 1350,
+                  "content": "        self.write_register(TCA9554_OUTPUT, current)"
+                },
+                {
+                  "lineNumber": 1354,
+                  "content": "        let value = self.read_register(TCA9554_INPUT)?;"
+                },
+                {
+                  "lineNumber": 1358,
+                  "content": "    fn write_register(&amp;mut self, reg: u8, value: u8) -&gt; Result&lt;(), E&gt; {"
+                },
+                {
+                  "lineNumber": 1362,
+                  "content": "    fn read_register(&amp;mut self, reg: u8) -&gt; Result&lt;u8, E&gt; {"
+                },
+                {
+                  "lineNumber": 1415,
+                  "content": "    let mut expander = TCA9554::new(i2c, 0x20);"
+                },
+                {
+                  "lineNumber": 1449,
+                  "content": "    for addr in 0x08..0x78 {"
+                },
+                {
+                  "lineNumber": 1451,
+                  "content": "            println!(\"Found device at address: 0x{:02X}\", addr);"
+                },
+                {
+                  "lineNumber": 1485,
+                  "content": "    for addr in 0x08..0x78 {"
+                },
+                {
+                  "lineNumber": 1487,
+                  "content": "            println!(\"Found device at address: 0x{:02X}\", addr);"
+                },
+                {
+                  "lineNumber": 1528,
+                  "content": "    // You might need to use raw SPI registers or ESP-IDF"
+                },
+                {
+                  "lineNumber": 1589,
+                  "content": "    // (codec configuration registers)"
+                },
+                {
+                  "lineNumber": 1675,
+                  "content": "    for addr in 0x08..0x78 {"
+                },
+                {
+                  "lineNumber": 1677,
+                  "content": "            println!(\"Device found at 0x{:02X}\", addr);"
+                },
+                {
+                  "lineNumber": 1682,
+                  "content": "    const TCA9554_ADDR: u8 = 0x20;"
+                },
+                {
+                  "lineNumber": 1684,
+                  "content": "    i2c.write(TCA9554_ADDR, &amp;[0x03, 0b01001000]).ok();"
+                },
+                {
+                  "lineNumber": 1686,
+                  "content": "    i2c.write(TCA9554_ADDR, &amp;[0x01, 0b00000011]).ok();"
+                },
+                {
+                  "lineNumber": 1691,
+                  "content": "    const QMI8658_ADDR: u8 = 0x6B;"
+                },
+                {
+                  "lineNumber": 1693,
+                  "content": "    if i2c.write_read(QMI8658_ADDR, &amp;[0x00], &amp;mut who_am_i).is_ok() {"
+                },
+                {
+                  "lineNumber": 1694,
+                  "content": "        println!(\"QMI8658 WHO_AM_I: 0x{:02X}\", who_am_i[0]);"
+                },
+                {
+                  "lineNumber": 1708,
+                  "content": "const QMI8658_ADDR: u8 = 0x6B;"
+                },
+                {
+                  "lineNumber": 1712,
+                  "content": "    i2c.write(QMI8658_ADDR, &amp;[0x07, 0b11000000]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1718,
+                  "content": "    i2c.write_read(QMI8658_ADDR, &amp;[0x35], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1729,
+                  "content": "    i2c.write_read(QMI8658_ADDR, &amp;[0x3B], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1750,
+                  "content": "const PCF85063_ADDR: u8 = 0x51;"
+                },
+                {
+                  "lineNumber": 1759,
+                  "content": "        0x04,      // Start at seconds register"
+                },
+                {
+                  "lineNumber": 1768,
+                  "content": "    i2c.write_read(PCF85063_ADDR, &amp;[0x04], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1771,
+                  "content": "    let second = ((buffer[0] &gt;&gt; 4) &amp; 0x07) * 10 + (buffer[0] &amp; 0x0F);"
+                },
+                {
+                  "lineNumber": 1772,
+                  "content": "    let minute = ((buffer[1] &gt;&gt; 4) &amp; 0x07) * 10 + (buffer[1] &amp; 0x0F);"
+                },
+                {
+                  "lineNumber": 1773,
+                  "content": "    let hour = ((buffer[2] &gt;&gt; 4) &amp; 0x03) * 10 + (buffer[2] &amp; 0x0F);"
+                },
+                {
+                  "lineNumber": 1791,
+                  "content": "const FT3168_ADDR: u8 = 0x38;"
+                },
+                {
+                  "lineNumber": 1801,
+                  "content": "    i2c.write_read(FT3168_ADDR, &amp;[0x02], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1803,
+                  "content": "    let num_points = buffer[0] &amp; 0x0F;"
+                },
+                {
+                  "lineNumber": 1808,
+                  "content": "        let x = (((buffer[base] &amp; 0x0F) as u16) &lt;&lt; 8) | buffer[base + 1] as u16;"
+                },
+                {
+                  "lineNumber": 1809,
+                  "content": "        let y = (((buffer[base + 2] &amp; 0x0F) as u16) &lt;&lt; 8) | buffer[base + 3] as u16;"
+                },
+                {
+                  "lineNumber": 1810,
+                  "content": "        let event = (buffer[base] &gt;&gt; 6) &amp; 0x03;"
+                },
+                {
+                  "lineNumber": 1839,
+                  "content": "const AXP2101_ADDR: u8 = 0x34;"
+                },
+                {
+                  "lineNumber": 1844,
+                  "content": "    i2c.write_read(AXP2101_ADDR, &amp;[0x00], &amp;mut status).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1845,
+                  "content": "    println!(\"AXP2101 Status: 0x{:02X}\", status[0]);"
+                },
+                {
+                  "lineNumber": 1855,
+                  "content": "    // Read ADC value from appropriate register"
+                },
+                {
+                  "lineNumber": 1858,
+                  "content": "    i2c.write_read(AXP2101_ADDR, &amp;[0x34], &amp;mut buffer).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1883,
+                  "content": "const ES8311_ADDR: u8 = 0x18;"
+                },
+                {
+                  "lineNumber": 1887,
+                  "content": "    i2c.write(ES8311_ADDR, &amp;[0x00, 0x1F]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1891,
+                  "content": "    i2c.write(ES8311_ADDR, &amp;[0x01, 0x30]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1894,
+                  "content": "    i2c.write(ES8311_ADDR, &amp;[0x17, 0x18]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1897,
+                  "content": "    i2c.write(ES8311_ADDR, &amp;[0x32, 0xBF]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1900,
+                  "content": "    i2c.write(ES8311_ADDR, &amp;[0x0E, 0x02]).map_err(|_| ())?;"
+                },
+                {
+                  "lineNumber": 1965,
+                  "content": "- Check FT3168 I2C address (0x38)"
+                },
+                {
+                  "lineNumber": 1981,
+                  "content": "- Verify I2C address (0x6B with SA0=1, 0x6A with SA0=0)"
+                },
+                {
+                  "lineNumber": 1983,
+                  "content": "- Enable accelerometer and gyroscope in control registers"
+                },
+                {
+                  "lineNumber": 1989,
+                  "content": "i2c.write_read(QMI8658_ADDR, &amp;[0x00], &amp;mut who_am_i).unwrap();"
+                },
+                {
+                  "lineNumber": 1990,
+                  "content": "println!(\"WHO_AM_I: 0x{:02X}\", who_am_i[0]);  // Should be 0x05"
+                },
+                {
+                  "lineNumber": 1993,
+                  "content": "i2c.write(QMI8658_ADDR, &amp;[0x07, 0b00000001]).unwrap();  // Enable accel"
+                },
+                {
+                  "lineNumber": 1994,
+                  "content": "i2c.write(QMI8658_ADDR, &amp;[0x08, 0b00000001]).unwrap();  // Enable gyro"
+                },
+                {
+                  "lineNumber": 2040,
+                  "content": "- Verify codec registers (volume, DAC enable)"
+                },
+                {
+                  "lineNumber": 2067,
+                  "content": "debug!(\"I2C address: 0x{:02X}\", addr);"
+                },
+                {
+                  "lineNumber": 2074,
+                  "content": "for addr in 0x08..0x78 {"
+                },
+                {
+                  "lineNumber": 2076,
+                  "content": "        Ok(_) =&gt; println!(\"Device at 0x{:02X}\", addr),"
+                },
+                {
+                  "lineNumber": 2083,
+                  "content": "- 0x18: ES8311"
+                },
+                {
+                  "lineNumber": 2084,
+                  "content": "- 0x20: TCA9554"
+                },
+                {
+                  "lineNumber": 2085,
+                  "content": "- 0x34: AXP2101"
+                },
+                {
+                  "lineNumber": 2086,
+                  "content": "- 0x38: FT3168"
+                },
+                {
+                  "lineNumber": 2087,
+                  "content": "- 0x51: PCF85063A"
+                },
+                {
+                  "lineNumber": 2088,
+                  "content": "- 0x6B: QMI8658C"
+                },
+                {
+                  "lineNumber": 2096,
+                  "content": "Monitor battery voltage and current via AXP2101 ADC registers."
+                },
+                {
+                  "lineNumber": 2174,
+                  "content": "| EXIO0 | LCD_RESET | Display | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2175,
+                  "content": "| EXIO1 | DSI_PWR_EN | Display | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2176,
+                  "content": "| EXIO2 | TP_RESET | Touch | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2177,
+                  "content": "| EXIO3 | QMI_INT2 | IMU | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2178,
+                  "content": "| EXIO4 | Backlight btn | Input | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2179,
+                  "content": "| EXIO5 | PMU_IRQ | Power | 0x20 (TCA9554) | Via GPIO expander |"
+                },
+                {
+                  "lineNumber": 2180,
+                  "content": "| EXIO6 | QMI_RST | IMU | 0x20 (TCA9554) | Via GPIO expander (optional) |"
+                },
+                {
+                  "lineNumber": 2181,
+                  "content": "| EXIO7 | SD_PWR | SD Card | 0x20 (TCA9554) | Via GPIO expander |"
+                }
+              ]
+            }
+          ],
+          "totalLines": 170,
+          "totalMatchedLines": 170
+        }
+      }
+    }
+  }
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+---
+
+<think><details><summary>Thought Process</summary>
+**Checking existing battery percent handling**
+
+I'm verifying if battery percentage reading uses AXP2101's fuel gauge register and searching Arduino patterns for a getBatteryPercent implementation to confirm how battery level is currently accessed.</details></think>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: /home/tadas/work/my/waveshare-esp32-sandbox-1/docs/devices/waveshare-amoled-1.8-arduino-patterns.md</summary>
+
+</details>
+</tool-use>
+
+---
+
