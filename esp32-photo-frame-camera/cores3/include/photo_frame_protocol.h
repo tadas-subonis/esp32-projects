@@ -1,0 +1,17 @@
+/*
+ * Copy of shared/protocol/photo_frame_protocol.h — keep in sync.
+ */
+#pragma once
+
+#define PHOTO_FRAME_PROTOCOL_VERSION 1
+
+#define PHOTO_FRAME_API_PATH "/api/v1/photo"
+
+#define PHOTO_FRAME_MAX_JPEG_BYTES (128 * 1024)
+
+#define PHOTO_FRAME_JPEG_QUALITY 40
+
+#define PHOTO_FRAME_EPD_WIDTH 600
+#define PHOTO_FRAME_EPD_HEIGHT 400
+
+#define PHOTO_FRAME_REFRESH_ETA_SEC 18

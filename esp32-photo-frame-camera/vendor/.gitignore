@@ -1,0 +1,4 @@
+# Shallow-cloned vendor trees (refresh with git pull; do not commit)
+cores3/
+papercolor/
+common/

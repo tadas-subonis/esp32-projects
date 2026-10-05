@@ -1,0 +1,30 @@
+# Build outputs
+**/build/
+**/.pio/
+**/sdkconfig
+**/sdkconfig.old
+**/dependencies.lock
+**/managed_components/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Secrets (copy from examples)
+**/secrets.h
+**/secrets.yaml
+.env
+
+# Python / tools
+.venv/
+__pycache__/
+logs/
+
+# Vendor repo build artifacts (sources under vendor/ are tracked or present locally)
+vendor/**/build/
+vendor/**/.pio/
+vendor/**/managed_components/
+vendor/**/sdkconfig
+vendor/**/sdkconfig.old

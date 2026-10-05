@@ -1,0 +1,30 @@
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "console.cpp"
+        "hal.cpp"
+        "storage.cpp"
+        "wifi_ap.cpp"
+        "http_photo_server.cpp"
+        "photo_gallery.cpp"
+        "image_utils.cpp"
+    INCLUDE_DIRS "." "include"
+    REQUIRES
+        nvs_flash
+        esp_app_format
+        esp_timer
+        esp_wifi
+        esp_netif
+        esp_event
+        esp_http_server
+        console
+        esp_driver_usb_serial_jtag
+        json
+        fatfs
+        sdmmc
+        driver
+        spi_flash
+        M5Unified
+        M5GFX
+        m5pm1
+)
