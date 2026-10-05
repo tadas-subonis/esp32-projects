@@ -1,0 +1,22 @@
+# Build outputs
+**/build/
+**/sdkconfig
+**/sdkconfig.old
+**/dependencies.lock
+**/managed_components/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Python / tools
+.venv/
+__pycache__/
+logs/
+
+# Secrets
+.env
+secrets.h

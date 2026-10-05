@@ -1,0 +1,15 @@
+---
+description: Cheap ESP32-P4 multiplayer handheld — prototype rules
+alwaysApply: true
+---
+
+# Handheld console
+
+Prototype: Waveshare ESP32-P4-WIFI6-POE-ETH Rev 2.0 + 3.5" SPI ILI9488. Product plan: `docs/console-plan.md`. LCD notes: `docs/notes.md`.
+
+- Stage 0 LCD is **done** (`hw-lcd-working`). Stage 1 buttons **done** (`hw-buttons-working`). Do not change LCD or button GPIOs while bringing up artillery.
+- Next: Stage 2 local artillery (`docs/stage2-local-artillery.md`). Do not start Wi-Fi, matchmaking, launcher, battery, or a second SD until that stage exits.
+- P4Bench (`TEST_MODE 4`, `docs/p4bench.md`) characterizes SPI LCD / renderer limits; fill `docs/p4bench-findings.md` from real runs only.
+- Games are native ESP-IDF binaries, not a custom OS/VM. Prefer getting two people playing over extra infrastructure.
+- Buttons: GPIO to GND, internal pull-ups, pressed = LOW. Map: UP20 DOWN6 LEFT3 RIGHT2 A33 B26 SELECT48 START47. LCD control is the **right** 40-pin column only.
+- One hardware change at a time. Commit/tag each known-good subsystem.
