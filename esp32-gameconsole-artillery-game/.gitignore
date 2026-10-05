@@ -1,0 +1,31 @@
+# Build outputs
+**/build/
+**/build-host/
+**/sdkconfig
+**/sdkconfig.old
+**/dependencies.lock
+**/managed_components/
+CMakeCache.txt
+compile_commands.json
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*.pdb
+*.ilk
+
+# Secrets
+**/secrets.h
+.env
+.local.env
+*.local.env
+
+# Python / tools
+.venv/
+__pycache__/
+logs/
+*.ppm
+assets/sprites/_crop_*.png

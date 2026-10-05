@@ -1,0 +1,9 @@
+game_id = "artillery"
+name = "Tank Duel"
+version = "0.1.0"
+min_sdk = "0.1.0"
+players_min = 2
+players_max = 2
+protocol_version = 1
+display = "480x320"
+controls = "dpad+ab"
